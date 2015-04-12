@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Build-Timestamp: Wed, 4 Mar 2015 00:32:01 -0500
+Implementation-Title: KIE :: Execution Server :: Distribution Wars
+Implementation-Version: 6.2.0.Final-redhat-2
+Os-Version: 2.6.32-504.8.1.el6.x86_64
+Built-By: mockbuild
+Specification-Vendor: JBoss by Red Hat
+Created-By: Apache Maven
+Os-Name: Linux
+Implementation-URL: http://www.jboss.org/drools/kie-parent-with-depend
+ encies/droolsjbpm-integration/kie-server-parent/kie-server
+Java-Vendor: Oracle Corporation
+Implementation-Vendor: JBoss by Red Hat
+Scm-Revision: 8a9cffb19080192d5da1467a4bb01ed31346cb71
+Implementation-Vendor-Id: org.kie
+Scm-Url: https://github.com/droolsjbpm/droolsjbpm-integration/kie-serv
+ er-parent/kie-server
+Build-Jdk: 1.7.0_75
+Java-Version: 1.7.0_75
+Scm-Connection: scm:git:git@github.com:droolsjbpm/droolsjbpm-integrati
+ on.git/kie-server-parent/kie-server
+Os-Arch: amd64
+Specification-Title: KIE :: Execution Server :: Distribution Wars
+Specification-Version: 6.2.0.Final-redhat-2
+Archiver-Version: Plexus Archiver
+
