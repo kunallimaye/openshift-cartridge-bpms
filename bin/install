@@ -57,6 +57,7 @@ bpmuser_username=bpm-user
 bpmmanager_username=bpm-manager
 root_username=root
 loan_username=loan
+kieserveruser_username=kieserveruser
 
 
 bpmadmin_password=$(generate_password)
@@ -66,6 +67,7 @@ bpmuser_password=$(generate_password)
 bpmmanager_password=$(generate_password)
 root_password=$(generate_password)
 loan_password=$(generate_password)
+kieserveruser_password=$(generate_password)
 
 # env vars
 #
@@ -90,6 +92,9 @@ echo "$root_password" > $OPENSHIFT_BPMS_DIR/env/OPENSHIFT_BPMS_ROOT_PASSWORD
 echo "$bpmdeveloper_username" > $OPENSHIFT_BPMS_DIR/env/OPENSHIFT_BPMS_BPMDEVELOPER_USERNAME
 echo "$bpmdeveloper_password" > $OPENSHIFT_BPMS_DIR/env/OPENSHIFT_BPMS_BPMDEVELOPER_PASSWORD
 
+echo "$kieserveruser_username" > $OPENSHIFT_BPMS_DIR/env/OPENSHIFT_BPMS_KIESERVERUSER_USERNAME
+echo "$kieserveruser_password" > $OPENSHIFT_BPMS_DIR/env/OPENSHIFT_BPMS_KIESERVERUSER_PASSWORD
+
 # Create the bpms-security-users.properties file
 BPMS_USERS_PATH="${OPENSHIFT_BPMS_DIR}/template/${OPENSHIFT_BPMS_CONFIG_PATH}/${OPENSHIFT_BPMS_USERS_FILE}"
 echo "# username=password" > $BPMS_USERS_PATH
@@ -101,6 +106,7 @@ echo "${bpmmanager_username}=${bpmmanager_password}" >> $BPMS_USERS_PATH
 echo "${root_username}=${root_password}" >> $BPMS_USERS_PATH
 echo "${bpmdeveloper_username}=${bpmdeveloper_password}" >> $BPMS_USERS_PATH
 echo "${loan_username}=${loan_password}" >> $BPMS_USERS_PATH
+echo "${kieserveruser_username}=${kieserveruser_password}" >> $BPMS_USERS_PATH
 
 # Create the bpms-security-roles.properties file
 BPMS_ROLES_PATH="${OPENSHIFT_BPMS_DIR}/template/${OPENSHIFT_BPMS_CONFIG_PATH}/${OPENSHIFT_BPMS_ROLES_FILE}"
@@ -112,6 +118,7 @@ echo "${bpmuser_username}=user" >> $BPMS_ROLES_PATH
 echo "${bpmmanager_username}=manager" >> $BPMS_ROLES_PATH
 echo "${root_username}=admin" >> $BPMS_ROLES_PATH
 echo "${loan_username}=analyst,broker,manager,appraiser" >> $BPMS_ROLES_PATH
+echo "${kieserveruser_username}=kie-server" >> $BPMS_ROLES_PATH
 
 # Create temporary symlinks from <EAP_HOME>/standalone/configuration to users and roles files.
 # This files cannot be linked from $OPERNSHIFT_REPO_DIR yet because this repository is not initialized yet.
@@ -165,6 +172,9 @@ client_result "                    Password: $root_password"
 client_result ""
 client_result "            BPM Example User: $loan_username"
 client_result "                    Password: $loan_password"
+client_result ""
+client_result "      KieServer Example User: $kieserveruser_username"
+client_result "                    Password: $kieserveruser_password"
 client_result ""
 client_result "Configuration files: "
 client_result "- You can add/modify/show/remove users and roles using the following files in your cartridge git repository:"
