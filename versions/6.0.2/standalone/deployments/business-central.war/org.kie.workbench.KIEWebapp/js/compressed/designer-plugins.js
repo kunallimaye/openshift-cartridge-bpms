@@ -74,7 +74,7 @@ f=true
 }}.bind(this));
 if(f){e.values().each(function(g){this.facade.getRules().initializeRules(g)
 }.bind(this));
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_STENCIL_SET_LOADED});
+ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD});
 var b=this.facade.getSelection();
 this.facade.setSelection();
 this.facade.setSelection(b)
@@ -140,16 +140,16 @@ l.functionality=function(){if("undefined"!=typeof(pageTracker)&&"function"==type
 }return k.apply(this,arguments)
 };
 if(l.dropDownGroupIcon){var n=a[l.dropDownGroupIcon];
-if(n===undefined){n=a[l.dropDownGroupIcon]=new Ext.Toolbar.SplitButton({cls:"x-btn-icon",icon:l.dropDownGroupIcon,menu:new Ext.menu.Menu({items:[]}),listeners:{click:function(o,p){if(!o.menu.isVisible()&&!o.ignoreNextClick){o.showMenu()
+if(n===undefined){n=a[l.dropDownGroupIcon]=new Ext.Toolbar.SplitButton({iconCls:window.SpriteUtils.toUniqueId(l.dropDownGroupIcon),menu:new Ext.menu.Menu({items:[]}),listeners:{click:function(o,p){if(!o.menu.isVisible()&&!o.ignoreNextClick){o.showMenu()
 }else{o.hideMenu()
 }}}});
 this.toolbar.add(n)
-}var m={icon:l.icon,text:l.name,itemId:l.id,handler:l.toggle?undefined:l.functionality,checkHandler:l.toggle?l.functionality:undefined,listeners:{render:function(o){if(l.description){new Ext.ToolTip({target:o.getEl(),title:l.description})
+}var m={iconCls:window.SpriteUtils.toUniqueId(l.icon),text:l.name,itemId:l.id,handler:l.toggle?undefined:l.functionality,checkHandler:l.toggle?l.functionality:undefined,listeners:{render:function(o){if(l.description){new Ext.ToolTip({target:o.getEl(),title:l.description})
 }}}};
 if(l.toggle){var j=new Ext.menu.CheckItem(m)
 }else{var j=new Ext.menu.Item(m)
 }n.menu.add(j)
-}else{var j=new Ext.Toolbar.Button({icon:l.icon,cls:"x-btn-icon",itemId:l.id,tooltip:l.description,tooltipType:"title",handler:l.toggle?null:l.functionality,enableToggle:l.toggle,toggleHandler:l.toggle?l.functionality:null});
+}else{var j=new Ext.Toolbar.Button({iconCls:window.SpriteUtils.toUniqueId(l.icon),itemId:l.id,tooltip:l.description,tooltipType:"title",handler:l.toggle?null:l.functionality,enableToggle:l.toggle,toggleHandler:l.toggle?l.functionality:null});
 this.toolbar.add(j);
 j.getEl().onclick=function(){this.blur()
 }
@@ -191,15 +191,16 @@ c=0
 }this.sliceMap[g.id]=d;
 c+=h
 }.bind(this));
-if(d>0){this.insertSlicingSeperator(d,this.items.getCount()+1);
-this.insertSlicingButton("prev",d,this.items.getCount()+1);
+if(d>0){this.insertSlicingSeperator(d,-1);
+this.insertSlicingButton("prev",d,-1);
 var b=new Ext.Toolbar.Spacer();
-this.insertSlicedHelperButton(b,d,this.items.getCount()+1);
+this.insertSlicedHelperButton(b,d,-1);
 Ext.get(b.id).setWidth(this.iconStandardWidth)
 }this.maxSlice=d;
 this.setCurrentSlice(this.currentSlice)
-},insertSlicedButton:function(b,c,a){this.insertButton(a,b);
-this.sliceMap[b.id]=c
+},insertSlicedButton:function(b,c,a){if(a==-1){this.addButton(b)
+}else{this.insertButton(a,b)
+}this.sliceMap[b.id]=c
 },insertSlicedHelperButton:function(b,c,a){b.helperItem=true;
 this.insertSlicedButton(b,c,a)
 },insertSlicingSeperator:function(b,a){this.insertSlicedHelperButton(new Ext.Toolbar.Fill(),b,a)
@@ -272,56 +273,106 @@ if(ORYX.READONLY!=true){this.facade.offer({name:ORYX.I18N.View.connectServiceRep
 }.bind(this)})
 }},jbpmServiceRepoConnect:function(){this._showInitialRepoScreen()
 },_showInitialRepoScreen:function(){this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+"</center>"});
-var a=new Ext.Button({text:ORYX.I18N.View.connect,handler:function(){this._updateRepoDialog(Ext.getCmp("serviceurlfield").getValue())
+var a=new Ext.Button({text:ORYX.I18N.View.connect,handler:function(){var b="";
+var c=this._readCookie("designerservicerepos");
+if(c!=null){b=c+","+Ext.getCmp("serviceurlfield").getRawValue()
+}else{b=Ext.getCmp("serviceurlfield").getRawValue()
+}this._createCookie("designerservicerepos",b,365);
+this._updateRepoDialog(Ext.getCmp("serviceurlfield").getRawValue());
+this.selectedrepourl=Ext.getCmp("serviceurlfield").getRawValue()
 }.bind(this)});
-this.repoDialog=new Ext.Window({autoCreate:true,autoScroll:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.View.connectServiceRepoDataTitle,height:440,width:600,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[this.repoContent],tbar:[{id:"serviceurlfield",xtype:"textfield",fieldLabel:"URL",name:"repourl",width:"300",value:ORYX.I18N.View.enterServiceURL,handleMouseEvents:true,listeners:{render:function(){this.getEl().on("mousedown",function(d,c,b){Ext.getCmp("serviceurlfield").setValue("")
-})
-}}},a],buttons:[{text:ORYX.I18N.jPDLSupport.close,handler:function(){this.repoDialog.hide()
+this.repoDialog=new Ext.Window({autoCreate:true,autoScroll:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.View.connectServiceRepoDataTitle,height:440,width:600,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[this.repoContent],tbar:[this._getRepoCombo(),a],buttons:[{text:"Install selected item",handler:function(){if(this.mygrid.getSelectionModel().getSelectedCell()!=null){var b=this.mygrid.getSelectionModel().getSelectedCell()[0];
+ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.View.installingRepoItem,title:""});
+var c=this.mygrid.getStore().getAt(b).get("name");
+var d=this.mygrid.getStore().getAt(b).get("category");
+Ext.Ajax.request({url:ORYX.PATH+"jbpmservicerepo",method:"POST",success:function(f){try{if(f.responseText=="false"){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failInstallation,title:""})
+}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success",msg:ORYX.I18N.View.successInstall,title:""})
+}}catch(g){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failAssetsInstallation+": "+g,title:""})
+}}.createDelegate(this),failure:function(){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failAssetsInstallation+".",title:""})
+}.createDelegate(this),params:{action:"install",profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),asset:c,category:d,repourl:this.selectedrepourl}})
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.LocalHistory.LocalHistoryView.msg,title:""})
+}}.bind(this)},{text:ORYX.I18N.jPDLSupport.close,handler:function(){this.repoDialog.hide();
+this.repoDialog.destroy(true);
+delete this.repoDialog
 }.bind(this)}]});
 this.repoDialog.on("hide",function(){if(this.repoDialog){this.repoDialog.destroy(true);
 delete this.repoDialog
 }});
 this.repoDialog.show()
+},_getRepoCombo:function(){var b=new Array();
+var f=new Ext.data.SimpleStore({fields:["url","value"],data:[[]]});
+var c=this._readCookie("designerservicerepos");
+if(c!=null){if(c.startsWith(",")){c=c.substr(1,c.length)
+}if(c.endsWith(",")){c=c.substr(0,c.length-1)
+}var k=c.split(",");
+for(var g=0;
+g<k.length;
+g++){var d=k[g];
+if(d.length>=0){var h=new Array();
+h.push(d);
+h.push(d);
+b.push(h)
+}}f.loadData(b);
+f.commitChanges()
+}else{var a=new Array();
+a.push("http://people.redhat.com/tsurdilo/repository");
+a.push("http://people.redhat.com/tsurdilo/repository");
+b.push(a);
+var j=new Array();
+j.push("http://people.redhat.com/kverlaen/repository");
+j.push("http://people.redhat.com/kverlaen/repository");
+b.push(j);
+f.loadData(b);
+f.commitChanges()
+}var e=new Ext.form.ComboBox({id:"serviceurlfield",name:"repourl",forceSelection:false,editable:true,allowBlank:false,displayField:"url",valueField:"value",mode:"local",queryMode:"local",typeAhead:true,value:"",triggerAction:"all",fieldLabel:"Location",width:300,store:f});
+return e
 },_updateRepoDialog:function(a){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.View.connectServiceRepoConnecting,title:""});
-Ext.Ajax.request({url:ORYX.PATH+"jbpmservicerepo",method:"POST",success:function(b){try{if(b.responseText=="false"){this.repoDialog.remove(this.repoContent,true);
-this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+".</center>"});
+Ext.Ajax.request({url:ORYX.PATH+"jbpmservicerepo",method:"POST",success:function(c){try{if((c.responseText=="false")||(c.responseText.startsWith("false||"))){if(this.repoDialog){this.repoDialog.remove(this.repoContent,true)
+}this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+".</center>"});
 this.repoDialog.add(this.repoContent);
 this.repoDialog.doLayout();
-ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService,title:""})
-}else{this._showJbpmServiceInfo(b.responseText,a)
-}}catch(c){this.repoDialog.remove(this.repoContent,true);
-this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+"</center>"});
+if(c.responseText.startsWith("false||")){var b=c.responseText.split("||");
+ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService+" - "+b[1],title:""})
+}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService,title:""})
+}}else{this._showJbpmServiceInfo(c.responseText,a)
+}}catch(d){if(this.repoDialog){this.repoDialog.remove(this.repoContent,true)
+}this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+"</center>"});
 this.repoDialog.add(this.repoContent);
 this.repoDialog.doLayout();
-ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService+":"+c,title:""})
-}}.createDelegate(this),failure:function(){this.repoDialog.remove(this.repoContent,true);
-this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+"</center>"});
+ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService+":"+d,title:""})
+}}.createDelegate(this),failure:function(){if(this.repoDialog){this.repoDialog.remove(this.repoContent,true)
+}this.repoContent=new Ext.Panel({layout:"table",html:"<br/><br/><br/><br/><center>"+ORYX.I18N.View.noServiceSpecified+"</center>"});
 this.repoDialog.add(this.repoContent);
 this.repoDialog.doLayout();
 ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failConnectService+".",title:""})
 },params:{action:"display",profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),repourl:a}})
-},_showJbpmServiceInfo:function(f,c){var h=f.evalJSON();
-var g=[];
+},_showJbpmServiceInfo:function(e,c){var g=e.evalJSON();
+var f=[];
 var b=0;
-for(var e in h){g[b]=h[e];
+for(var d in g){f[b]=g[d];
 b++
-}var a=new Ext.data.SimpleStore({fields:[{name:"name"},{name:"displayName"},{name:"icon"},{name:"category"},{name:"explanation"},{name:"documentation"},{name:"inputparams"},{name:"results"}],data:g});
-var d=new Ext.grid.GridPanel({store:a,columns:[{header:ORYX.I18N.View.headerIcon,width:50,sortable:true,dataIndex:"icon",renderer:this._renderIcon},{header:ORYX.I18N.View.headerName,width:100,sortable:true,dataIndex:"displayName"},{header:ORYX.I18N.View.headerExplanation,width:100,sortable:true,dataIndex:"explanation"},{header:ORYX.I18N.View.headerDocumentation,width:100,sortable:true,dataIndex:"documentation",renderer:this._renderDocs},{header:ORYX.I18N.View.headerInput,width:200,sortable:true,dataIndex:"inputparams"},{header:ORYX.I18N.View.headerResults,width:200,sortable:true,dataIndex:"results"},{header:ORYX.I18N.View.headerCategory,width:100,sortable:true,dataIndex:"category"}],title:ORYX.I18N.View.clickOnRowToInstall,autoScroll:true,viewConfig:{autoFit:true}});
-d.on("rowdblclick",function(m,k,n){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.View.installingRepoItem,title:""});
-var j=m.getStore().getAt(k).get("name");
-var l=m.getStore().getAt(k).get("category");
-Ext.Ajax.request({url:ORYX.PATH+"jbpmservicerepo",method:"POST",success:function(i){try{if(i.responseText=="false"){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failInstallation,title:""})
-}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success",msg:ORYX.I18N.View.successInstall,title:""})
-}}catch(o){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failAssetsInstallation+": "+o,title:""})
-}}.createDelegate(this),failure:function(){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.View.failAssetsInstallation+".",title:""})
-}.createDelegate(this),params:{action:"install",profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),asset:j,category:l,repourl:c}})
-});
-this.repoDialog.remove(this.repoContent,true);
-this.repoContent=new Ext.TabPanel({activeTab:0,border:false,width:"100%",height:"100%",tabPosition:"top",layoutOnTabChange:true,deferredRender:false,items:[{title:ORYX.I18N.View.serviceNodes,autoScroll:true,items:[d],layout:"fit",margins:"10 10 10 10"}]});
+}this.mystore=new Ext.data.SimpleStore({fields:[{name:"name"},{name:"displayName"},{name:"icon"},{name:"category"},{name:"explanation"},{name:"documentation"},{name:"inputparams"},{name:"results"}],data:f});
+var a=Ext.id();
+this.mygrid=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:this.mystore,id:a,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"icon",header:ORYX.I18N.View.headerIcon,width:50,sortable:true,dataIndex:"icon",renderer:this._renderIcon},{id:"displayName",header:ORYX.I18N.View.headerName,width:100,sortable:true,dataIndex:"displayName",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"explanation",header:ORYX.I18N.View.headerExplanation,width:100,sortable:true,dataIndex:"explanation",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"documentation",header:ORYX.I18N.View.headerDocumentation,width:100,sortable:true,dataIndex:"documentation",renderer:this._renderDocs},{id:"inputparams",header:ORYX.I18N.View.headerInput,width:200,sortable:true,dataIndex:"inputparams",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"results",header:ORYX.I18N.View.headerResults,width:200,sortable:true,dataIndex:"results",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"category",header:ORYX.I18N.View.headerCategory,width:100,sortable:true,dataIndex:"category",editor:new Ext.form.TextField({allowBlank:true,disabled:true})}])});
+if(this.repoDialog){this.repoDialog.remove(this.repoContent,true)
+}this.repoContent=new Ext.TabPanel({activeTab:0,border:false,width:"100%",height:"100%",tabPosition:"top",layoutOnTabChange:true,deferredRender:false,items:[{title:ORYX.I18N.View.serviceNodes,autoScroll:true,items:[this.mygrid],layout:"fit",margins:"10 10 10 10"}]});
 this.repoDialog.add(this.repoContent);
 this.repoDialog.doLayout()
 },_renderIcon:function(a){return'<img src="'+a+'"/>'
 },_renderDocs:function(a){return'<a href="'+a+'" target="_blank">link</a>'
+},_createCookie:function(c,d,e){if(e){var b=new Date();
+b.setTime(b.getTime()+(e*24*60*60*1000));
+var a="; expires="+b.toGMTString()
+}else{var a=""
+}document.cookie=c+"="+d+a+"; path=/"
+},_readCookie:function(b){var e=b+"=";
+var a=document.cookie.split(";");
+for(var d=0;
+d<a.length;
+d++){var f=a[d];
+while(f.charAt(0)==" "){f=f.substring(1,f.length)
+}if(f.indexOf(e)==0){return f.substring(e.length,f.length)
+}}return null
 }});
 if(!ORYX.Plugins){ORYX.Plugins={}
 }if(!ORYX.Config){ORYX.Config={}
@@ -366,8 +417,9 @@ ORYX.PROCESS_SAVED=false
 if(a&&a==true){b=prompt("Save this item","Check in comment");
 if(b==null){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.Save.saveCancelled,title:""});
 return
-}}Ext.Ajax.request({url:ORYX.PATH+"assetservice",method:"POST",success:function(g){try{if(g.responseText&&g.responseText.length>0){var k=g.responseText.evalJSON();
-if(k.errors&&k.errors.lengt>0){var l=k.errors;
+}}parent.designersignalexpectconcurrentupdate(ORYX.UUID);
+Ext.Ajax.request({url:ORYX.PATH+"assetservice",method:"POST",success:function(g){try{if(g.responseText&&g.responseText.length>0){var k=g.responseText.evalJSON();
+if(k.errors&&k.errors.length>0){var l=k.errors;
 for(var h=0;
 h<l.length;
 h++){var d=l[h];
@@ -384,12 +436,12 @@ Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(e){
 }}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+": "+i,title:""})
 }}catch(i){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+": "+i,title:""})
 }}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+".",title:""})
-}.bind(this),params:{action:"updateasset",profile:ORYX.PROFILE,assetcontent:ORYX.EDITOR.getSerializedJSON(),pp:ORYX.PREPROCESSING,assetid:window.btoa(encodeURI(ORYX.UUID)),assetcontenttransform:"jsontobpmn2",commitmessage:b}})
+}.bind(this),params:{action:"updateasset",profile:ORYX.PROFILE,assetcontent:window.btoa(encodeURIComponent(ORYX.EDITOR.getSerializedJSON())),pp:ORYX.PREPROCESSING,assetid:window.btoa(encodeURI(ORYX.UUID)),assetcontenttransform:"jsontobpmn2",commitmessage:b}})
 }else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.Save.noChanges,title:""})
 }},saveSync:function(){if(!ORYX.PROCESS_SAVED){var k=ORYX.EDITOR.getSerializedJSON();
 var a=new XMLHttpRequest;
 var b=ORYX.PATH+"assetservice";
-var d="action=updateasset&profile="+ORYX.PROFILE+"&pp="+ORYX.PREPROCESSING+"&assetid="+window.btoa(encodeURI(ORYX.UUID))+"&assetcontenttransform=jsontobpmn2&assetcontent="+encodeURIComponent(k);
+var d="action=updateasset&profile="+ORYX.PROFILE+"&pp="+ORYX.PREPROCESSING+"&assetid="+window.btoa(encodeURI(ORYX.UUID))+"&assetcontenttransform=jsontobpmn2&assetcontent="+window.btoa(encodeURIComponent(k));
 a.open("POST",b,false);
 a.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 a.send(d);
@@ -573,30 +625,30 @@ a=a.select(function(e){if(d[0].getStencil().type()==="node"){return this.facade.
 if(a.size()<=1){return
 }this.morphMenu.removeAll();
 if(d[0].getStencil().id().endsWith("#Task")){var c=ORYX.CALCULATE_CURRENT_PERSPECTIVE()==ORYX.RULEFLOW_PERSPECTIVE;
-if(d[0].properties["oryx-tasktype"]!="User"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.userTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.user.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"User")
+if(d[0].properties["oryx-tasktype"]!="User"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.userTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.user.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"User")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Send"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.sendTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.send.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Send")
+}if(d[0].properties["oryx-tasktype"]!="Send"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.sendTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.send.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Send")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Receive"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.receiveTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.receive.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Receive")
+}if(d[0].properties["oryx-tasktype"]!="Receive"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.receiveTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.receive.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Receive")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Manual"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.manualTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.manual.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Manual")
+}if(d[0].properties["oryx-tasktype"]!="Manual"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.manualTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.manual.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Manual")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Service"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.serviceTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.service.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Service")
+}if(d[0].properties["oryx-tasktype"]!="Service"&&!c){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.serviceTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.service.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Service")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Business Rule"){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.businessRuleTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.business.rule.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Business Rule")
+}if(d[0].properties["oryx-tasktype"]!="Business Rule"){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.businessRuleTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.business.rule.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Business Rule")
 }).bind(this)});
 this.morphMenu.add(b)
-}if(d[0].properties["oryx-tasktype"]!="Script"){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.scriptTask,icon:ORYX.BASE_FILE_PATH+"stencilsets/bpmn2.0jbpm/icons/activity/list/type.script.png",disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Script")
+}if(d[0].properties["oryx-tasktype"]!="Script"){var b=new Ext.menu.Item({text:ORYX.I18N.ShapeMenuPlugin.scriptTask,iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.script.png"),disabled:false,disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.updateTaskType(d[0],"Script")
 }).bind(this)});
 this.morphMenu.add(b)
 }}a=a.sortBy(function(e){return e.position()
 });
-a.each((function(f){if(!(d[0].properties["oryx-nomorph"]&&d[0].properties["oryx-nomorph"]=="true")){var e=new Ext.menu.Item({text:f.title(),icon:f.icon(),disabled:f.id()==d[0].getStencil().id(),disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.morphShape(d[0],f)
+a.each((function(f){if(!(d[0].properties["oryx-nomorph"]&&d[0].properties["oryx-nomorph"]=="true")){var e=new Ext.menu.Item({text:f.title(),iconCls:window.SpriteUtils.toUniqueId("stencilsets/bpmn2.0jbpm/icons/activity/list/type.script.png"),disabled:f.id()==d[0].getStencil().id(),disabledClass:ORYX.CONFIG.MORPHITEM_DISABLED,handler:(function(){this.morphShape(d[0],f)
 }).bind(this)});
 this.morphMenu.add(e)
 }}).bind(this));
@@ -686,8 +738,8 @@ if(h.dropStatus==h.dropNotAllowed){return this.facade.updateSelection()
 }if(!this._currentReference){return
 }var d=Ext.dd.Registry.getHandle(f.DDM.currentTarget);
 d.parent=this._currentReference;
-var p=b.getXY();
-var j={x:p[0],y:p[1]};
+var q=b.getXY();
+var j={x:q[0],y:q[1]};
 var l=this.facade.getCanvas().node.getScreenCTM();
 j.x-=l.e;
 j.y-=l.f;
@@ -695,9 +747,9 @@ j.x/=l.a;
 j.y/=l.d;
 j.x-=document.documentElement.scrollLeft;
 j.y-=document.documentElement.scrollTop;
-var o=this._currentReference.absoluteXY();
-j.x-=o.x;
-j.y-=o.y;
+var p=this._currentReference.absoluteXY();
+j.x-=p.x;
+j.y-=p.y;
 if(!b.ctrlKey){var k=this.currentShapes[0].bounds.center();
 if(20>Math.abs(k.x-j.x)){j.x=k.x
 }if(20>Math.abs(k.y-j.y)){j.y=k.y
@@ -709,25 +761,25 @@ var g={sourceShape:this.currentShapes[0],targetStencil:m};
 d.connectingType=this.facade.getRules().connectMorph(g).id()
 }if(ORYX.CONFIG.SHAPEMENU_DISABLE_CONNECTED_EDGE===true){delete d.connectingType
 }var c=new ORYX.Plugins.ShapeMenuPlugin.CreateCommand(Object.clone(d),this._currentReference,j,this);
-this.facade.executeCommands([c]);
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_ADDED});
+var o=this.facade.executeCommands([c]);
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_ADDED,shape:o});
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_MENU_CLOSE,source:e,destination:this.currentShapes});
 if(d.backupOptions){for(key in d.backupOptions){d[key]=d.backupOptions[key]
 }delete d.backupOptions
 }this._currentReference=undefined
-},newShape:function(e,f){var a=this.facade.getStencilSets()[e.namespace];
-var d=a.stencil(e.type);
-if(this.facade.getRules().canContain({containingShape:this.currentShapes.first().parent,containedStencil:d})){e.connectedShape=this.currentShapes[0];
-e.parent=this.currentShapes.first().parent;
-e.containedStencil=d;
-var b={sourceShape:this.currentShapes[0],targetStencil:d};
-var c=this.facade.getRules().connectMorph(b);
-if(!c){return
-}e.connectingType=c.id();
-if(ORYX.CONFIG.SHAPEMENU_DISABLE_CONNECTED_EDGE===true){delete e.connectingType
-}var g=new ORYX.Plugins.ShapeMenuPlugin.CreateCommand(e,undefined,undefined,this);
-this.facade.executeCommands([g]);
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_ADDED})
+},newShape:function(f,g){var a=this.facade.getStencilSets()[f.namespace];
+var e=a.stencil(f.type);
+if(this.facade.getRules().canContain({containingShape:this.currentShapes.first().parent,containedStencil:e})){f.connectedShape=this.currentShapes[0];
+f.parent=this.currentShapes.first().parent;
+f.containedStencil=e;
+var c={sourceShape:this.currentShapes[0],targetStencil:e};
+var d=this.facade.getRules().connectMorph(c);
+if(!d){return
+}f.connectingType=d.id();
+if(ORYX.CONFIG.SHAPEMENU_DISABLE_CONNECTED_EDGE===true){delete f.connectingType
+}var h=new ORYX.Plugins.ShapeMenuPlugin.CreateCommand(f,undefined,undefined,this);
+var b=this.facade.executeCommands([h]);
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_ADDED,shape:b})
 }},updateTaskType:function(a,b){if(a&&b){a.setProperty("oryx-tasktype",b);
 a.setProperty("oryx-multipleinstance",false);
 a.refresh();
@@ -916,12 +968,14 @@ ORYX.Plugins.ShapeMenu=Clazz.extend(ORYX.Plugins.ShapeMenu);
 ORYX.Plugins.ShapeMenuButton={construct:function(b){if(b){this.option=b;
 if(!this.option.arguments){this.option.arguments=[]
 }}else{}this.parentId=this.option.id?this.option.id:null;
-var e=this.option.caption?"Oryx_button_with_caption":"Oryx_button";
-this.node=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",$(this.parentId),["div",{"class":e}]);
+var f=this.option.caption?"Oryx_button_with_caption":"Oryx_button";
+this.node=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",$(this.parentId),["div",{"class":f}]);
 var c={src:this.option.icon};
 if(this.option.msg){c.title=this.option.msg
-}if(this.option.icon){ORYX.Editor.graft("http://www.w3.org/1999/xhtml",this.node,["img",c])
-}if(this.option.caption){var d=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",this.node,["span"]);
+}if(this.option.icon){if(this.option.icon.startsWith("data")){ORYX.Editor.graft("http://www.w3.org/1999/xhtml",this.node,["img",c])
+}else{var e=window.SpriteUtils.toUniqueId(this.option.icon);
+ORYX.Editor.graft("http://www.w3.org/1999/xhtml",this.node,["img",{src:ORYX.BASE_FILE_PATH+"lib/ext-2.0.2/resources/images/default/s.gif","class":e,title:this.option.msg}])
+}}if(this.option.caption){var d=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",this.node,["span"]);
 ORYX.Editor.graft("http://www.w3.org/1999/xhtml",d,this.option.caption)
 }var a=false;
 this.node.addEventListener(ORYX.CONFIG.EVENT_MOUSEOVER,this.hover.bind(this),a);
@@ -997,7 +1051,8 @@ this.parent=c.parent;
 this.currentReference=b;
 this.shapeOptions=c.shapeOptions
 },execute:function(){var d=false;
-if(this.shape){if(this.shape instanceof ORYX.Core.Node){this.parent.add(this.shape);
+if(this.shape){this.shape.properties["oryx-invisid"]=Math.random();
+if(this.shape instanceof ORYX.Core.Node){this.parent.add(this.shape);
 if(this.edge){this.plugin.facade.getCanvas().add(this.edge);
 this.edge.dockers.first().setDockedShape(this.connectedShape);
 this.edge.dockers.first().setReferencePoint(this.sourceRefPos);
@@ -1009,6 +1064,7 @@ this.shape.dockers.first().setDockedShape(this.connectedShape);
 this.shape.dockers.first().setReferencePoint(this.sourceRefPos)
 }}d=true
 }else{this.shape=this.plugin.facade.createShape(this.option);
+this.shape.properties["oryx-invisid"]=Math.random();
 this.edge=(!(this.shape instanceof ORYX.Core.Edge))?this.shape.getIncomingShapes().first():undefined
 }if(this.currentReference&&this.position){if(this.shape instanceof ORYX.Core.Edge){if(!(this.currentReference instanceof ORYX.Core.Canvas)){this.shape.dockers.last().setDockedShape(this.currentReference);
 var g=this.currentReference.absoluteXY();
@@ -1046,175 +1102,594 @@ this.targetRefPos=this.edge.dockers.last().referencePoint
 this.plugin.facade.updateSelection();
 if(!d){if(this.edge){this.plugin.doLayout(this.edge)
 }else{if(this.shape instanceof ORYX.Core.Edge){this.plugin.doLayout(this.shape)
-}}}},rollback:function(){this.plugin.facade.deleteShape(this.shape);
+}}}return this.shape
+},rollback:function(){this.plugin.facade.deleteShape(this.shape);
 if(this.edge){this.plugin.facade.deleteShape(this.edge)
 }this.plugin.facade.setSelection(this.plugin.facade.getSelection().without(this.shape,this.edge))
 }});
-if(!ORYX.Plugins){ORYX.Plugins=new Object()
-}ORYX.Plugins.ShapeRepository={facade:undefined,construct:function(c){this.facade=c;
-this._currentParent;
-this._canContain=undefined;
-this._canAttach=undefined;
-this._patternData;
-this.shapeList=new Ext.tree.TreeNode({});
-var a=new Ext.tree.TreePanel({cls:"shaperepository",loader:new Ext.tree.TreeLoader(),root:this.shapeList,autoScroll:true,rootVisible:false,lines:false,anchors:"0, -30"});
-var d=this.facade.addToRegion("west",a,ORYX.I18N.ShapeRepository.title);
-Ext.Ajax.request({url:ORYX.PATH+"stencilpatterns",method:"POST",success:function(f){try{this._patternData=Ext.decode(f.responseText)
-}catch(g){ORYX.Log.error("Failed to retrieve Stencil Patterns Data :\n"+g)
-}}.createDelegate(this),failure:function(){ORYX.Log.error("Failed to retrieve Stencil Patterns Data")
-},params:{profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID))}});
-var b=new Ext.dd.DragZone(this.shapeList.getUI().getEl(),{shadow:!Ext.isMac});
-b.afterDragDrop=this.drop.bind(this,b);
-b.beforeDragOver=this.beforeDragOver.bind(this,b);
-b.beforeDragEnter=function(){this._lastOverElement=false;
-return true
-}.bind(this);
-this.setStencilSets();
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_LOADED,this.setStencilSets.bind(this))
-},setStencilSets:function(){var a=this.shapeList.firstChild;
-while(a){this.shapeList.removeChild(a);
-a=this.shapeList.firstChild
-}this.facade.getStencilSets().values().each((function(d){var b;
-var f=ORYX.I18N.propertyNames[d.title()];
-var c=d.extensions();
-this.shapeList.appendChild(b=new Ext.tree.TreeNode({text:f,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRep",singleClickExpand:true}));
-b.render();
-b.expand();
-var e=d.stencils(this.facade.getCanvas().getStencil(),this.facade.getRules());
-var g=new Hash();
-e=e.sortBy(function(h){return h.position()
-});
-e.each((function(j){if(j.hidden()){return
-}var h=j.groups();
-h.each((function(k){if(!g[k]){if(Ext.isIE){g[k]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true,expanded:true});
-g[k].expand()
-}else{g[k]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true})
-}b.appendChild(g[k]);
-g[k].render()
-}this.createStencilTreeNode(g[k],j)
-}).bind(this));
-if(h.length==0){this.createStencilTreeNode(b,j)
-}var i=ORYX.CONFIG.STENCIL_GROUP_ORDER();
-b.sort(function(l,k){return i[d.namespace()][l.text]-i[d.namespace()][k.text]
-})
-}).bind(this))
-}).bind(this))
-},createStencilTreeNode:function(c,d){var a=d.id().split("#");
-var b=ORYX.I18N.propertyNames[a[1]];
-if(!b){b=d.title()
-}else{if(b.length<=0){b=d.title()
-}}var f=new Ext.tree.TreeNode({text:b,icon:decodeURIComponent(d.icon()),allowDrag:false,allowDrop:false,iconCls:"ShapeRepEntreeImg",cls:"ShapeRepEntree"});
-c.appendChild(f);
-f.render();
-var e=f.getUI();
-e.elNode.setAttributeNS(null,"title",d.description());
-Ext.dd.Registry.register(e.elNode,{node:e.node,handles:[e.elNode,e.textNode].concat($A(e.elNode.childNodes)),isHandle:false,type:d.id(),title:d.title(),namespace:d.namespace()})
-},drop:function(m,k,b){this._lastOverElement=undefined;
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.added"});
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.attached"});
-var l=m.getProxy();
-if(l.dropStatus==l.dropNotAllowed){return
-}if(!this._currentParent){return
-}var h=Ext.dd.Registry.getHandle(k.DDM.currentTarget);
-var s=b.getXY();
-var o={x:s[0],y:s[1]};
-var p=this.facade.getCanvas().node.getScreenCTM();
-o.x-=p.e;
-o.y-=p.f;
-o.x/=p.a;
-o.y/=p.d;
-o.x-=document.documentElement.scrollLeft;
-o.y-=document.documentElement.scrollTop;
-var q=this._currentParent.absoluteXY();
-o.x-=q.x;
-o.y-=q.y;
-h.position=o;
-if(this._canAttach&&this._currentParent instanceof ORYX.Core.Node){h.parent=undefined
-}else{h.parent=this._currentParent
-}var f=ORYX.Core.Command.extend({construct:function(u,i,w,a,t,v){this.option=u;
-this.currentParent=i;
-this.canAttach=w;
-this.position=a;
-this.facade=t;
-this.selection=this.facade.getSelection();
-this.shape;
-this.parent
-},execute:function(){if(!this.shape){this.shape=this.facade.createShape(h);
-this.parent=this.shape.parent
-}else{this.parent.add(this.shape)
-}if(this.canAttach&&this.currentParent instanceof ORYX.Core.Node&&this.shape.dockers.length>0){var a=this.shape.dockers[0];
-if(this.currentParent.parent instanceof ORYX.Core.Node){this.currentParent.parent.add(a.parent)
-}a.bounds.centerMoveTo(this.position);
-a.setDockedShape(this.currentParent)
-}if(j&&j.length>0&&this.shape instanceof ORYX.Core.Node){this.shape.setProperty("oryx-tasktype",j);
-this.shape.refresh()
-}this.facade.setSelection([this.shape]);
-this.facade.getCanvas().update();
-this.facade.updateSelection();
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_DROP_SHAPE,shape:this.shape})
-},rollback:function(){this.facade.deleteShape(this.shape);
-this.facade.setSelection(this.selection.without(this.shape));
-this.facade.getCanvas().update();
-this.facade.updateSelection()
-}});
-var g=this.facade.eventCoordinates(b.browserEvent);
-var e=h.type.split("#");
-var n=false;
-if(ORYX.PREPROCESSING){var r=ORYX.PREPROCESSING.split(",");
-for(var d=0;
-d<r.length;
-d++){if(r[d]==e[1]){n=true
-}}}if(e[1].startsWith("wp-")&&!n){this.facade.raiseEvent({type:ORYX.CONFIG.CREATE_PATTERN,pid:e[1],pdata:this._patternData,pos:g})
-}else{if(e[1].endsWith("Task")&&!n){var j=e[1];
-j=j.substring(0,j.length-4);
-h.type=e[0]+"#Task";
-if(j.length<1){if(h.title=="User"||h.title=="Send"||h.title=="Receive"||h.title=="Manual"||h.title=="Service"||h.title=="Business Rule"||h.title=="Script"){j=h.title
-}}var c=new f(h,this._currentParent,this._canAttach,g,this.facade,j);
-this.facade.executeCommands([c])
-}else{var c=new f(h,this._currentParent,this._canAttach,g,this.facade);
-this.facade.executeCommands([c])
-}}this._currentParent=undefined
-},beforeDragOver:function(h,f,b){var e=this.facade.eventCoordinates(b.browserEvent);
-var k=this.facade.getCanvas().getAbstractShapesAtPosition(e);
-if(k.length<=0){var a=h.getProxy();
-a.setStatus(a.dropNotAllowed);
-a.sync();
-return false
-}var c=k.last();
-if(k.lenght==1&&k[0] instanceof ORYX.Core.Canvas){return false
-}else{var d=Ext.dd.Registry.getHandle(f.DDM.currentTarget);
-var i=this.facade.getStencilSets()[d.namespace];
-var j=i.stencil(d.type);
-if(j.type()==="node"){var g=k.reverse().find(function(l){return(l instanceof ORYX.Core.Canvas||l instanceof ORYX.Core.Node||l instanceof ORYX.Core.Edge)
-});
-if(g!==this._lastOverElement){this._canAttach=undefined;
-this._canContain=undefined
-}if(g){if(!(g instanceof ORYX.Core.Canvas)&&g.isPointOverOffset(e.x,e.y)&&this._canAttach==undefined){this._canAttach=this.facade.getRules().canConnect({sourceShape:g,edgeStencil:j,targetStencil:j});
-if(g&&g.properties["oryx-tasktype"]&&g.properties["oryx-tasktype"]=="Script"){this._canAttach=false
-}if(this._canAttach){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_SHOW,highlightId:"shapeRepo.attached",elements:[g],style:ORYX.CONFIG.SELECTION_HIGHLIGHT_STYLE_RECTANGLE,color:ORYX.CONFIG.SELECTION_VALID_COLOR});
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.added"});
-this._canContain=undefined
-}}if(!(g instanceof ORYX.Core.Canvas)&&!g.isPointOverOffset(e.x,e.y)){this._canAttach=this._canAttach==false?this._canAttach:undefined
-}if(this._canContain==undefined&&!this._canAttach){this._canContain=this.facade.getRules().canContain({containingShape:g,containedStencil:j});
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_SHOW,highlightId:"shapeRepo.added",elements:[g],color:this._canContain?ORYX.CONFIG.SELECTION_VALID_COLOR:ORYX.CONFIG.SELECTION_INVALID_COLOR});
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.attached"})
-}this._currentParent=this._canContain||this._canAttach?g:undefined;
-this._lastOverElement=g;
-var a=h.getProxy();
-a.setStatus(this._currentParent?a.dropAllowed:a.dropNotAllowed);
-a.sync()
-}}else{this._currentParent=this.facade.getCanvas();
-var a=h.getProxy();
-a.setStatus(a.dropAllowed);
-a.sync()
-}}return false
-}};
-ORYX.Plugins.ShapeRepository=Clazz.extend(ORYX.Plugins.ShapeRepository);
+/**
+ * Copyright (c) 2006
+ * Martin Czuchra, Nicolas Peters, Daniel Polak, Willi Tscheschner
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ **/
+
+
+if (!ORYX.Plugins) {
+	ORYX.Plugins = new Object();
+}
+
+ORYX.Plugins.ShapeRepository = {
+
+	facade: undefined,
+
+	construct: function(facade) {
+		this.facade = facade;
+		this._currentParent;
+		this._canContain = undefined;
+		this._canAttach  = undefined;
+        this._patternData;
+
+        this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_LOADED, this.setStencilSets.bind(this));
+        this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD, this.setStencilSets.bind(this));
+
+		this.shapeList = new Ext.tree.TreeNode({
+			
+		});
+
+		var panel = new Ext.tree.TreePanel({
+            cls:'shaperepository',
+			loader: new Ext.tree.TreeLoader(),
+			root: this.shapeList,
+			autoScroll:true,
+			rootVisible: false,
+			lines: false,
+			anchors: '0, -30'
+		});
+		
+//		var sorter = new Ext.tree.TreeSorter(panel, {
+//		    folderSort: true,
+//		    dir: "asc",
+//		    sortType: function(node) {
+//		        return node.text;
+//		    }
+//		});
+		
+		var region = this.facade.addToRegion("west", panel, ORYX.I18N.ShapeRepository.title);
+
+//		Ext.Ajax.request({
+//            url: ORYX.PATH + "processinfo",
+//            method: 'POST',
+//            success: function(request) {
+//    	   		try {
+//    	   			var infopanel = new Ext.Panel({
+//    	   				bodyStyle:'background:#eee;font-size:9px;font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;',
+//    	   				autoScroll:true,
+//    	   				lines: false,
+//    	   				html: request.responseText,
+//    	   				title: 'Process Information'
+//    	   			});
+//    	   			this.facade.addToRegion("west", infopanel);
+//    	   		} catch(e) {
+//    	   			ORYX.Log.error("Failed to retrieve Process Info :\n" + e);
+//    	   		}
+//            }.createDelegate(this),
+//            failure: function(){
+//            	ORYX.Log.error("Failed to retrieve Process Info");
+//            },
+//            params: {
+//            	profile: ORYX.PROFILE,
+//            	uuid : ORYX.UUID
+//            }
+//        });
+
+        Ext.Ajax.request({
+            url: ORYX.PATH + "stencilpatterns",
+            method: 'POST',
+            success: function(response) {
+                try {
+                    this._patternData = Ext.decode(response.responseText);
+                } catch(e) {
+                    ORYX.Log.error("Failed to retrieve Stencil Patterns Data :\n" + e);
+                }
+            }.createDelegate(this),
+            failure: function(){
+                ORYX.Log.error("Failed to retrieve Stencil Patterns Data");
+            },
+            params: {
+                profile: ORYX.PROFILE,
+                uuid :  window.btoa(encodeURI(ORYX.UUID))
+            }
+        });
+
+		// Create a Drag-Zone for Drag'n'Drop
+		var DragZone = new Ext.dd.DragZone(this.shapeList.getUI().getEl(), {shadow: !Ext.isMac});
+		DragZone.afterDragDrop = this.drop.bind(this, DragZone);
+		DragZone.beforeDragOver = this.beforeDragOver.bind(this, DragZone);
+		DragZone.beforeDragEnter = function(){this._lastOverElement = false; return true}.bind(this);
+		
+		// Load all Stencilssets
+		this.setStencilSets();
+	},
+	
+	
+	/**
+	 * Load all stencilsets in the shaperepository
+	 */
+	setStencilSets: function() {
+		// Remove all childs
+		var child = this.shapeList.firstChild;
+		while(child) {
+			this.shapeList.removeChild(child);
+			child = this.shapeList.firstChild;
+		}
+
+		// Go thru all Stencilsets and stencils
+		this.facade.getStencilSets().values().each((function(sset) {
+			
+			// For each Stencilset create and add a new Tree-Node
+			var stencilSetNode
+			
+			var typeTitle = ORYX.I18N.propertyNames[sset.title()];
+			var extensions = sset.extensions();
+//			if (extensions && extensions.size() > 0) {
+//				typeTitle += " / " + ORYX.Core.StencilSet.getTranslation(extensions.values()[0], "title");
+//			} 
+
+			this.shapeList.appendChild(stencilSetNode = new Ext.tree.TreeNode({
+				text:typeTitle, 			// Stencilset Name
+				allowDrag:false,
+        		allowDrop:false,
+				iconCls:'headerShapeRepImg',
+	            cls:'headerShapeRep',
+				singleClickExpand:true}));
+			stencilSetNode.render();
+			stencilSetNode.expand();
+			// Get Stencils from Stencilset
+			var stencils = sset.stencils(this.facade.getCanvas().getStencil(),
+										 this.facade.getRules());	
+			var treeGroups = new Hash();
+			
+			// Sort the stencils according to their position and add them to the repository
+			stencils = stencils.sortBy(function(value) { return value.position(); } );
+			stencils.each((function(value) {
+				if (value.hidden()) {
+					return;
+				}
+				
+				// Get the groups name
+				var groups = value.groups();
+				
+				// For each Group-Entree
+				groups.each((function(group) {
+                    var groupText = group;
+                    if(ORYX.I18N.propertyNames[group] && ORYX.I18N.propertyNames[group].length > 0) {
+                        groupText = ORYX.I18N.propertyNames[group];
+                    }
+					// If there is a new group
+                    if(!treeGroups[group]) {
+                        if(Ext.isIE) {
+                            // Create a new group
+                            treeGroups[group] = new Ext.tree.TreeNode({
+                                text: groupText,					// Group-Name
+                                allowDrag:false,
+                                allowDrop:false,
+                                iconCls:'headerShapeRepImg', // Css-Class for Icon
+                                cls:'headerShapeRepChild',  // CSS-Class for Stencil-Group
+                                singleClickExpand:true,
+                                expanded:true});
+                            treeGroups[group].expand();
+                        } else {
+                            // Create a new group
+                            treeGroups[group] = new Ext.tree.TreeNode({
+                                text: groupText,					// Group-Name
+                                allowDrag:false,
+                                allowDrop:false,
+                                iconCls:'headerShapeRepImg', // Css-Class for Icon
+                                cls:'headerShapeRepChild',  // CSS-Class for Stencil-Group
+                                singleClickExpand:true});
+                        }
+						// Add the Group to the ShapeRepository
+						stencilSetNode.appendChild(treeGroups[group]);
+						treeGroups[group].render();	
+					}
+					
+					// Create the Stencil-Tree-Node
+					this.createStencilTreeNode(treeGroups[group], value);	
+					
+				}).bind(this));
+				
+				
+				
+				// If there is no group
+				if(groups.length == 0) {
+					// Create the Stencil-Tree-Node
+					this.createStencilTreeNode(stencilSetNode, value);						
+				}
+
+				// sort the groups
+				var stencilOrder = ORYX.CONFIG.STENCIL_GROUP_ORDER();
+                stencilSetNode.sort(function(a, b) {
+                    return stencilOrder[sset.namespace()][a.text] - stencilOrder[sset.namespace()][b.text];
+                });
+
+			}).bind(this));
+		}).bind(this));
+		//if (this.shapeList.firstChild.firstChild) {
+		//	this.shapeList.firstChild.firstChild.expand(false, true);
+		//}	
+	},
+
+	createStencilTreeNode: function(parentTreeNode, stencil) {
+        try {
+		// Create and add the Stencil to the Group
+        var IdParts = stencil.id().split("#");
+        var textTitle = ORYX.I18N.propertyNames[IdParts[1]];
+        if(!textTitle) {
+            textTitle = stencil.title();
+        } else {
+            if(textTitle.length <= 0) {
+                textTitle = stencil.title();
+            }
+        }
+        var newElement;
+        // if stencil.icon() is a .png or .gif file, load from image sprite
+        if (window.SpriteUtils.isIconFile(stencil.icon())) {
+            newElement = new Ext.tree.TreeNode({
+                text: textTitle, 		// Text of the stencil
+                iconCls: window.SpriteUtils.toUniqueId(stencil.icon()), // set iconCls to sprite css class
+                allowDrag: false,					// Don't use the Drag and Drop of Ext-Tree
+                allowDrop: false
+            });
+        }
+        else {
+            newElement = new Ext.tree.TreeNode({
+                text: textTitle, 		// Text of the stencil
+                icon:		decodeURIComponent(stencil.icon()),			// Icon of the stencil
+                allowDrag: false,					// Don't use the Drag and Drop of Ext-Tree
+                allowDrop: false,
+                iconCls:	'ShapeRepEntreeImg', 	// CSS-Class for Icon
+                cls:		'ShapeRepEntree'		// CSS-Class for the Tree-Entree
+            });
+        }
+
+        if(parentTreeNode === undefined) {
+        } else {
+            parentTreeNode.appendChild(newElement);
+            newElement.render();
+        }
+
+		var ui = newElement.getUI();
+		
+		// Set the tooltip
+		ui.elNode.setAttributeNS(null, "title", stencil.description());
+		
+		// Register the Stencil on Drag and Drop
+		Ext.dd.Registry.register(ui.elNode, {
+				node: 		ui.node,
+		        handles: 	[ui.elNode, ui.textNode].concat($A(ui.elNode.childNodes)), // Set the Handles
+		        isHandle: 	false,
+				type:		stencil.id(),			// Set Type of stencil
+                title:      stencil.title(),
+				namespace:	stencil.namespace()		// Set Namespace of stencil
+				});
+
+        }catch(e) {
+            // ignore errrors for now
+        }
+	},
+	
+	drop: function(dragZone, target, event) {
+		this._lastOverElement = undefined;
+		
+		// Hide the highlighting
+		this.facade.raiseEvent({type: ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE, highlightId:'shapeRepo.added'});
+		this.facade.raiseEvent({type: ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE, highlightId:'shapeRepo.attached'});
+		
+		// Check if drop is allowed
+		var proxy = dragZone.getProxy()
+		if(proxy.dropStatus == proxy.dropNotAllowed) { return }
+		
+		// Check if there is a current Parent
+		if(!this._currentParent) { return }
+		
+		var option = Ext.dd.Registry.getHandle(target.DDM.currentTarget);
+		
+		var xy = event.getXY();
+		var pos = {x: xy[0], y: xy[1]};
+
+		var a = this.facade.getCanvas().node.getScreenCTM();
+
+		// Correcting the UpperLeft-Offset
+		pos.x -= a.e; pos.y -= a.f;
+		// Correcting the Zoom-Faktor
+		pos.x /= a.a; pos.y /= a.d;
+		// Correting the ScrollOffset
+		pos.x -= document.documentElement.scrollLeft;
+		pos.y -= document.documentElement.scrollTop;
+		// Correct position of parent
+		var parentAbs = this._currentParent.absoluteXY();
+		pos.x -= parentAbs.x;
+		pos.y -= parentAbs.y;
+
+		// Set position
+		option['position'] = pos
+		
+		// Set parent
+		if( this._canAttach &&  this._currentParent instanceof ORYX.Core.Node ){
+			option['parent'] = undefined;	
+		} else {
+			option['parent'] = this._currentParent;
+		}
+		
+		
+		var commandClass = ORYX.Core.Command.extend({
+			construct: function(option, currentParent, canAttach, position, facade, ttype){
+				this.option = option;
+				this.currentParent = currentParent;
+				this.canAttach = canAttach;
+				this.position = position;
+				this.facade = facade;
+				this.selection = this.facade.getSelection();
+				this.shape;
+				this.parent;
+			},			
+			execute: function(){
+				if (!this.shape) {
+					this.shape 	= this.facade.createShape(option);
+					this.parent = this.shape.parent;
+				} else {
+					this.parent.add(this.shape);
+				}
+					
+				if( this.canAttach &&  this.currentParent instanceof ORYX.Core.Node && this.shape.dockers.length > 0){
+					
+					var docker = this.shape.dockers[0];
+		
+					if( this.currentParent.parent instanceof ORYX.Core.Node ) {
+						this.currentParent.parent.add( docker.parent );
+					}
+												
+					docker.bounds.centerMoveTo( this.position );
+					docker.setDockedShape( this.currentParent );
+					//docker.update();	
+				}
+		
+				//this.currentParent.update();
+				//this.shape.update();
+
+                if(ttype && ttype.length > 0 && this.shape instanceof ORYX.Core.Node) {
+                    this.shape.setProperty("oryx-tasktype", ttype);
+                    this.shape.refresh();
+                }
+
+				this.facade.setSelection([this.shape]);
+				this.facade.getCanvas().update();
+				this.facade.updateSelection();
+				
+				this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_DROP_SHAPE, shape:this.shape});
+				
+			},
+			rollback: function(){
+				this.facade.deleteShape(this.shape);
+				
+				//this.currentParent.update();
+
+				this.facade.setSelection(this.selection.without(this.shape));
+				this.facade.getCanvas().update();
+				this.facade.updateSelection();
+				
+			}
+		});
+
+		var position = this.facade.eventCoordinates( event.browserEvent );
+        var typeParts = option.type.split("#");
+        var isCustom = false;
+        if(ORYX.PREPROCESSING) {
+            var customParts = ORYX.PREPROCESSING.split(",");
+            for (var i = 0; i < customParts.length; i++) {
+                if(customParts[i] == typeParts[1]) {
+                    isCustom = true;
+                }
+            }
+        }
+        if(typeParts[1].startsWith("wp-") && !isCustom) {
+            this.facade.raiseEvent({
+                type: ORYX.CONFIG.CREATE_PATTERN,
+                pid: typeParts[1],
+                pdata: this._patternData,
+                pos: position
+            });
+        } else if(typeParts[1].endsWith("Task") && !isCustom) {
+            var ttype = typeParts[1];
+            ttype = ttype.substring(0, ttype.length - 4);
+            option.type = typeParts[0] + "#Task";
+
+            if(ttype.length < 1) {
+                if(option.title == "User" ||
+                    option.title == "Send" ||
+                    option.title == "Receive" ||
+                    option.title == "Manual" ||
+                    option.title == "Service" ||
+                    option.title == "Business Rule" ||
+                    option.title == "Script") {
+                    ttype = option.title;
+                }
+            }
+
+            var command = new commandClass(option, this._currentParent, this._canAttach, position, this.facade, ttype);
+            this.facade.executeCommands([command]);
+        } else {
+           var command = new commandClass(option, this._currentParent, this._canAttach, position, this.facade);
+           this.facade.executeCommands([command]);
+        }
+		this._currentParent = undefined;
+	},
+
+	beforeDragOver: function(dragZone, target, event){
+
+		var coord = this.facade.eventCoordinates(event.browserEvent);
+		var aShapes = this.facade.getCanvas().getAbstractShapesAtPosition( coord );
+
+		if(aShapes.length <= 0) {
+			
+				var pr = dragZone.getProxy();
+				pr.setStatus(pr.dropNotAllowed);
+				pr.sync();
+				
+				return false;
+		}	
+		
+		var el = aShapes.last();
+	
+		
+		if(aShapes.lenght == 1 && aShapes[0] instanceof ORYX.Core.Canvas) {
+			
+			return false;
+			
+		} else {
+			// check containment rules
+			var option = Ext.dd.Registry.getHandle(target.DDM.currentTarget);
+
+			var stencilSet = this.facade.getStencilSets()[option.namespace];
+
+			var stencil = stencilSet.stencil(option.type);
+
+			if(stencil.type() === "node") {
+				
+				var parentCandidate = aShapes.reverse().find(function(candidate) {
+					return (candidate instanceof ORYX.Core.Canvas 
+							|| candidate instanceof ORYX.Core.Node
+							|| candidate instanceof ORYX.Core.Edge);
+				});
+				
+				if(  parentCandidate !== this._lastOverElement){
+					
+					this._canAttach  = undefined;
+					this._canContain = undefined;
+					
+				}
+				
+				if( parentCandidate ) {
+					//check containment rule					
+						
+					if (!(parentCandidate instanceof ORYX.Core.Canvas) && parentCandidate.isPointOverOffset(coord.x, coord.y) && this._canAttach == undefined) {
+					
+						this._canAttach = this.facade.getRules().canConnect({
+												sourceShape: parentCandidate,
+												edgeStencil: stencil,
+												targetStencil: stencil
+											});
+                        if(parentCandidate && parentCandidate.properties['oryx-tasktype'] && parentCandidate.properties['oryx-tasktype'] == "Script") {
+                            this._canAttach = false;
+                        }
+						
+						if( this._canAttach ){
+							// Show Highlight
+							this.facade.raiseEvent({
+								type: ORYX.CONFIG.EVENT_HIGHLIGHT_SHOW,
+								highlightId: "shapeRepo.attached",
+								elements: [parentCandidate],
+								style: ORYX.CONFIG.SELECTION_HIGHLIGHT_STYLE_RECTANGLE,
+								color: ORYX.CONFIG.SELECTION_VALID_COLOR
+							});
+							
+							this.facade.raiseEvent({
+								type: ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,
+								highlightId: "shapeRepo.added"
+							});
+							
+							this._canContain	= undefined;
+						} 					
+						
+					}
+					
+					if(!(parentCandidate instanceof ORYX.Core.Canvas) && !parentCandidate.isPointOverOffset(coord.x, coord.y)){
+						this._canAttach 	= this._canAttach == false ? this._canAttach : undefined;						
+					}
+					
+					if( this._canContain == undefined && !this._canAttach) {
+											
+						this._canContain = this.facade.getRules().canContain({
+															containingShape:parentCandidate, 
+															containedStencil:stencil
+															});
+															
+						// Show Highlight
+						this.facade.raiseEvent({
+															type:		ORYX.CONFIG.EVENT_HIGHLIGHT_SHOW, 
+															highlightId:'shapeRepo.added',
+															elements:	[parentCandidate],
+															color:		this._canContain ? ORYX.CONFIG.SELECTION_VALID_COLOR : ORYX.CONFIG.SELECTION_INVALID_COLOR
+														});	
+						this.facade.raiseEvent({
+															type: 		ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,
+															highlightId:"shapeRepo.attached"
+														});						
+					}
+						
+				
+					
+					this._currentParent = this._canContain || this._canAttach ? parentCandidate : undefined;
+					this._lastOverElement = parentCandidate;
+					var pr = dragZone.getProxy();
+					pr.setStatus(this._currentParent ? pr.dropAllowed : pr.dropNotAllowed );
+					pr.sync();
+	
+				} 
+			} else { //Edge
+				this._currentParent = this.facade.getCanvas();
+				var pr = dragZone.getProxy();
+				pr.setStatus(pr.dropAllowed);
+				pr.sync();
+			}		
+		}
+		
+		
+		return false
+	}
+}
+
+ORYX.Plugins.ShapeRepository = Clazz.extend(ORYX.Plugins.ShapeRepository);
+
+
 if(!ORYX.Plugins){ORYX.Plugins=new Object()
 }if(!ORYX.FieldEditors){ORYX.FieldEditors={}
 }if(!ORYX.AssociationEditors){ORYX.AssociationEditors={}
 }if(!ORYX.LabelProviders){ORYX.LabelProviders={}
-}ORYX.Plugins.PropertyWindow={facade:undefined,construct:function(a){this.facade=a;
+}Ext.override(Ext.form.ComboBox,{anyMatch:false,caseSensitive:false,doQuery:function(c,b){if(c===undefined||c===null){c=""
+}var a={query:c,forceAll:b,combo:this,cancel:false};
+if(this.fireEvent("beforequery",a)===false||a.cancel){return false
+}c=a.query;
+b=a.forceAll;
+if(b===true||(c.length>=this.minChars)){if(this.lastQuery!==c){this.lastQuery=c;
+if(this.mode=="local"){this.selectedIndex=-1;
+if(b){this.store.clearFilter()
+}else{this.store.filter(this.displayField,c,this.anyMatch,this.caseSensitive)
+}this.onLoad()
+}else{this.store.baseParams[this.queryParam]=c;
+this.store.load({params:this.getParams(c)});
+this.expand()
+}}else{this.selectedIndex=-1;
+this.onLoad()
+}}}});
+ORYX.Plugins.PropertyWindow={facade:undefined,construct:function(a){this.facade=a;
 this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHOW_PROPERTYWINDOW,this.init.bind(this));
 this.facade.registerOnEvent(ORYX.CONFIG.EVENT_LOADED,this.onSelectionChanged.bind(this));
 this.init()
@@ -1350,13 +1825,13 @@ this.simulationProperties=[];
 this.displayProperties=[];
 if(this.shapeSelection.commonProperties){this.shapeSelection.commonProperties.each((function(p,F){var t=p.prefix()+"-"+p.id();
 var q=p.title();
-var Y=[];
+var Z=[];
 var C=this.shapeSelection.commonPropertiesValues[t];
 var N=undefined;
 var K=null;
 var G=false;
 var O=ORYX.FieldEditors[p.type()];
-if(O!==undefined){N=O.init.bind(this,t,p,Y,F)();
+if(O!==undefined){N=O.init.bind(this,t,p,Z,F)();
 if(N==null){return
 }N.on("beforehide",this.facade.enableEvent.bind(this,ORYX.CONFIG.EVENT_KEYDOWN));
 N.on("specialkey",this.specialKeyDown.bind(this))
@@ -1388,8 +1863,8 @@ z.on("keyup",function(i,j){this.editDirectly(t,i.getValue())
 }.bind(this));
 N=new Ext.Editor(z);
 break;
-case ORYX.CONFIG.TYPE_COLOR:var W=new Ext.ux.ColorField({allowBlank:p.optional(),msgTarget:"title",facade:this.facade});
-N=new Ext.Editor(W);
+case ORYX.CONFIG.TYPE_COLOR:var X=new Ext.ux.ColorField({allowBlank:p.optional(),msgTarget:"title",facade:this.facade});
+N=new Ext.Editor(X);
 break;
 case ORYX.CONFIG.TYPE_CHOICE:var v=p.items();
 var y=[];
@@ -1397,8 +1872,8 @@ if(p.id()=="tasktype"&&ORYX.CALCULATE_CURRENT_PERSPECTIVE()==ORYX.RULEFLOW_PERSP
 }if(i.refToView()[0]){G=true
 }if(i.value()=="Business Rule"||i.value()=="Script"||i.value()=="None"){if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){y.push([i.icon(),ORYX.I18N.propertyNamesTaskType[i.title()],i.value()])
 }else{y.push([i.icon(),i.title(),i.value()])
-}if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){Y.push({name:ORYX.I18N.propertyNamesTaskType[i.title()],icon:i.icon()})
-}else{Y.push({name:i.title(),icon:i.icon()})
+}if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){Z.push({name:ORYX.I18N.propertyNamesTaskType[i.title()],icon:i.icon()})
+}else{Z.push({name:i.title(),icon:i.icon()})
 }}})
 }else{v.each(function(j){if(j.value()==C){C=j.title()
 }if(j.refToView()[0]){G=true
@@ -1407,35 +1882,55 @@ if(ORYX.I18N.propertyNamesValue[j.title()]&&ORYX.I18N.propertyNamesValue[j.title
 }else{i=j.title()
 }if(!i){i=j.title()
 }y.push([j.icon(),i,j.value()]);
-Y.push({name:i,icon:j.icon()})
+Z.push({name:i,icon:j.icon()})
 })
 }var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
 var o=new Ext.form.ComboBox({editable:false,tpl:'<tpl for="."><div class="x-combo-list-item">{[(values.icon) ? "<img src=\'" + values.icon + "\' />" : ""]} {title}</div></tpl>',store:b,displayField:"title",valueField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true});
-o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
-}.bind(this));
-N=new Ext.Editor(o);
+if(p.id()=="tasktype"){o.on("select",function(ac,i,j){this.editDirectly(t,ac.getValue());
+var k=this.facade.getSelection();
+var ab=k.first();
+this.facade.setSelection([]);
+this.facade.getCanvas().update();
+this.facade.updateSelection();
+this.facade.setSelection([ab]);
+this.facade.getCanvas().update();
+this.facade.updateSelection();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_LOADED,elements:[ab]})
+}.bind(this))
+}else{o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
+}.bind(this))
+}N=new Ext.Editor(o);
 break;
 case ORYX.CONFIG.TYPE_DYNAMICCHOICE:var v=p.items();
 var y=[];
-v.each(function(ad){if(ad.value()==C){C=ad.title()
-}if(ad.refToView()[0]){G=true
+var aa=false;
+var R="";
+v.each(function(af){if(af.value()==C){C=af.title()
+}if(af.refToView()[0]){G=true
+}if(af.needsprop().length>0){aa=true;
+R=af.needsprop()
 }y.push(["","",""]);
-var ab=ORYX.EDITOR.getSerializedJSON();
-var ac=jsonPath(ab.evalJSON(),ad.value());
-if(ac){if(ac.toString().length>0){for(var aa=0;
-aa<ac.length;
-aa++){var ae=ac[aa].split(",");
-for(var Z=0;
-Z<ae.length;
-Z++){if(ae[Z].indexOf(":")>0){var k=ae[Z].split(":");
-y.push([ad.icon(),k[0],k[0]])
-}else{y.push([ad.icon(),ae[Z],ae[Z]])
+var ad=ORYX.EDITOR.getSerializedJSON();
+var ae=jsonPath(ad.evalJSON(),af.value());
+if(ae){if(ae.toString().length>0){for(var ac=0;
+ac<ae.length;
+ac++){var ag=ae[ac].split(",");
+for(var ab=0;
+ab<ag.length;
+ab++){if(ag[ab].indexOf(":")>0){var k=ag[ab].split(":");
+y.push([af.icon(),k[0],k[0]])
+}else{y.push([af.icon(),ag[ab],ag[ab]])
 }}}}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.PropertyWindow.noDataAvailableForProp,title:""})
-}Y.push({name:ad.title(),icon:ad.icon()})
+}Z.push({name:af.title(),icon:af.icon()})
 });
 var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
 var o=new Ext.form.ComboBox({editable:false,tpl:'<tpl for="."><div class="x-combo-list-item">{[(values.icon) ? "<img src=\'" + values.icon + "\' />" : ""]} {title}</div></tpl>',store:b,displayField:"title",valueField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true});
-o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
+o.on("select",function(ae,i,k){if(aa==true&&R.length>0){var ad=ORYX.EDITOR._pluginFacade.getSelection();
+if(ad){var j=ad.first();
+var ac="oryx-"+R;
+var ab=j.properties[ac];
+if(ab!=undefined&&ab.length<1){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"This property needs the associated property '"+R+"' to be set.",title:""})
+}}}this.editDirectly(t,ae.getValue())
 }.bind(this));
 N=new Ext.Editor(o);
 break;
@@ -1443,17 +1938,17 @@ case ORYX.CONFIG.TYPE_DYNAMICDATAINPUT:var y=[];
 var r=ORYX.EDITOR._pluginFacade.getSelection();
 if(r&&r.length==1){var u=r.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 y.push(["","",""]);
-var P=jsonPath(X.evalJSON(),"$.childShapes.*");
-for(var V=0;
-V<P.length;
-V++){var h=P[V];
+var P=jsonPath(Y.evalJSON(),"$.childShapes.*");
+for(var W=0;
+W<P.length;
+W++){var h=P[W];
 if(h.resourceId==s){var Q=h.properties.datainputset;
 var B=Q.split(",");
-for(var T=0;
-T<B.length;
-T++){var m=B[T];
+for(var V=0;
+V<B.length;
+V++){var m=B[V];
 if(m.indexOf(":")>0){var a=m.split(":");
 y.push(["",a[0],a[0]])
 }else{y.push(["",m,m])
@@ -1467,17 +1962,17 @@ case ORYX.CONFIG.TYPE_DYNAMICDATAOUTPUT:var y=[];
 var r=ORYX.EDITOR._pluginFacade.getSelection();
 if(r&&r.length==1){var u=r.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 y.push(["","",""]);
-var P=jsonPath(X.evalJSON(),"$.childShapes.*");
-for(var V=0;
-V<P.length;
-V++){var h=P[V];
+var P=jsonPath(Y.evalJSON(),"$.childShapes.*");
+for(var W=0;
+W<P.length;
+W++){var h=P[W];
 if(h.resourceId==s){var e=h.properties.dataoutputset;
 var g=e.split(",");
-for(var R=0;
-R<g.length;
-R++){var m=g[R];
+for(var S=0;
+S<g.length;
+S++){var m=g[S];
 if(m.indexOf(":")>0){var a=m.split(":");
 y.push(["",a[0],a[0]])
 }else{y.push(["",m,m])
@@ -1491,17 +1986,17 @@ case ORYX.CONFIG.TYPE_DYNAMICGATEWAYCONNECTIONS:var U=ORYX.Config.FACADE.getSele
 var y=[];
 if(U&&U.length==1){var u=U.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 var x=new XMLHttpRequest;
 var d=ORYX.PATH+"processinfo";
-var c="uuid="+window.btoa(encodeURI(ORYX.UUID))+"&ppdata="+ORYX.PREPROCESSING+"&profile="+ORYX.PROFILE+"&gatewayid="+s+"&json="+encodeURIComponent(X);
+var c="uuid="+window.btoa(encodeURI(ORYX.UUID))+"&ppdata="+ORYX.PREPROCESSING+"&profile="+ORYX.PROFILE+"&gatewayid="+s+"&json="+encodeURIComponent(Y);
 x.open("POST",d,false);
 x.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 x.send(c);
 if(x.status==200){var J=x.responseText.evalJSON();
-for(var V=0;
-V<J.length;
-V++){var h=J[V];
+for(var W=0;
+W<J.length;
+W++){var h=J[W];
 y.push(["",h.sequenceflowinfo,h.sequenceflowinfo])
 }}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.errorDetOutConnections,title:""})
 }}var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
@@ -1527,6 +2022,10 @@ E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
 N=new Ext.Editor(E);
 break;
 case ORYX.CONFIG.TYPE_CALLEDELEMENT:var E=new Ext.form.ComplexCalledElementField({allowBlank:p.optional(),dataSource:this.dataSource,grid:this.grid,row:F,facade:this.facade});
+E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
+N=new Ext.Editor(E);
+break;
+case ORYX.CONFIG.TYPE_RULEFLOW_GROUP:var E=new Ext.form.ComplexRuleflowGroupElementField({allowBlank:p.optional(),dataSource:this.dataSource,grid:this.grid,row:F,facade:this.facade});
 E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
 N=new Ext.Editor(E);
 break;
@@ -1598,9 +2097,9 @@ C="<a href='"+C+"' target='_blank'>"+C.split("://")[1]+"</a>"
 }}}if((p.visible()&&p.visible()==true)&&p.hidden()!=true&&(p.id()!="origbordercolor"&&p.id()!="origbgcolor"&&p.id()!="isselectable")){var H=true;
 if(this.shapeSelection.shapes.length==1){if(p.fortasktypes()&&p.fortasktypes().length>0){var l=false;
 var A=p.fortasktypes().split("|");
-for(var V=0;
-V<A.size();
-V++){if(A[V]==this.shapeSelection.shapes.first().properties["oryx-tasktype"]){l=true
+for(var W=0;
+W<A.size();
+W++){if(A[W]==this.shapeSelection.shapes.first().properties["oryx-tasktype"]){l=true
 }}if(!l){H=false
 }}if(p.ifproptrue()&&p.ifproptrue().length>0){var w=false;
 var M=p.ifproptrue();
@@ -1608,22 +2107,22 @@ if(this.shapeSelection.shapes.first().properties["oryx-"+M]&&this.shapeSelection
 }if(!w){H=false
 }}if(p.fordistribution()&&p.fordistribution().length>0){var L=false;
 var A=p.fordistribution().split("|");
-for(var T=0;
-T<A.size();
-T++){if(A[T]==this.shapeSelection.shapes.first().properties["oryx-distributiontype"]){L=true
+for(var V=0;
+V<A.size();
+V++){if(A[V]==this.shapeSelection.shapes.first().properties["oryx-distributiontype"]){L=true
 }}if(!L){H=false
 }}}if(H){if(p.popular()){p.setPopular()
 }if(p.simulation()){p.setSimulation()
 }if(p.display()){p.setDisplay()
 }if(p.extra()){p.setExtra()
-}if(p.extra()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.properties.push([ORYX.I18N.PropertyWindow.moreProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{if(p.simulation()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.simulationProperties.push([ORYX.I18N.PropertyWindow.simulationProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{if(p.display()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.displayProperties.push([ORYX.I18N.PropertyWindow.displayProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.popularProperties.push([ORYX.I18N.PropertyWindow.oftenUsed,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}if(p.extra()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.properties.push([ORYX.I18N.PropertyWindow.moreProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{if(p.simulation()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.simulationProperties.push([ORYX.I18N.PropertyWindow.simulationProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{if(p.display()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.displayProperties.push([ORYX.I18N.PropertyWindow.displayProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.popularProperties.push([ORYX.I18N.PropertyWindow.oftenUsed,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
 }}}}}}).bind(this))
 }this.setProperties()
 },getLabelProvider:function(a){lp=ORYX.LabelProviders[a.labelProvider()];
@@ -1688,41 +2187,51 @@ c++){var e=a[c].id();
 b[e]=a[c].value()
 }var d=Ext.data.Record.create(f);
 return new d(b)
-},buildColumnModel:function(l){var h=[];
-for(var c=0;
-c<this.items.length;
-c++){var a=this.items[c].id();
-var d=this.items[c].name();
-var b=this.items[c].width();
-var g=this.items[c].type();
-var e;
-if(g==ORYX.CONFIG.TYPE_STRING){e=new Ext.form.TextField({allowBlank:this.items[c].optional(),width:b})
-}else{if(g==ORYX.CONFIG.TYPE_CHOICE){var f=this.items[c].items();
-var k=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",l,["select",{style:"display:none"}]);
-var j=new Ext.Template('<option value="{value}">{value}</option>');
-f.each(function(i){j.append(k,{value:i.value()})
+},buildColumnModel:function(n){var k=[];
+for(var d=0;
+d<this.items.length;
+d++){var a=this.items[d].id();
+var e=this.items[d].name();
+var b=this.items[d].width();
+var j=this.items[d].type();
+var f;
+if(j==ORYX.CONFIG.TYPE_STRING){f=new Ext.form.TextField({allowBlank:this.items[d].optional(),width:b})
+}else{if(j==ORYX.CONFIG.TYPE_CHOICE){var h=this.items[d].items();
+var m=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",n,["select",{style:"display:none"}]);
+var l=new Ext.Template('<option value="{value}">{value}</option>');
+h.each(function(i){l.append(m,{value:i.value()})
 });
-e=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:k,lazyRender:true,msgTarget:"title",width:b})
-}else{if(g==ORYX.CONFIG.TYPE_DYNAMICCHOICE){var f=this.items[c].items();
-var k=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",l,["select",{style:"display:none"}]);
-var j=new Ext.Template('<option value="{value}">{value}</option>');
-f.each(function(r){var p=ORYX.EDITOR.getSerializedJSON();
-var q=jsonPath(p.evalJSON(),r.value());
-if(q){if(q.toString().length>0){for(var o=0;
-o<q.length;
-o++){var s=q[o].split(",");
-for(var n=0;
-n<s.length;
-n++){if(s[n].indexOf(":")>0){var m=s[n].split(":");
-j.append(k,{value:m[0]})
-}else{j.append(k,{value:s[n]})
+f=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:m,lazyRender:true,msgTarget:"title",width:b})
+}else{if(j==ORYX.CONFIG.TYPE_DYNAMICCHOICE){var h=this.items[d].items();
+var m=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",n,["select",{style:"display:none"}]);
+var l=new Ext.Template('<option value="{value}">{value}</option>');
+var g=false;
+var c="";
+h.each(function(t){if(t.needsprop()&&t.needsprop().length>0){g=true;
+c=t.needsprop()
+}var r=ORYX.EDITOR.getSerializedJSON();
+var s=jsonPath(r.evalJSON(),t.value());
+if(s){if(s.toString().length>0){for(var q=0;
+q<s.length;
+q++){var u=s[q].split(",");
+for(var p=0;
+p<u.length;
+p++){if(u[p].indexOf(":")>0){var o=u[p].split(":");
+l.append(m,{value:o[0]})
+}else{l.append(m,{value:u[p]})
 }}}}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.PropertyWindow.noDataAvailableForProp,title:""})
 }});
-e=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:k,lazyRender:true,msgTarget:"title",width:b})
-}else{if(g==ORYX.CONFIG.TYPE_BOOLEAN){e=new Ext.form.Checkbox({width:b})
-}else{if(g=="xpath"){e=new Ext.form.TextField({allowBlank:this.items[c].optional(),width:b})
-}}}}}h.push({id:a,header:d,dataIndex:a,resizable:true,editor:e,width:b})
-}return new Ext.grid.ColumnModel(h)
+f=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:m,lazyRender:true,msgTarget:"title",width:b});
+f.on("select",function(t,i,p){if(g==true&&c.length>0){var s=ORYX.EDITOR._pluginFacade.getSelection();
+if(s&&s.length==1){var o=s.first();
+var r="oryx-"+c;
+var q=o.properties[r];
+if(q&&q.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"This property needs the associated property '"+c+"' to be set.",title:""})
+}}}}.bind(this))
+}else{if(j==ORYX.CONFIG.TYPE_BOOLEAN){f=new Ext.form.Checkbox({width:b})
+}else{if(j=="xpath"){f=new Ext.form.TextField({allowBlank:this.items[d].optional(),width:b})
+}}}}}k.push({id:a,header:e,dataIndex:a,resizable:true,editor:f,width:b})
+}return new Ext.grid.ColumnModel(k)
 },afterEdit:function(a){a.grid.getStore().commitChanges()
 },beforeEdit:function(h){var a=this.grid.getView().getScrollState();
 var b=h.column;
@@ -1988,61 +2497,113 @@ this.grid.stopEditing();
 a.focus(false,100)
 }});
 Ext.form.ComplexImportsField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
-}var r=Ext.data.Record.create([{name:"type"},{name:"classname"},{name:"wsdllocation"},{name:"wsdlnamespace"}]);
-var e=new Ext.data.MemoryProxy({root:[]});
-var q=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},r),proxy:e,sorters:[{property:"type",direction:"ASC"}]});
-q.load();
-if(this.value.length>0){var j=this.value.split(",");
-for(var n=0;
-n<j.length;
-n++){var d="";
-var s,b,h;
-var c=j[n];
-var m=c.split("|");
-if(m[1]=="default"){d="default";
-s=m[0];
-b="";
-h=""
-}else{d="wsdl";
-s="";
-b=m[0];
-h=m[1]
-}q.add(new r({type:d,classname:s,wsdllocation:b,wsdlnamespace:h}))
-}}var g=new Extensive.grid.ItemDeleter();
-var l=new Array();
+}var a=ORYX.EDITOR.getSerializedJSON();
+var b=jsonPath(a.evalJSON(),"$.properties.package");
+var c=jsonPath(a.evalJSON(),"$.properties.id");
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(l){try{if(l.responseText.length>=0&&l.responseText!="false"){var x=Ext.decode(l.responseText);
+var o=new Array();
+var Q=new Array();
+Q.push("String");
+Q.push("String");
+o.push(Q);
+var k=new Array();
+k.push("Integer");
+k.push("Integer");
+o.push(k);
+var E=new Array();
+E.push("Boolean");
+E.push("Boolean");
+o.push(E);
+var v=new Array();
+v.push("Float");
+v.push("Float");
+o.push(v);
+var A=new Array();
+A.push("Object");
+A.push("Object");
+o.push(A);
 var f=new Array();
-f.push("default");
-f.push("default");
-l.push(f);
-var p=new Array();
-p.push("wsdl");
-p.push("wsdl");
-l.push(p);
-var k=Ext.id();
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:q,id:k,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"imptype",header:ORYX.I18N.PropertyWindow.importType,width:100,dataIndex:"type",editor:new Ext.form.ComboBox({id:"importTypeCombo",valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})})},{id:"classname",header:ORYX.I18N.PropertyWindow.className,width:200,dataIndex:"classname",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdllocation",header:ORYX.I18N.PropertyWindow.wsdlLocation,width:200,dataIndex:"wsdllocation",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdlnamespace",header:ORYX.I18N.PropertyWindow.wsdlNamespace,width:200,dataIndex:"wsdlnamespace",editor:new Ext.form.TextField({allowBlank:true})},g]),selModel:g,autoHeight:true,tbar:[{text:ORYX.I18N.PropertyWindow.addImport,handler:function(){q.add(new r({type:"default",classname:"",wsdllocation:"",wsdlnamespace:""}));
-a.fireEvent("cellclick",a,q.getCount()-1,1,null)
+f.push("**********");
+f.push("**********");
+o.push(f);
+var d=new Array();
+for(var u in x){var y=x[u];
+d.push(y)
+}d.sort();
+for(var I=0;
+I<d.length;
+I++){var K=new Array();
+var g=d[I];
+var w=g.split(".");
+var O=w[w.length-1];
+var C=g.substring(0,g.length-(O.length+1));
+K.push(O+" ["+C+"]");
+K.push(d[I]);
+o.push(K)
+}var F=Ext.data.Record.create([{name:"type"},{name:"classname"},{name:"customclassname"},{name:"wsdllocation"},{name:"wsdlnamespace"}]);
+var N=new Ext.data.MemoryProxy({root:[]});
+var n=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},F),proxy:N,sorters:[{property:"type",direction:"ASC"}]});
+n.load();
+if(this.value.length>0){var r=this.value.split(",");
+for(var M=0;
+M<r.length;
+M++){var R="";
+var h,s,G;
+var q=r[M];
+var j=q.split("|");
+if(j[1]=="default"){R="default";
+h=j[0];
+s="";
+G=""
+}else{R="wsdl";
+h="";
+s=j[0];
+G=j[1]
+}var p=false;
+for(var u in x){var y=x[u];
+if(y==h){p=true
+}}if(p){n.add(new F({type:R,classname:h,customclassname:"",wsdllocation:s,wsdlnamespace:G}))
+}else{n.add(new F({type:R,classname:"",customclassname:h,wsdllocation:s,wsdlnamespace:G}))
+}}}var m=new Extensive.grid.ItemDeleter();
+var B=new Array();
+var J=new Array();
+J.push("default");
+J.push("default");
+B.push(J);
+var z=new Array();
+z.push("wsdl");
+z.push("wsdl");
+B.push(z);
+var D=Ext.id();
+var H=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:n,id:D,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"imptype",header:ORYX.I18N.PropertyWindow.importType,width:100,dataIndex:"type",editor:new Ext.form.ComboBox({id:"importTypeCombo",typeAhead:true,anyMatch:true,valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})},{id:"classname",header:"Defined Class Name",width:180,dataIndex:"classname",editor:new Ext.form.ComboBox({id:"customTypeCombo",typeAhead:true,anyMatch:true,valueField:"value",displayField:"name",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})},{id:"customclassname",header:"Custom Class Name",width:180,dataIndex:"customclassname",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdllocation",header:ORYX.I18N.PropertyWindow.wsdlLocation,width:180,dataIndex:"wsdllocation",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdlnamespace",header:ORYX.I18N.PropertyWindow.wsdlNamespace,width:180,dataIndex:"wsdlnamespace",editor:new Ext.form.TextField({allowBlank:true})},m]),selModel:m,autoHeight:true,tbar:[{text:ORYX.I18N.PropertyWindow.addImport,handler:function(){n.add(new F({type:"default",classname:"",customclassname:"",wsdllocation:"",wsdlnamespace:""}));
+H.fireEvent("cellclick",H,n.getCount()-1,1,null)
 }}],clicksToEdit:1});
-var o=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForImports,height:400,width:800,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){o.hide()
-}.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-o.destroy()
-}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
-a.getView().refresh();
-a.stopEditing();
-q.data.each(function(){if(this.data.type=="default"){i+=this.data.classname+"|"+this.data.type+","
-}if(this.data.type=="wsdl"){i+=this.data.wsdllocation+"|"+this.data.wsdlnamespace+"|"+this.data.type+","
+var L=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForImports,height:400,width:900,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){L.hide()
+}.bind(this)}],items:[H],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+L.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var e="";
+H.getView().refresh();
+H.stopEditing();
+n.data.each(function(){if(this.data.type=="default"){if(this.data.classname.length>0){e+=this.data.classname+"|"+this.data.type+","
+}else{e+=this.data.customclassname+"|"+this.data.type+","
+}}if(this.data.type=="wsdl"){e+=this.data.wsdllocation+"|"+this.data.wsdlnamespace+"|"+this.data.type+","
 }});
-if(i.length>0){i=i.slice(0,-1)
-}this.setValue(i);
-this.dataSource.getAt(this.row).set("value",i);
+if(e.length>0){e=e.slice(0,-1)
+}this.setValue(e);
+this.dataSource.getAt(this.row).set("value",e);
 this.dataSource.commitChanges();
-o.hide()
+L.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-o.hide()
+L.hide()
 }.bind(this)}]});
-o.show();
-a.render();
+L.show();
+H.render();
 this.grid.stopEditing();
-a.focus(false,100)
+H.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find Data Types.",title:""})
+}}catch(P){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info  :\n"+P,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:b,pid:c,action:"showdatatypes"}})
 }});
 Ext.form.ComplexActionsField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
 }var f=Ext.data.Record.create([{name:"action"}]);
@@ -2080,252 +2641,372 @@ a.render();
 this.grid.stopEditing();
 a.focus(false,100)
 }});
-Ext.form.ComplexDataAssignmenField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return undefined
+Ext.form.ComplexDataAssignmenField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,addParentVars:function(h,d,l,c,b,j){if(h){if(h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"||h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#Subprocess"||h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess"){var i=h.properties["oryx-vardefs"];
+if(i&&i.length>0){var n=i.split(",");
+for(var f=0;
+f<n.length;
+f++){var e=n[f];
+var g=new Array();
+if(e.indexOf(":")>0){var o=e.split(":");
+g.push(o[0]);
+g.push(o[0]);
+b[o[0]]=o[1];
+j.push(o[0])
+}else{g.push(e);
+g.push(e);
+b[e]="java.lang.String";
+j.push(e)
+}l.push(g);
+c.push(g)
+}}if(h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"){var a=h.properties["oryx-multipleinstancedatainput"];
+if(a&&a.length>0){var g=new Array();
+g.push(a);
+g.push(a);
+b[a]="java.lang.String";
+j.push(g);
+l.push(g);
+c.push(g)
+}var m=h.properties["oryx-multipleinstancedataoutput"];
+if(m&&m.length>0){var g=new Array();
+g.push(m);
+g.push(m);
+b[m]="java.lang.String";
+j.push(g);
+l.push(g);
+c.push(g)
+}}}if(h.parent){this.addParentVars(h.parent,d,l,c,b,j)
+}}},onTriggerClick:function(){if(this.disabled){return undefined
 }var c="";
 var f=ORYX.EDITOR.getSerializedJSON();
-var D=jsonPath(f.evalJSON(),"$.properties.vardefs");
-var l=new Array();
-var o=new Array();
+var G=jsonPath(f.evalJSON(),"$.properties.vardefs");
+var m=new Array();
+var p=new Array();
 var d=new Hash();
 var j=new Array();
 var b=new Array();
-var y=new Array();
-var k=new Array();
-var n=new Array();
-var s=new Array();
-o.push("");
-o.push("** Variable Definitions **");
-l.push(o);
-j.push(o);
-if(D){D.forEach(function(L){if(L.length>0){var I=L.split(",");
-for(var K=0;
-K<I.length;
-K++){var J=new Array();
-var M=I[K];
-if(M.indexOf(":")>0){var H=M.split(":");
-J.push(H[0]);
-J.push(H[0]);
-d[H[0]]=H[1];
-b.push(H[0])
-}else{J.push(M);
-J.push(M);
-d[M]="java.lang.String";
-b.push(M)
-}l.push(J);
-j.push(J)
-}}})
-}var p=new Array();
+var B=new Array();
+var l=new Array();
+var o=new Array();
+var t=new Array();
 p.push("");
-p.push("** Data Inputs **");
-l.push(p);
-y.push(p);
-Ext.each(this.dataSource.data.items,function(K){if((K.data.gridProperties.propId=="oryx-datainputset")||(K.data.gridProperties.propId=="oryx-datainput")){var H=K.data.value.split(",");
-for(var J=0;
-J<H.length;
-J++){var L=H[J];
-var I=new Array();
-if(L.indexOf(":")>0){var i=L.split(":");
-I.push(i[0]);
-I.push(i[0]);
+var z=false;
+var J=ORYX.EDITOR._pluginFacade.getSelection();
+if(J){var y=J.first();
+if(y&&y.parent){if(y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"||y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#Subprocess"||y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess"){p.push("** Process/Subprocess Definitions **");
+m.push(p);
+j.push(p);
+z=true
+}this.addParentVars(y.parent,p,m,j,d,b)
+}}if(!z){p.push("** Variable Definitions **");
+m.push(p);
+j.push(p)
+}if(G){G.forEach(function(O){if(O.length>0){var L=O.split(",");
+for(var N=0;
+N<L.length;
+N++){var M=new Array();
+var P=L[N];
+if(P.indexOf(":")>0){var K=P.split(":");
+M.push(K[0]);
+M.push(K[0]);
+d[K[0]]=K[1];
+b.push(K[0])
+}else{M.push(P);
+M.push(P);
+d[P]="java.lang.String";
+b.push(P)
+}m.push(M);
+j.push(M)
+}}})
+}var q=new Array();
+q.push("");
+q.push("** Data Inputs **");
+m.push(q);
+B.push(q);
+Ext.each(this.dataSource.data.items,function(N){if((N.data.gridProperties.propId=="oryx-datainputset")||(N.data.gridProperties.propId=="oryx-datainput")){var K=N.data.value.split(",");
+for(var M=0;
+M<K.length;
+M++){var O=K[M];
+var L=new Array();
+if(O.indexOf(":")>0){var i=O.split(":");
+L.push(i[0]);
+L.push(i[0]);
 d[i[0]]=i[1];
-k.push(i[0])
-}else{I.push(L);
-I.push(L);
-d[L]="java.lang.String";
-k.push(L)
-}l.push(I);
-y.push(I)
+l.push(i[0])
+}else{L.push(O);
+L.push(O);
+d[O]="java.lang.String";
+l.push(O)
+}m.push(L);
+B.push(L)
 }}});
-var r=new Array();
-r.push("");
-r.push("** Data Outputs **");
-l.push(r);
-n.push(r);
-Ext.each(this.dataSource.data.items,function(K){if((K.data.gridProperties.propId=="oryx-dataoutputset")||(K.data.gridProperties.propId=="oryx-dataoutput")){var I=K.data.value.split(",");
+var s=new Array();
+s.push("");
+s.push("** Data Outputs **");
+m.push(s);
+o.push(s);
+Ext.each(this.dataSource.data.items,function(N){if((N.data.gridProperties.propId=="oryx-dataoutputset")||(N.data.gridProperties.propId=="oryx-dataoutput")){var L=N.data.value.split(",");
 for(var i=0;
-i<I.length;
-i++){var L=I[i];
-var J=new Array();
-if(L.indexOf(":")>0){var H=L.split(":");
-J.push(H[0]);
-J.push(H[0]);
-d[H[0]]=H[1];
-s.push(H[0])
-}else{J.push(L);
-J.push(L);
-d[L]="java.lang.String";
-s.push(L)
-}l.push(J);
-n.push(J)
+i<L.length;
+i++){var O=L[i];
+var M=new Array();
+if(O.indexOf(":")>0){var K=O.split(":");
+M.push(K[0]);
+M.push(K[0]);
+d[K[0]]=K[1];
+t.push(K[0])
+}else{M.push(O);
+M.push(O);
+d[O]="java.lang.String";
+t.push(O)
+}m.push(M);
+o.push(M)
 }}});
-var e=Ext.data.Record.create([{name:"atype"},{name:"from"},{name:"type"},{name:"to"},{name:"tostr"},{name:"dataType"}]);
-var B=new Ext.data.MemoryProxy({root:[]});
-var F=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},e),proxy:B,sorters:[{property:"atype",direction:"ASC"},{property:"from",direction:"ASC"},{property:"to",direction:"ASC"},{property:"tostr",direction:"ASC"}]});
-F.load();
-if(this.value.length>0){var v=this.value.split(",");
-for(var A=0;
-A<v.length;
-A++){var g=v[A];
-if(g.indexOf("=")>0){var x=g.split("=");
-var z=d[x[0]];
-if(!z){z="java.lang.String"
-}var q=x[0];
-x.shift();
-var h=x.join("=").replace(/\#\#/g,",");
+var e=Ext.data.Record.create([{name:"atype"},{name:"from"},{name:"type"},{name:"to"},{name:"tostr"},{name:"dataType"},{name:"assignment"}]);
+var E=new Ext.data.MemoryProxy({root:[]});
+var I=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},e),proxy:E,sorters:[{property:"atype",direction:"ASC"},{property:"from",direction:"ASC"},{property:"to",direction:"ASC"},{property:"tostr",direction:"ASC"}]});
+I.load();
+if(this.value.length>0){var w=this.value.split(",");
+for(var D=0;
+D<w.length;
+D++){var g=w[D];
+if(g.indexOf("=")>0){var A=g.split("=");
+if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
 h=h.replace(/\|\|/g,"=");
-if(b.indexOf(q)<0){F.add(new e({atype:(k.indexOf(q)>=0)?"DataInput":"DataOutput",from:q,type:"is equal to",to:"",tostr:h,dataType:z}))
-}}else{if(g.indexOf("->")>0){var x=g.split("->");
-var z=d[x[0]];
-if(!z){z="java.lang.String"
-}var q=x[0];
-var G=false;
-if(k.indexOf(q)>=0&&k.indexOf(x[1])>=0){G=true
-}if(k.indexOf(q)>=0&&b.indexOf(x[1])>=0){G=true
-}if(b.indexOf(q)>=0&&b.indexOf(x[1])>=0){G=true
-}if(s.indexOf(q)>=0&&k.indexOf(x[1])>=0){G=true
-}if(!G){F.add(new e({atype:(b.indexOf(q)>=0||k.indexOf(q)>=0)?"DataInput":"DataOutput",from:x[0],type:"is mapped to",to:x[1],tostr:"",dataType:z}))
-}}else{var z=d[g];
-if(!z){z="java.lang.String"
-}if(b.indexOf(g)<0){F.add(new e({atype:(b.indexOf(g)>=0||k.indexOf(g)>=0)?"DataInput":"DataOutput",from:g,type:"is equal to",to:"",tostr:"",dataType:z}))
-}}}}}F.on("update",function(I,i,H){if(H=="edit"){var J=d[i.get("from")];
-if(!J){J="java.lang.String"
-}i.set("dataType",J)
+I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(6,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
+h=h.replace(/\|\|/g,"=");
+I.add(new e({atype:"DataOutput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}else{var r=A[0];
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
+h=h.replace(/\|\|/g,"=");
+I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}}}else{if(g.indexOf("->")>0){var A=g.split("->");
+if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}var k="DataInput";
+I.add(new e({atype:k,from:r,type:"is mapped to",to:A[1],tostr:"",dataType:C,assignment:"true"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(6,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}var k="DataOutput";
+I.add(new e({atype:k,from:r,type:"is mapped to",to:A[1],tostr:"",dataType:C,assignment:"true"}))
+}}}else{if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:"",dataType:C,assignment:"false"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:"",dataType:C,assignment:"false"}))
+}}var C=d[g]
+}}}}I.on("update",function(L,i,K){if(K=="edit"){var M=d[i.get("from")];
+if(!M){M="java.lang.String"
+}i.set("dataType",M)
 }});
-var E=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})});
-var u=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-var m=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})});
-var t=new Extensive.grid.ItemDeleter();
-var w=Ext.id();
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:F,id:w,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"valueType",header:ORYX.I18N.PropertyWindow.dataType,width:180,dataIndex:"dataType",hidden:"true"},{id:"atype",header:"Assignment Type",width:180,dataIndex:"atype"},{id:"from",header:ORYX.I18N.PropertyWindow.fromObject,width:180,dataIndex:"from",editor:E},{id:"type",header:ORYX.I18N.PropertyWindow.assignmentType,width:100,dataIndex:"type",editor:u},{id:"to",header:ORYX.I18N.PropertyWindow.toObject,width:180,dataIndex:"to",editor:m},{id:"tostr",header:ORYX.I18N.PropertyWindow.toValue,width:180,dataIndex:"tostr",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},t]),selModel:t,autoHeight:true,tbar:[{text:"[ New Data Input Assignment ]",handler:function(){F.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:""}));
+var H=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:m})});
+var v=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
+var n=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:m})});
+var u=new Extensive.grid.ItemDeleter();
+var x=Ext.id();
+var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:I,id:x,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"valueType",header:ORYX.I18N.PropertyWindow.dataType,width:180,dataIndex:"dataType",hidden:"true"},{id:"atype",header:"Assignment Type",width:180,dataIndex:"atype"},{id:"from",header:ORYX.I18N.PropertyWindow.fromObject,width:180,dataIndex:"from",editor:H},{id:"type",header:ORYX.I18N.PropertyWindow.assignmentType,width:100,dataIndex:"type",editor:v},{id:"to",header:ORYX.I18N.PropertyWindow.toObject,width:180,dataIndex:"to",editor:n},{id:"tostr",header:ORYX.I18N.PropertyWindow.toValue,width:180,dataIndex:"tostr",editor:new Ext.form.TextField({name:"tostrTxt",allowBlank:true}),renderer:Ext.util.Format.htmlEncode},u]),selModel:u,autoHeight:true,tbar:[{text:"[ Input Assignment ]",handler:function(){I.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:"",assignment:"false"}));
 c="datainput";
-a.fireEvent("cellclick",a,F.getCount()-1,1,null)
-}},{text:"[ New Data Output Assignment ]",handler:function(){F.add(new e({atype:"DataOutput",from:"",type:"",to:"",tostr:""}));
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}},{text:"[ Input Mapping ]",handler:function(){I.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:"",assignment:"true"}));
+c="datainput";
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}},{text:"[ Output Mapping ]",handler:function(){I.add(new e({atype:"DataOutput",from:"",type:"",to:"",tostr:"",assignment:"true"}));
 c="dataoutput";
-a.fireEvent("cellclick",a,F.getCount()-1,1,null)
-}}],clicksToEdit:1,listeners:{beforeedit:function(K){if(K.record.data.atype=="DataInput"){var i=K.grid.getColumnModel().getCellEditor(K.column,K.row)||{};
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}}],clicksToEdit:1,listeners:{beforeedit:function(O){if(O.record.data.atype=="DataInput"){var i=O.grid.getColumnModel().getCellEditor(O.column,O.row)||{};
 i=i.field||{};
 if(i.name=="typeCombo"){i.destroy();
-var H=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(H))
+var K;
+if(O.record.data.assignment=="true"){K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo]]})})
+}else{K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(K))
 }if(i.name=="fromCombo"){i.destroy();
-var I=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j.concat(y)})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(I))
+var L;
+if(O.record.data.assignment=="true"){L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}else{L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(L))
 }if(i.name=="toCombo"){i.destroy();
-var J=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:y})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(J))
-}}if(K.record.data.atype=="DataOutput"){var i=K.grid.getColumnModel().getCellEditor(K.column,K.row)||{};
+var N;
+if(O.record.data.assignment=="true"){N=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}else{N=new Ext.form.ComboBox({name:"toCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(N))
+}if(i.name=="tostrTxt"){i.destroy();
+var M;
+if(O.record.data.assignment=="true"){M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true,disabled:true})
+}else{M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(M))
+}}if(O.record.data.atype=="DataOutput"){var i=O.grid.getColumnModel().getCellEditor(O.column,O.row)||{};
 i=i.field||{};
 if(i.name=="typeCombo"){i.destroy();
-var H=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(H))
+var K;
+if(O.record.data.assignment=="true"){K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo]]})})
+}else{K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(K))
 }if(i.name=="fromCombo"){i.destroy();
-var I=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:n})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(I))
+var L;
+if(O.record.data.assignment=="true"){L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})
+}else{L=new Ext.form.ComboBox({name:"fromCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(L))
 }if(i.name=="toCombo"){i.destroy();
-var J=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(J))
+var N;
+if(O.record.data.assignment=="true"){N=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}else{N=new Ext.form.ComboBox({name:"toCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(N))
+}if(i.name=="tostrTxt"){i.destroy();
+var M;
+if(O.record.data.assignment=="true"){M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true,disabled:true})
+}else{M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(M))
 }}}}});
-var C=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForDataAssignments,height:350,width:890,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){C.hide()
+var F=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForDataAssignments,height:350,width:890,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){F.hide()
 }.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-C.destroy()
+F.destroy()
 }.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
 a.getView().refresh();
 a.stopEditing();
-F.data.each(function(){if(this.data.from.length>0&&this.data.type.length>0){if(this.data.type=="is mapped to"){if(this.data.to.length>0){if(k.indexOf(this.data.from)>=0&&k.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(k.indexOf(this.data.from)>=0&&j.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(b.indexOf(this.data.from)>=0&&j.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(s.indexOf(this.data.from)>=0&&k.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{i+=this.data.from+"->"+this.data.to+","
-}}}}}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" does not contain a proper mapping",title:""})
-}}else{if(this.data.type=="is equal to"){if(this.data.tostr.length>0){if(b.indexOf(this.data.from)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{var H=this.data.tostr.replace(/,/g,"##");
-H=H.replace(/=/g,"||");
-i+=this.data.from+"="+H+","
-}}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" does not contain a proper mapping.",title:""})
-}}}}});
+I.data.each(function(){if(this.data.from.length>0&&this.data.type.length>0){var K=this.data.atype;
+if(this.data.type=="is mapped to"){if(K=="DataInput"){i+="[din]"+this.data.from+"->"+this.data.to+","
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"->"+this.data.to+","
+}}}else{if(this.data.type=="is equal to"){if(this.data.tostr.length>0){var L=this.data.tostr.replace(/,/g,"##");
+L=L.replace(/=/g,"||");
+if(K=="DataInput"){i+="[din]"+this.data.from+"="+L+","
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"="+L+","
+}}}else{if(K=="DataInput"){i+="[din]"+this.data.from+"=,"
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"=,"
+}}}}}}});
 if(i.length>0){i=i.slice(0,-1)
 }this.setValue(i);
 this.dataSource.getAt(this.row).set("value",i);
 this.dataSource.commitChanges();
-C.hide()
+F.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-C.hide()
+F.hide()
 }.bind(this)}]});
-C.show();
+F.show();
 a.render();
 this.grid.stopEditing();
 a.focus(false,100);
 return a
 }});
 Ext.form.NameTypeEditor=Ext.extend(Ext.form.TriggerField,{windowTitle:"",addButtonLabel:"",single:false,editable:false,readOnly:true,dtype:"",onTriggerClick:function(){if(this.disabled){return
-}var j=Ext.data.Record.create([{name:"name"},{name:"stype"},{name:"ctype"}]);
-var d=new Ext.data.MemoryProxy({root:[]});
-var g=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},j),proxy:d,sorters:[{property:"name",direction:"ASC"}]});
-g.load();
-if(this.value.length>0){var l=this.value.split(",");
-for(var h=0;
-h<l.length;
-h++){var e=l[h];
-if(e.indexOf(":")>0){var r=e.split(":");
-if(r[1]=="String"||r[1]=="Integer"||r[1]=="Boolean"||r[1]=="Float"){g.add(new j({name:r[0],stype:r[1],ctype:""}))
-}else{if(r[1]!="Object"){g.add(new j({name:r[0],stype:"Object",ctype:r[1]}))
-}else{g.add(new j({name:r[0],stype:r[1],ctype:""}))
-}}}else{g.add(new j({name:e,stype:"",ctype:""}))
-}}}var k=new Extensive.grid.ItemDeleter();
-k.setDType(this.dtype);
-var c=new Array();
+}var a=ORYX.EDITOR.getSerializedJSON();
+var b=jsonPath(a.evalJSON(),"$.properties.package");
+var c=jsonPath(a.evalJSON(),"$.properties.id");
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(f){try{if(f.responseText.length>=0&&f.responseText!="false"){var L=Ext.decode(f.responseText);
+var l=new Array();
+var s=new Array();
+s.push("String");
+s.push("String");
+l.push(s);
 var q=new Array();
-q.push("String");
-q.push("String");
-c.push(q);
-var p=new Array();
-p.push("Integer");
-p.push("Integer");
-c.push(p);
-var n=new Array();
-n.push("Boolean");
-n.push("Boolean");
-c.push(n);
-var o=new Array();
-o.push("Float");
-o.push("Float");
-c.push(o);
-var b=new Array();
-b.push("Object");
-b.push("Object");
-c.push(b);
-var f=Ext.id();
+q.push("Integer");
+q.push("Integer");
+l.push(q);
+var I=new Array();
+I.push("Boolean");
+I.push("Boolean");
+l.push(I);
+var D=new Array();
+D.push("Float");
+D.push("Float");
+l.push(D);
+var x=new Array();
+x.push("Object");
+x.push("Object");
+l.push(x);
+var A=new Array();
+A.push("**********");
+A.push("**********");
+l.push(A);
+var O=new Array();
+for(var Q in L){var H=L[Q];
+O.push(H)
+}O.sort();
+for(var v=0;
+v<O.length;
+v++){var z=new Array();
+var o=O[v];
+var w=o.split(".");
+var N=w[w.length-1];
+var u=o.substring(0,o.length-(N.length+1));
+z.push(N+" ["+u+"]");
+z.push(O[v]);
+l.push(z)
+}var h=Ext.data.Record.create([{name:"name"},{name:"stype"},{name:"ctype"}]);
+var m=new Ext.data.MemoryProxy({root:[]});
+var g=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},h),proxy:m,sorters:[{property:"name",direction:"ASC"}]});
+g.load();
+if(this.value.length>0){var B=this.value.split(",");
+for(var J=0;
+J<B.length;
+J++){var n=B[J];
+if(n.indexOf(":")>0){var E=n.split(":");
+var p=false;
+for(var G=0;
+G<l.length;
+G++){var M=l[G];
+for(var F=0;
+F<M.length;
+F++){var y=M[F];
+if(y==E[1]){p=true;
+break
+}}}if(p==true){g.add(new h({name:E[0],stype:E[1],ctype:""}))
+}else{g.add(new h({name:E[0],stype:"",ctype:E[1]}))
+}}else{g.add(new h({name:n,stype:"",ctype:""}))
+}}}var r=new Extensive.grid.ItemDeleter();
+r.setDType(this.dtype);
+var C=Ext.id();
 Ext.form.VTypes.inputNameVal=/^[a-z0-9\-\.\_]*$/i;
 Ext.form.VTypes.inputNameText="Invalid name";
-Ext.form.VTypes.inputName=function(i){return Ext.form.VTypes.inputNameVal.test(i)
+Ext.form.VTypes.inputName=function(e){return Ext.form.VTypes.inputNameVal.test(e)
 };
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:g,id:f,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"name",header:ORYX.I18N.PropertyWindow.name,width:100,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,vtype:"inputName",regex:/^[a-z0-9\-\.\_]*$/i}),renderer:Ext.util.Format.htmlEncode},{id:"stype",header:ORYX.I18N.PropertyWindow.standardType,width:100,dataIndex:"stype",editor:new Ext.form.ComboBox({id:"typeCombo",valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:c})})},{id:"ctype",header:ORYX.I18N.PropertyWindow.customType,width:200,dataIndex:"ctype",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},k]),selModel:k,autoHeight:true,tbar:[{text:this.addButtonLabel,handler:function(){if(this.single&&g.getCount()>0){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.OnlySingleEntry,title:""})
-}else{g.add(new j({name:"",stype:"",ctype:""}));
-a.fireEvent("cellclick",a,g.getCount()-1,1,null)
+var d=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:g,id:C,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"name",header:ORYX.I18N.PropertyWindow.name,width:100,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,vtype:"inputName",regex:/^[a-z0-9\-\.\_]*$/i}),renderer:Ext.util.Format.htmlEncode},{id:"stype",header:"Defined Types",width:200,dataIndex:"stype",editor:new Ext.form.ComboBox({typeAhead:true,anyMatch:true,id:"customTypeCombo",valueField:"value",displayField:"name",labelStyle:"display:none",submitValue:true,typeAhead:true,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,editable:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})})},{id:"ctype",header:ORYX.I18N.PropertyWindow.customType,width:200,dataIndex:"ctype",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},r]),selModel:r,autoHeight:true,tbar:[{text:this.addButtonLabel,handler:function(){if(this.single&&g.getCount()>0){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.OnlySingleEntry,title:""})
+}else{g.add(new h({name:"",stype:"",ctype:""}));
+d.fireEvent("cellclick",d,g.getCount()-1,1,null)
 }}.bind(this)}],clicksToEdit:1});
-var m=new Ext.Window({layout:"anchor",autoCreate:true,title:this.windowTitle,height:300,width:500,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){m.hide()
-}.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-m.destroy()
-}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
-a.stopEditing();
-a.getView().refresh();
-g.data.each(function(){if(this.data.name.length>0){if(this.data.stype.length>0){if(this.data.stype=="Object"&&this.data.ctype.length>0){i+=this.data.name+":"+this.data.ctype+","
-}else{i+=this.data.name+":"+this.data.stype+","
-}}else{if(this.data.ctype.length>0){i+=this.data.name+":"+this.data.ctype+","
-}else{i+=this.data.name+","
+var K=new Ext.Window({layout:"anchor",autoCreate:true,title:this.windowTitle,height:300,width:600,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){K.hide()
+}.bind(this)}],items:[d],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+K.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var e="";
+d.stopEditing();
+d.getView().refresh();
+g.data.each(function(){if(this.data.name.length>0){if(this.data.stype.length>0){if(this.data.stype=="Object"&&this.data.ctype.length>0){e+=this.data.name+":"+this.data.ctype+","
+}else{e+=this.data.name+":"+this.data.stype+","
+}}else{if(this.data.ctype.length>0){e+=this.data.name+":"+this.data.ctype+","
+}else{e+=this.data.name+","
 }}}});
-if(i.length>0){i=i.slice(0,-1)
-}this.setValue(i);
-this.dataSource.getAt(this.row).set("value",i);
+if(e.length>0){e=e.slice(0,-1)
+}this.setValue(e);
+this.dataSource.getAt(this.row).set("value",e);
 this.dataSource.commitChanges();
-m.hide()
+K.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-m.hide()
+K.hide()
 }.bind(this)}]});
-m.show();
-a.render();
+K.show();
+d.render();
 this.grid.stopEditing();
-a.focus(false,100)
+d.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find Data Types.",title:""})
+}}catch(P){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info  :\n"+P,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:b,pid:c,action:"showdatatypes"}})
 }});
 Ext.form.ComplexVardefField=Ext.extend(Ext.form.NameTypeEditor,{windowTitle:ORYX.I18N.PropertyWindow.editorForVariableDefinitions,addButtonLabel:ORYX.I18N.PropertyWindow.addVariable,dtype:ORYX.CONFIG.TYPE_DTYPE_VARDEF});
 Ext.form.ComplexDataInputField=Ext.extend(Ext.form.NameTypeEditor,{windowTitle:ORYX.I18N.PropertyWindow.editorForDataInput,addButtonLabel:ORYX.I18N.PropertyWindow.addDataInput,dtype:ORYX.CONFIG.TYPE_DTYPE_DINPUT});
@@ -2568,7 +3249,87 @@ n.setHeight(P.getInnerHeight());
 if(!y){H()
 }this.grid.stopEditing()
 }});
-Ext.form.ComplexCalledElementField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
+Ext.form.ComplexRuleflowGroupElementField=Ext.extend(Ext.form.TriggerField,{editable:true,readOnly:false,onTriggerClick:function(){if(this.disabled){return
+}var b=ORYX.EDITOR.getSerializedJSON();
+var d=jsonPath(b.evalJSON(),"$.properties.package");
+var f=jsonPath(b.evalJSON(),"$.properties.id");
+var a=Ext.data.Record.create([{name:"name"},{name:"rules"},{name:"repo"},{name:"project"},{name:"branch"},{name:"fullpath"}]);
+var c=new Ext.data.MemoryProxy({root:[]});
+var e=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},a),proxy:c,sorters:[{property:"name",direction:"ASC"}]});
+e.load();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:"Loading RuleFlow Groups",title:""});
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(j){try{if(j.responseText.length>0&&j.responseText!="false"){var C=Ext.decode(j.responseText);
+for(var H in C){var z=C[H];
+var y=new Array();
+var r=z.split("||");
+var q=r[0];
+var m=r[1];
+var x=m.split("<<");
+for(var A=0;
+A<x.length;
+A++){var D=x[A].split("^^");
+var s=new Array();
+s.push(D[0]);
+s.push(D[1]);
+y.push(s)
+}var u=x[0];
+var l=u.split("^^");
+var G=l[1];
+var p=G.split("://");
+var F=p[1];
+var w=F.split("@");
+var h=w[0];
+var k=w[1];
+var o=k.split("/")[0];
+var t=k.split("/")[1];
+e.add(new a({name:q,rules:y,repo:o,project:t,branch:h,fullpath:G}))
+}e.commitChanges();
+var v=Ext.id();
+var g=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:e,id:v,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"rfgname",header:"RuleFlow Group Name",width:200,sortable:true,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfrulenames",header:"Rules",width:200,sortable:false,renderer:function(M,I,K,L,P,N){function i(S,U,R,T){new Ext.form.ComboBox({name:"ruleflowscombo",id:T,valueField:"value",displayField:"name",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:S})}).render(document.getElementById(v),U)
+}function O(S,U,R,T){new Ext.Button({text:"view",handler:function(V,Y){var X=Ext.getCmp(T).getRawValue();
+var W=Ext.getCmp(T).getValue();
+if(X&&X.length>0&&W&&W.length>0){parent.designeropenintab(X,W)
+}}}).render(document.getElementById(v),U)
+}var J="rulenamescombodiv-"+L;
+var Q="rncombo-"+L;
+i.defer(1,this,[N.getAt(L).get("rules"),J,K,Q]);
+O.defer(1,this,[N.getAt(L).get("rules"),J,K,Q]);
+return('<div id="'+J+'"></div>')
+}},{id:"rfrepository",header:"Repository",width:100,sortable:true,dataIndex:"repo",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfproject",header:"Project",width:100,sortable:true,dataIndex:"project",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfbranch",header:"Branch",width:100,sortable:true,dataIndex:"branch",editor:new Ext.form.TextField({allowBlank:true,disabled:true})}])});
+g.on("afterrender",function(J){if(this.value.length>0){var i=0;
+var K=this.value;
+var I=g;
+e.data.each(function(){if(this.data.name==K){I.getSelectionModel().select(i,1)
+}i++
+})
+}}.bind(this));
+var n=new Ext.Panel({id:"ruleFlowGroupsPanel",title:'<center><p style="font-size:11px"><i>Select RuleFlow Group Name and click on Save</i></p></center>',layout:"column",items:[g],layoutConfig:{columns:1},defaults:{columnWidth:1}});
+var B=new Ext.Window({layout:"anchor",autoCreate:true,title:"Editor for RuleFlow Groups",height:350,width:760,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,items:[n],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+B.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.Save.save,handler:function(){if(g.getSelectionModel().getSelectedCell()!=null){var i=g.getSelectionModel().getSelectedCell()[0];
+var I=e.getAt(i).data.name;
+g.stopEditing();
+g.getView().refresh();
+this.setValue(I);
+this.dataSource.getAt(this.row).set("value",I);
+this.dataSource.commitChanges();
+B.hide()
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"No data selected.",title:""})
+}}.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
+B.hide()
+}.bind(this)}]});
+B.show();
+g.render();
+g.fireEvent("afterrender");
+this.grid.stopEditing();
+g.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find RuleFlow Groups.",title:""})
+}}catch(E){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving RuleFlow Groups info  :\n"+E,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving RuleFlow Groups info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:d,pid:f,action:"showruleflowgroups"}});
+this.grid.stopEditing()
+}});
+Ext.form.ComplexCalledElementField=Ext.extend(Ext.form.TriggerField,{editable:true,readOnly:false,onTriggerClick:function(){if(this.disabled){return
 }var a=Ext.data.Record.create([{name:"name"},{name:"pkgname"},{name:"imgsrc"}]);
 var e=new Ext.data.MemoryProxy({root:[]});
 var d=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},a),proxy:e,sorters:[{property:"name",direction:"ASC"}]});
@@ -2758,8 +3519,8 @@ if(!ORYX.Plugins){ORYX.Plugins=new Object()
 }ORYX.Plugins.View={facade:undefined,diffEditor:undefined,diffDialog:undefined,construct:function(b,a){this.facade=b;
 this.facade.registerOnEvent(ORYX.CONFIG.VOICE_COMMAND_GENERATE_IMAGE,this.showAsPNG.bind(this));
 this.facade.registerOnEvent(ORYX.CONFIG.VOICE_COMMAND_VIEW_SOURCE,this.showProcessBPMN.bind(this));
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_DRAGDROP_END,this.refreshCanvasforIE.bind(this));
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHAPE_ADDED,this.refreshCanvasforIE.bind(this));
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_DRAGDROP_END,this.refreshCanvasForIE.bind(this));
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHAPE_ADDED,this.refreshCanvasForIE.bind(this));
 this.zoomLevel=1;
 this.maxFitToScreenLevel=1.5;
 this.minZoomLevel=0.4;
@@ -2810,16 +3571,21 @@ uuidParamValue=uuidParams[1];
 window.open(ORYX.EXTERNAL_PROTOCOL+"://"+ORYX.EXTERNAL_HOST+"/"+ORYX.EXTERNAL_SUBDOMAIN+"/org.drools.guvnor.Guvnor/standaloneEditorServlet?assetsUUIDs="+uuidParamValue+"&client=oryx","Process Editor","status=0,toolbar=0,menubar=0,resizable=0,location=no,width=1400,height=1000")
 },importFromBPMN2:function(a){var c=new Ext.form.FormPanel({baseCls:"x-plain",labelWidth:50,defaultType:"textfield",items:[{text:ORYX.I18N.FromBPMN2Support.selectFile,style:"font-size:12px;margin-bottom:10px;display:block;",anchor:"100%",xtype:"label"},{fieldLabel:ORYX.I18N.FromBPMN2Support.file,name:"subject",inputType:"file",style:"margin-bottom:10px;display:block;",itemCls:"ext_specific_window_overflow"},{xtype:"textarea",hideLabel:true,name:"msg",anchor:"100% -63"}]});
 var b=new Ext.Window({autoCreate:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.FromBPMN2Support.impBPMN2,height:350,width:500,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[c],buttons:[{text:ORYX.I18N.FromBPMN2Support.impBtn,handler:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.FromBPMN2Support.impProgress,title:""});
-var d=c.items.items[2].getValue();
-Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(f){if(f.responseText.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
+var e=c.items.items[1].getValue();
+var d=false;
+if(e===undefined||e.length<=0){d=true
+}else{if(e.endsWith(".bpmn")||e.endsWith(".bpmn2")){d=true
+}}if(d){var f=c.items.items[2].getValue();
+Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(g){if(g.responseText.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
 b.hide()
-}else{try{this._loadJSON(f.responseText,"BPMN2")
-}catch(g){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+"<p>"+g+"</p>",title:""})
+}else{try{this._loadJSON(g.responseText,"BPMN2")
+}catch(h){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+"<p>"+h+"</p>",title:""})
 }b.hide()
 }}.createDelegate(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
 b.hide()
-}.createDelegate(this),params:{profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),pp:ORYX.PREPROCESSING,bpmn2:d,transformto:"bpmn2json"}})
-}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
+}.createDelegate(this),params:{profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),pp:ORYX.PREPROCESSING,bpmn2:f,transformto:"bpmn2json"}})
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Invalid file type. Must be .bpmn or .bpmn2",title:""})
+}}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
 }.bind(this)}]});
 b.on("hide",function(){b.destroy(true);
 delete b
@@ -2832,11 +3598,16 @@ d.readAsText(e.target.files[0],"UTF-8")
 },true)
 },importFromJSON:function(a){var c=new Ext.form.FormPanel({baseCls:"x-plain",labelWidth:50,defaultType:"textfield",items:[{text:ORYX.I18N.FromJSONSupport.selectFile,style:"font-size:12px;margin-bottom:10px;display:block;",anchor:"100%",xtype:"label"},{fieldLabel:ORYX.I18N.FromJSONSupport.file,name:"subject",inputType:"file",style:"margin-bottom:10px;display:block;",itemCls:"ext_specific_window_overflow"},{xtype:"textarea",hideLabel:true,name:"msg",anchor:"100% -63"}]});
 var b=new Ext.Window({autoCreate:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.FromJSONSupport.impBPMN2,height:350,width:500,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[c],buttons:[{text:ORYX.I18N.FromJSONSupport.impBtn,handler:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.FromJSONSupport.impProgress,title:""});
-var d=c.items.items[2].getValue();
-try{this._loadJSON(d,"JSON")
-}catch(f){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromJSONError+"\n"+f,title:""})
+var f=c.items.items[1].getValue();
+var d=false;
+if(f===undefined||f.length<=0){d=true
+}else{if(f.endsWith(".json")){d=true
+}}if(d){var g=c.items.items[2].getValue();
+try{this._loadJSON(g,"JSON")
+}catch(h){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromJSONError+"\n"+h,title:""})
 }b.hide()
-}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Invalid file type. Must be .json",title:""})
+}}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
 }.bind(this)}]});
 b.on("hide",function(){b.destroy(true);
 delete b
@@ -2930,9 +3701,7 @@ this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success"
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
 }}else{try{this.facade.importJSON(a);
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success",msg:ORYX.I18N.view.importSuccess+" "+b,title:""})
-}catch(e){var h=ORYX.EDITOR.getSerializedJSON();
-this.facade.importJSON(h);
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
+}catch(e){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
 }}}.bind(this))
 }else{this._showErrorMessageBox(ORYX.I18N.Oryx.title,ORYX.I18N.jPDLSupport.impFailedJson)
 }},getAllShapesToConsider:function(b,d){var a=[];
@@ -3224,16 +3993,31 @@ var b=Math.min((a.parentNode.getWidth()/a.getWidth()),(a.parentNode.getHeight()/
 return 0.7>b
 },_checkZoomLevelRange:function(){if(this.zoomLevel<this.minZoomLevel){this.zoomLevel=this.minZoomLevel
 }if(this.zoomLevel>this.maxZoomLevel){this.zoomLevel=this.maxZoomLevel
-}},refreshCanvasforIE:function(){if(Object.hasOwnProperty.call(window,"ActiveXObject")&&!window.ActiveXObject){var d=ORYX.EDITOR.getSerializedJSON();
+}},refreshCanvasForIE:function(b){if((Object.hasOwnProperty.call(window,"ActiveXObject")&&!window.ActiveXObject)||(navigator.appVersion.indexOf("MSIE 10")!==-1)){if(!b.shape){var c=this.facade.getSelection();
+if(c&&c.length>0&&c[0] instanceof ORYX.Core.Node){var a=c[0];
+a.properties["oryx-invisid"]=Math.random();
+b.shape=a
+}}var h=ORYX.EDITOR.getSerializedJSON();
 this.facade.setSelection(this.facade.getCanvas().getChildShapes(true));
-var a=this.facade.getSelection();
-var b=new ORYX.Plugins.Edit.ClipBoard();
-b.refresh(a,this.getAllShapesToConsider(a,true));
-var c=new ORYX.Plugins.Edit.DeleteCommand(b,this.facade);
-this.facade.executeCommands([c]);
-this.facade.importJSON(d);
-this.facade.setSelection([])
-}}};
+var d=this.facade.getSelection();
+var e=new ORYX.Plugins.Edit.ClipBoard();
+e.refresh(d,this.getAllShapesToConsider(d,true));
+var g=new ORYX.Plugins.Edit.DeleteCommand(e,this.facade);
+this.facade.executeCommands([g]);
+this.facade.importJSON(h);
+var f=false;
+f=this.findSelectedShape(b.shape,b);
+if(f){this.facade.setSelection([f])
+}this.facade.getCanvas().update();
+this.facade.updateSelection()
+}},findSelectedShape:function(a,b){var c=false;
+if(b&&b.shape){ORYX.EDITOR._canvas.getChildren().each((function(e){if(e instanceof ORYX.Core.Node||e instanceof ORYX.Core.Edge){if(b.shape.properties["oryx-invisid"]==e.properties["oryx-invisid"]){c=e
+}}if(e.getChildren().size()>0){for(var d=0;
+d<e.getChildren().size();
+d++){if(e.getChildren()[d] instanceof ORYX.Core.Node||e.getChildren()[d] instanceof ORYX.Core.Edge){this.findSelectedShape(e.getChildren()[d],b)
+}}}}).bind(this))
+}return c
+}};
 ORYX.Plugins.View=Clazz.extend(ORYX.Plugins.View);
 if(!ORYX.Plugins){ORYX.Plugins=new Object()
 }ORYX.Plugins.DragDropResize=ORYX.Plugins.AbstractPlugin.extend({construct:function(b){this.facade=b;
@@ -5142,7 +5926,7 @@ if(p&&p.length>0){ORYX.Dictionary.Dictionaryitems.add(new ORYX.Dictionary.Dictio
 }}}]});
 var f=new Ext.Panel({id:"processdocspanel",title:ORYX.I18N.Dictionary.extractDicEntries,layout:"column",items:[i,c],layoutConfig:{columns:1},defaults:{columnWidth:1}});
 var h=new Ext.Panel({header:false,layout:"column",items:[{columnWidth:0.4,items:a},{columnWidth:0.6,items:f}]});
-var m=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.Dictionary.procDicEditor,height:530,width:960,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{fn:function(){m.hide()
+var m=new Ext.Window({layout:"fit",autoCreate:true,title:ORYX.I18N.Dictionary.procDicEditor,height:400,width:700,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{fn:function(){m.hide()
 }.bind(this)}],items:[h],listeners:{hide:function(){m.destroy()
 }.bind(this)},buttons:[{text:ORYX.I18N.Dictionary.Save,handler:function(){ORYX.Dictionary.Dictionaryitems.commitChanges();
 var q=new Array();
@@ -5482,7 +6266,7 @@ this.setNodeColors(f,c,i)
 var b=this.facade.getSelection();
 var a="";
 var c=ORYX.I18N.View.sim.processPathsTitle;
-if(b.length==1){b.each(function(d){if(d.getStencil().title()=="Embedded Subprocess"){a=d.resourceId;
+if(b.length==1){b.each(function(d){if(d.getStencil().title()=="Embedded"||d.getStencil().title()=="Event"){a=d.resourceId;
 c=ORYX.I18N.View.sim.subProcessPathsTitle
 }})
 }Ext.Ajax.request({url:ORYX.PATH+"simulation",method:"POST",success:function(k){try{if(k.responseText&&k.responseText.length>0){var r=k.responseText.evalJSON();
@@ -5521,15 +6305,33 @@ m.show()
 },params:{action:"getpathinfo",profile:ORYX.PROFILE,json:ORYX.EDITOR.getSerializedJSON(),ppdata:ORYX.PREPROCESSING,sel:a}})
 },getDisplayColor:function(b){var a=["#3399FF","#FFCC33","#FF99FF","#6666CC","#CCCCCC","#66FF00","#FFCCFF","#0099CC","#CC66FF","#FFFF00","#993300","#0000CC","#3300FF","#990000","#33CC00"];
 return a[b]
-},resetNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setOriginalValues(a)
+},setDefaultColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setDefaultValues(a)
 }).bind(this))
-},setOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){a.setProperty("oryx-bordercolor",a.properties["oryx-origbordercolor"]);
+},setDefaultValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){a.setProperty("oryx-bordercolor",a.properties["oryx-origbordercolor"]);
 a.setProperty("oryx-bgcolor",a.properties["oryx-origbgcolor"])
 }a.refresh();
 if(a.getChildren().size()>0){for(var b=0;
 b<a.getChildren().size();
+b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.setDefaultValues(a.getChildren()[b])
+}}}},resetNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setOriginalValues(a)
+}).bind(this))
+},setOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){if(a.savedbordercolor!==undefined){a.setProperty("oryx-bordercolor",a.savedbordercolor);
+delete a.savedbordercolor
+}if(a.savedbgcolor!==undefined){a.setProperty("oryx-bgcolor",a.savedbgcolor);
+delete a.savedbgcolor
+}}a.refresh();
+if(a.getChildren().size()>0){for(var b=0;
+b<a.getChildren().size();
 b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.setOriginalValues(a.getChildren()[b])
-}}}},setNodeColors:function(c,b,a){this.resetNodeColors();
+}}}},saveNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.saveOriginalValues(a)
+}).bind(this))
+},saveOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){if(a.savedbordercolor===undefined){a.savedbordercolor=a.properties["oryx-bordercolor"]
+}if(a.savedbgcolor===undefined){a.savedbgcolor=a.properties["oryx-bgcolor"]
+}}if(a.getChildren().size()>0){for(var b=0;
+b<a.getChildren().size();
+b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.saveOriginalValues(a.getChildren()[b])
+}}}},setNodeColors:function(c,b,a){this.saveNodeColors();
+this.setDefaultColors();
 ORYX.EDITOR._canvas.getChildren().each((function(d){this.applyPathColors(d,b,a)
 }).bind(this))
 },applyPathColors:function(b,a,e){var d=e.split("|");
@@ -5589,82 +6391,104 @@ this.createGraphsTree(a)
 },createProcessInfo:function(c){var a=jsonPath(c.results.evalJSON(),"$.siminfo.*");
 var b='<table border="0" width="100%">                           <tr>                          <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsProcessId+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].id+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsProcessName+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].name+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsProcessVersion+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].version+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsSimStartTime+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].starttime+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsSimEndTime+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].endtime+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsNumOfExecutions+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].executions+'</span></td>                           </tr>                           <tr>                           <td><span style="font-size: 10px"><b>'+ORYX.I18N.View.sim.resultsInterval+'</b></span></td>                           <td><span style="font-size: 10px">'+a[0].interval+"</span></td>                           </tr>                           </table>";
 if(a){Ext.getCmp("siminfopanel").body.update(b)
-}},createGraphsTree:function(q){var p=new Ext.tree.TreeNode({listeners:{beforecollapse:function(j,i,r){return false
+}},createGraphsTree:function(r){var q=new Ext.tree.TreeNode({listeners:{beforecollapse:function(s,j,t){return false
 }}});
-var b;
 var c;
-this.resultsjson=q.results;
-var k=jsonPath(q.results.evalJSON(),"$.processsim.*");
-if(k){b=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcess,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:false,listeners:{beforecollapse:function(j,i,r){return false
+var d;
+var a=[];
+this.resultsjson=r.results;
+var l=jsonPath(r.results.evalJSON(),"$.processsim.*");
+if(l){c=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcess,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:false,listeners:{beforecollapse:function(s,j,t){return false
 }}});
-c=new Ext.tree.TreeNode({id:"pgraph:processaverages",text:k[0].name+" ("+k[0].id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/diagram.png",singleClickExpand:false,listeners:{beforecollapse:function(j,i,r){return false
+d=new Ext.tree.TreeNode({id:"pgraph:processaverages",text:l[0].name+" ("+l[0].id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/diagram.png",singleClickExpand:false,listeners:{beforecollapse:function(s,j,t){return false
 }}});
-b.appendChild(c);
-p.appendChild(b)
-}var m=jsonPath(q.results.evalJSON(),"$.htsim.*");
-var g=jsonPath(q.results.evalJSON(),"$.tasksim.*");
-if(m||g){b=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcessElements,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:true,listeners:{beforecollapse:function(j,i,r){return false
+c.appendChild(d);
+q.appendChild(c);
+a.push(d)
+}var n=jsonPath(r.results.evalJSON(),"$.htsim.*");
+var h=jsonPath(r.results.evalJSON(),"$.tasksim.*");
+if(n||h){c=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcessElements,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:true,listeners:{beforecollapse:function(s,j,t){return false
 }}});
-for(var l=0;
-l<m.length;
-l++){var o=m[l];
-c=new Ext.tree.TreeNode({id:"htgraph:"+o.id,text:o.name+" ("+o.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/activities/User.png",singleClickExpand:true});
-b.appendChild(c)
-}for(var h=0;
-h<g.length;
-h++){var f=g[h];
+for(var m=0;
+m<n.length;
+m++){var p=n[m];
+d=new Ext.tree.TreeNode({id:"htgraph:"+p.id,text:p.name+" ("+p.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:window.SpriteUtils.toUniqueId(ORYX.BASE_FILE_PATH+"images/simulation/activities/User.png"),singleClickExpand:true});
+c.appendChild(d);
+a.push(d)
+}for(var k=0;
+k<h.length;
+k++){var g=h[k];
 this.taskType="None";
-this.findTaskType(f.id);
+this.findTaskType(g.id);
 this.taskType=this.taskType.replace(/\s/g,"");
-c=new Ext.tree.TreeNode({id:"tgraph:"+f.id,text:f.name+" ("+f.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/activities/"+this.taskType+".png",singleClickExpand:true});
-b.appendChild(c)
-}p.appendChild(b)
-}var e=jsonPath(q.results.evalJSON(),"$.pathsim.*");
-if(e){b=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcessPaths,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:true,listeners:{beforecollapse:function(j,i,r){return false
+d=new Ext.tree.TreeNode({id:"tgraph:"+g.id,text:g.name+" ("+g.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:window.SpriteUtils.toUniqueId(ORYX.BASE_FILE_PATH+"images/simulation/activities/"+this.taskType+".png"),singleClickExpand:true});
+c.appendChild(d);
+a.push(d)
+}q.appendChild(c)
+}var f=jsonPath(r.results.evalJSON(),"$.pathsim.*");
+if(f){c=new Ext.tree.TreeNode({text:ORYX.I18N.View.sim.resultsGroupProcessPaths,allowDrag:false,allowDrop:false,expanded:true,isLeaf:false,singleClickExpand:true,listeners:{beforecollapse:function(s,j,t){return false
 }}});
-for(var l=0;
-l<e.length;
-l++){var a=e[l];
-c=new Ext.tree.TreeNode({id:"pathgraph:"+a.id,text:"Path "+(l+1)+" ("+a.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/pathicon.png",singleClickExpand:true});
-b.appendChild(c)
-}p.appendChild(b)
-}Ext.getCmp("simresultscharts").setRootNode(p);
+for(var m=0;
+m<f.length;
+m++){var b=f[m];
+d=new Ext.tree.TreeNode({id:"pathgraph:"+b.id,text:"Path "+(m+1)+" ("+b.id+")",allowDrag:false,allowDrop:false,expanded:true,isLeaf:true,iconCls:"xnd-icon",icon:ORYX.BASE_FILE_PATH+"images/simulation/pathicon.png",singleClickExpand:true});
+c.appendChild(d);
+a.push(d)
+}q.appendChild(c)
+}Ext.getCmp("simresultscharts").setRootNode(q);
 Ext.getCmp("simresultscharts").getRootNode().render();
 Ext.getCmp("simresultscharts").el.dom.style.height="100%";
 Ext.getCmp("simresultscharts").el.dom.style.overflow="scroll";
 Ext.getCmp("simresultscharts").render();
-var n=Ext.getCmp("simresultscharts");
-var d=n.getNodeById("pgraph:processaverages");
-d.select();
-this._showProcessGraphs("processaverages")
-},findTaskType:function(a){ORYX.EDITOR._canvas.getChildren().each((function(b){this.isTaskType(b,a)
+var o=Ext.getCmp("simresultscharts");
+var e=o.getNodeById("pgraph:processaverages");
+e.select();
+this._showProcessGraphs("processaverages");
+if((Object.hasOwnProperty.call(window,"ActiveXObject")&&!window.ActiveXObject)||(navigator.appVersion.indexOf("MSIE 10")!==-1)){this.createDragZoneForIE(q,a)
+}},createDragZoneForIE:function(e,a){var b=new Ext.dd.DragZone(e.getUI().getEl(),{shadow:!Ext.isMac});
+b.onMouseUp=this.onMouseUpInDragZoneForIE.bind(this,b);
+for(i=0;
+i<a.length;
+i++){var c=a[i];
+var d=c.getUI();
+Ext.dd.Registry.register(d.elNode,{node:d.node,handles:[d.elNode,d.textNode],isHandle:false,id:c.id})
+}},onMouseUpInDragZoneForIE:function(b){if(b&&b.dragData&&b.dragData.id){var a={value:{id:b.dragData.id}};
+this.showGraph(a)
+}},findTaskType:function(a){ORYX.EDITOR._canvas.getChildren().each((function(b){this.isTaskType(b,a)
 }).bind(this))
 },isTaskType:function(b,a){if(b instanceof ORYX.Core.Node){if(b.resourceId==a&&b.properties["oryx-tasktype"]){this.taskType=b.properties["oryx-tasktype"]
 }if(b.getChildren().size()>0){for(var c=0;
 c<b.getChildren().size();
 c++){if(b.getChildren()[c] instanceof ORYX.Core.Node){this.isTaskType(b.getChildren()[c],a)
-}}}}},showProcessAveragesGraph:function(a,c){var m=jsonPath(c.evalJSON(),"$.processsim.*");
-var f=jsonPath(c.evalJSON(),"$.timeline");
-var h=jsonPath(c.evalJSON(),"$.activityinstances.*");
-var k=jsonPath(c.evalJSON(),"$.eventaggregations.*");
-var d=[];
-var b=jsonPath(c.evalJSON(),"$.htsim.*");
-for(var e=0;
-e<b.length;
-e++){var n=b[e];
-d.push(n.costvalues)
-}var g={timeline:f[0]};
-var j=ORYX.EDITOR.getSerializedJSON();
-var l=jsonPath(j.evalJSON(),"$.properties.timeunit");
-ORYX.EDITOR.simulationChartTimeUnit=l;
-ORYX.EDITOR.simulationChartData=m;
-ORYX.EDITOR.simulationEventData=g;
-ORYX.EDITOR.simulationEventAggregationData=k;
-ORYX.EDITOR.simulationInstancesData=h;
-ORYX.EDITOR.simulationHTCostData=d;
+}}}}},showProcessAveragesGraph:function(a,d){var o=jsonPath(d.evalJSON(),"$.processsim.*");
+var g=jsonPath(d.evalJSON(),"$.timeline");
+var k=jsonPath(d.evalJSON(),"$.activityinstances.*");
+var m=jsonPath(d.evalJSON(),"$.eventaggregations.*");
+var e=[];
+var c=jsonPath(d.evalJSON(),"$.htsim.*");
+for(var f=0;
+f<c.length;
+f++){var p=c[f];
+e.push(p.costvalues)
+}var b=[];
+var j=jsonPath(d.evalJSON(),"$.htsim.*");
+for(var f=0;
+f<j.length;
+f++){var p=j[f];
+b.push(p.resourcevalues)
+}var h={timeline:g[0]};
+var l=ORYX.EDITOR.getSerializedJSON();
+var n=jsonPath(l.evalJSON(),"$.properties.timeunit");
+ORYX.EDITOR.simulationChartTimeUnit=n;
+ORYX.EDITOR.simulationChartData=o;
+ORYX.EDITOR.simulationEventData=h;
+ORYX.EDITOR.simulationEventAggregationData=m;
+ORYX.EDITOR.simulationInstancesData=k;
+ORYX.EDITOR.simulationHTCostData=e;
+ORYX.EDITOR.simulationHTResourceData=b;
 ORYX.EDITOR.simulationChartTitle=ORYX.I18N.View.sim.resultsTitlesProcessSimResults;
-ORYX.EDITOR.simulationChartId=m[0].id;
-ORYX.EDITOR.simulationChartNodeName=m[0].name;
+ORYX.EDITOR.simulationChartId=o[0].id;
+ORYX.EDITOR.simulationChartNodeName=o[0].name;
 Ext.getDom("simchartframe").src=ORYX.BASE_FILE_PATH+"simulation/processchart.jsp"
 },showTaskAveragesGraph:function(h,e){var f=jsonPath(e.evalJSON(),"$.tasksim.*");
 for(var b=0;
@@ -6281,6 +7105,555 @@ ORYX.CONFIG.TASKFORMS_URL=function(b,a){if(b===undefined){b=ORYX.UUID
 }if(a===undefined){a=ORYX.PROFILE
 }return ORYX.PATH+"taskforms?uuid="+window.btoa(encodeURI(b))+"&profile="+a
 }
+}});
+if(!ORYX){var ORYX={}
+}if(!ORYX.Core){ORYX.Core={}
+}ORYX.Core.Commands={};
+ORYX.Core.AbstractCommand=Clazz.extend({construct:function construct(a,b){this.metadata={};
+this.metadata.id=ORYX.Editor.provideId();
+this.metadata.name=this.getCommandName();
+this.metadata.createdAt=new Date().getTime();
+this.metadata.local=true;
+this.metadata.putOnStack=true;
+this.facade=a;
+if(!b){this.execute=function c(d){d();
+this.getAffectedShapes().each(function e(f){if(typeof f.metadata==="undefined"){return
+}f.metadata.changedAt.push(this.getCreatedAt());
+f.metadata.changedBy.push(this.getCreatorId());
+f.metadata.commands.push(this.getDisplayName());
+f.metadata.isLocal=this.isLocal();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_METADATA_CHANGED,shape:f})
+}.bind(this))
+}.bind(this,this.execute.bind(this));
+this.rollback=function c(e){e();
+this.getAffectedShapes().each(function d(f){if(typeof f.metadata==="undefined"){return
+}f.metadata.changedAt.pop();
+f.metadata.changedBy.pop();
+f.metadata.commands.pop();
+f.metadata.isLocal=this.isLocal();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_SHAPE_METADATA_CHANGED,shape:f})
+}.bind(this))
+}.bind(this,this.rollback.bind(this))
+}},getCommandId:function getCommandId(){return this.metadata.id
+},getCreatorId:function getCreatorId(){return this.metadata.creatorId
+},getCreatedAt:function getCreatedAt(){return this.metadata.createdAt
+},createFromCommandData:function createFromCommandData(a,b){throw"AbstractCommand.createFromCommandData() has to be implemented"
+},getAffectedShapes:function getAffectedShapes(){throw"AbstractCommand.getAffectedShapes() has to be implemented"
+},getCommandData:function getCommandData(){throw"AbstractCommand.getCommandData() has to be implemented"
+},getCommandName:function getCommandName(){throw"AbstractCommand.getCommandName() has to be implemented"
+},getDisplayName:function getDisplayName(){return this.getCommandName()
+},execute:function execute(){throw"AbstractCommand.execute() has to be implemented"
+},rollback:function rollback(){throw"AbstractCommand.rollback() has to be implemented!"
+},isLocal:function isLocal(){return this.metadata.local
+},jsonSerialize:function jsonSerialize(){var b=this.getCommandData();
+var a={id:this.getCommandId(),name:this.getCommandName(),creatorId:this.getCreatorId(),createdAt:this.getCreatedAt(),data:b,putOnStack:this.metadata.putOnStack};
+return Object.toJSON(a)
+},jsonDeserialize:function jsonDeserialize(c,b){var a=b.evalJSON();
+var d=ORYX.Core.Commands[a.name].prototype.createFromCommandData(c,a.data);
+if(typeof d!=="undefined"){d.setMetadata({id:a.id,name:a.name,creatorId:a.creatorId,createdAt:a.createdAt,putOnStack:a.putOnStack,local:false})
+}return d
+},setMetadata:function setMetadata(a){this.metadata=Object.clone(a)
+}});
+if(!ORYX.Plugins){ORYX.Plugins=new Object()
+}if(!ORYX.Plugins){ORYX.Plugins=new Object()
+}ORYX.Plugins.Paint=ORYX.Plugins.AbstractPlugin.extend({construct:function construct(a){arguments.callee.$.construct.apply(this,arguments);
+ORYX.EDITOR._pluginFacade.offer({name:ORYX.I18N.paint_name,description:ORYX.I18N.paint_desc,icon:ORYX.BASE_FILE_PATH+"images/paint.png",functionality:this._togglePaint.bind(this),group:"paintgroup",toggle:true,index:1,minShape:0,maxShape:0,isEnabled:function(){return ORYX.READONLY!=true
+}.bind(this)});
+this.showCanvas=false;
+ORYX.EDITOR._pluginFacade.registerOnEvent(ORYX.CONFIG.EVENT_PAINT_NEWSHAPE,this._onNewShape.bind(this));
+ORYX.EDITOR._pluginFacade.registerOnEvent(ORYX.CONFIG.EVENT_PAINT_REMOVESHAPE,this._onRemoveShape.bind(this));
+ORYX.EDITOR._pluginFacade.registerOnEvent(ORYX.CONFIG.EVENT_CANVAS_RESIZED,this._onCanvasResized.bind(this));
+ORYX.EDITOR._pluginFacade.registerOnEvent(ORYX.CONFIG.EVENT_CANVAS_RESIZE_SHAPES_MOVED,this._onCanvasResizedShapesMoved.bind(this));
+ORYX.EDITOR._pluginFacade.registerOnEvent(ORYX.CONFIG.EVENT_CANVAS_ZOOMED,this._onCanvasZoomed.bind(this))
+},onLoaded:function onLoaded(){this.paintCanvas=this._createCanvas();
+this._loadBrush(this.paintCanvas);
+this.toolbar=this._createToolbar();
+this.paintCanvas.hide();
+this.paintCanvas.deactivate()
+},_activateTool:function _activateTool(a){this.paintCanvas.setTool(a)
+},_onCanvasZoomed:function _onCanvasZoomed(a){if(typeof this.paintCanvas==="undefined"){return
+}this.paintCanvas.scale(a.zoomLevel);
+this._alignCanvasWithOryxCanvas()
+},_createCanvas:function _createCanvas(){var b=ORYX.EDITOR._pluginFacade.getCanvas();
+var a={canvasId:"freehand-paint",width:b.bounds.width(),height:b.bounds.height(),shapeDrawnCallback:this._onShapeExistenceCommand.bind(this,"Paint.DrawCommand"),shapeDeletedCallback:this._onShapeExistenceCommand.bind(this,"Paint.RemoveCommand")};
+var c=new ORYX.Plugins.Paint.PaintCanvas(a);
+var d=b.rootNode.parentNode;
+d.appendChild(c.getDomElement());
+return c
+},_loadBrush:function _loadBrush(b){var a=new Image();
+a.onload=b.setBrush.bind(b,a,2);
+a.src=ORYX.BASE_FILE_PATH+"images/paint/brush.png"
+},_createToolbar:function _createToolbar(){var b=this._getBasePath();
+var a=new ORYX.Plugins.Paint.Toolbar();
+a.addButton(ORYX.BASE_FILE_PATH+"images/paint/line.png",this._activateTool.bind(this,ORYX.Plugins.Paint.PaintCanvas.LineTool));
+a.addButton(ORYX.BASE_FILE_PATH+"images/paint/arrow.png",this._activateTool.bind(this,ORYX.Plugins.Paint.PaintCanvas.ArrowTool));
+a.addButton(ORYX.BASE_FILE_PATH+"images/paint/box.png",this._activateTool.bind(this,ORYX.Plugins.Paint.PaintCanvas.BoxTool));
+a.addButton(ORYX.BASE_FILE_PATH+"images/paint/ellipse.png",this._activateTool.bind(this,ORYX.Plugins.Paint.PaintCanvas.EllipseTool));
+a.hide();
+return a
+},_getBasePath:function _getBasePath(){var a=window.location.href.lastIndexOf("/");
+return window.location.href.substring(0,a)
+},_togglePaint:function _togglePaint(){this.showCanvas=!this.showCanvas;
+if(this.showCanvas){if(typeof this.toolbar!=="undefined"){this.toolbar.show()
+}this.paintCanvas.show();
+this.paintCanvas.activate();
+this._alignCanvasWithOryxCanvas()
+}else{if(typeof this.toolbar!=="undefined"){this.toolbar.hide()
+}this.paintCanvas.hide();
+this.paintCanvas.deactivate()
+}},_onNewShape:function _onNewShape(a){this.paintCanvas.addShapeAndDraw(a.shape)
+},_onRemoveShape:function _onRemoveShape(a){this.paintCanvas.removeShape(a.shapeId)
+},_onShapeExistenceCommand:function _onShapeExistenceCommand(b,a){var c=new ORYX.Core.Commands[b](a,ORYX.EDITOR._pluginFacade);
+c.execute()
+},_onCanvasResized:function _onCanvasResized(a){this.paintCanvas.resize(a.bounds.width(),a.bounds.height());
+this._alignCanvasWithOryxCanvas()
+},_onCanvasResizedShapesMoved:function _onCanvasResizedShapesMoved(a){this.paintCanvas.moveShapes(a.offsetX,a.offsetY)
+},_onRemoveKeyPressed:function _onRemoveKeyPressed(a){this.paintCanvas.deleteCurrentShape()
+},_alignCanvasWithOryxCanvas:function _alignCanvasWithOryxCanvas(){var a=ORYX.EDITOR._pluginFacade.getCanvas().rootNode.parentNode;
+var b=jQuery(a).offset();
+this.paintCanvas.setOffset(b)
+},_onRemoveKey:function _onRemoveKey(a){this.paintCanvas.removeShapesUnderCursor()
+}});
+ORYX.Plugins.Paint.Toolbar=Clazz.extend({construct:function construct(){var a=$$(".ORYX_Editor")[0].parentNode;
+this.toolsList=document.createElement("div");
+this.toolsList.id="paint-toolbar";
+a.appendChild(this.toolsList);
+this.buttonsAdded=false
+},show:function show(){this.toolsList.show()
+},hide:function hide(){this.toolsList.hide()
+},addButton:function addButton(b,d){var a=this._createButton(b);
+this.toolsList.appendChild(a);
+var c=this._onButtonClicked.bind(this,a,d);
+jQuery(a).click(c);
+if(!this.buttonsAdded){c();
+this.buttonsAdded=true
+}},_createButton:function _createButton(b){var c=document.createElement("div");
+c.className="paint-toolbar-button";
+var a=document.createElement("div");
+a.style.backgroundImage="url("+b+")";
+c.appendChild(a);
+return c
+},_onButtonClicked:function _onButtonClicked(a,b){jQuery(this.toolsList).children().removeClass("paint-toolbar-button-pressed");
+jQuery(a).addClass("paint-toolbar-button-pressed");
+b()
+}});
+ORYX.Plugins.Paint.CanvasWrapper=Clazz.extend({construct:function construct(a){this.canvas=a;
+this.context=a.getContext("2d");
+this.scalingFactor=1;
+this.color="#000000"
+},clear:function clear(){this.canvas.width=this.canvas.width;
+this.context.clearRect(0,0,this.canvas.width,this.canvas.height);
+this.scale(this.scalingFactor)
+},resize:function resize(b,a){this.canvas.style.width=b+"px";
+this.canvas.style.height=a+"px";
+this.canvas.width=b;
+this.canvas.height=a
+},scale:function scale(a){this.context.scale(a,a);
+this.scalingFactor=a
+},setStyle:function setStyle(b,a){this.context.lineJoin="round";
+this.context.lineWidth=b;
+this.context.strokeStyle=a;
+this._setColor(a)
+},setBrush:function setBrush(a,b){this.origBrush=a;
+this.brush=this._colorBrush(a,this.color);
+this.brushDist=b
+},drawLine:function drawLine(b,a,d,c){(this.brush?this._brushLine:this._simpleLine).apply(this,arguments)
+},drawEllipse:function drawLine(b,a,d,c){(this.brush?this._brushEllipse:this._simpleEllipse).apply(this,arguments)
+},drawArrow:function drawArrow(b,l,i,h){this.drawLine.apply(this,arguments);
+var e=-Math.atan2(h-l,i-b)+Math.PI/2;
+var f=20;
+var d=e+3/4*Math.PI;
+var k=Math.sin(d)*f;
+var j=Math.cos(d)*f;
+this.drawLine(i,h,i+k,h+j);
+var g=e-3/4*Math.PI;
+var c=Math.sin(g)*f;
+var a=Math.cos(g)*f;
+this.drawLine(i,h,i+c,h+a)
+},strokeRect:function strokeRect(b,d,c,a){this.drawLine(b,d,b+c,d);
+this.drawLine(b,d+a,b+c,d+a);
+this.drawLine(b,d,b,d+a);
+this.drawLine(b+c,d,b+c,d+a)
+},_setColor:function _setColor(a){if(typeof this.origBrush!=="undefined"){this.brush=this._colorBrush(this.origBrush,a)
+}this.color=a
+},_simpleLine:function _simpleLine(b,a,d,c){this.context.beginPath();
+this.context.moveTo(b,a);
+this.context.lineTo(d,c);
+this.context.stroke()
+},_brushLine:function _brushLine(a,l,h,g){var b=function(i,m){return{x:i,y:m}
+};
+var e=ORYX.Core.Math.getDistancePointToPoint(b(a,l),b(h,g));
+var j=e/this.brushDist;
+var f=b(h-a,g-l);
+var d=function(i,m){return{x:i.x/m,y:i.y/m}
+};
+var k=d(f,j);
+for(var c=0;
+c<j;
+c++){this.context.drawImage(this.brush,a+c*k.x-this.brush.width/2,l+c*k.y-this.brush.height/2)
+}},_simpleEllipse:function _simpleEllipse(c,e,b,d){var a=this._getEllipseInRectParams.apply(this,arguments);
+var f=4*((Math.sqrt(2)-1)/3);
+this.context.beginPath();
+this.context.moveTo(a.cx,a.cy-a.ry);
+this.context.bezierCurveTo(a.cx+(f*a.rx),a.cy-a.ry,a.cx+a.rx,a.cy-(f*a.ry),a.cx+a.rx,a.cy);
+this.context.bezierCurveTo(a.cx+a.rx,a.cy+(f*a.ry),a.cx+(f*a.rx),a.cy+a.ry,a.cx,a.cy+a.ry);
+this.context.bezierCurveTo(a.cx-(f*a.rx),a.cy+a.ry,a.cx-a.rx,a.cy+(f*a.ry),a.cx-a.rx,a.cy);
+this.context.bezierCurveTo(a.cx-a.rx,a.cy-(f*a.ry),a.cx-(f*a.rx),a.cy-a.ry,a.cx,a.cy-a.ry);
+this.context.stroke()
+},_brushEllipse:function _brushEllipse(b,g,a,f){var e=this._getEllipseInRectParams.apply(this,arguments);
+var j=2*Math.PI/Math.max(e.rx,e.ry);
+var k=[];
+for(var l=0;
+l<2*Math.PI;
+l+=j){k.push({x:e.cx+Math.cos(l)*e.rx,y:e.cy+Math.sin(l)*e.ry})
+}var h,d;
+for(var c=0;
+c<k.length-1;
+c++){h=k[c];
+d=k[c+1];
+this._brushLine(h.x,h.y,d.x,d.y)
+}this._brushLine(k.last().x,k.last().y,k.first().x,k.first().y)
+},_getEllipseInRectParams:function _getEllipseInRectParams(b,d,a,c){var f=(a-b)/2;
+var e=(c-d)/2;
+return{rx:f,ry:e,cx:b+f,cy:d+e}
+},_colorBrush:function _colorBrush(b,a){var d=this._createTempCanvas(b.width,b.height);
+var c=d.getContext("2d");
+c.drawImage(b,0,0);
+this._recolorCanvas(c,a,b.width,b.height);
+return d
+},_createTempCanvas:function _createTempCanvas(b,a){var c=document.createElement("canvas");
+c.style.width=b+"px";
+c.style.height=a+"px";
+c.width=b;
+c.height=a;
+return c
+},_recolorCanvas:function _recolorCanvas(e,b,f,a){var h=e.getImageData(0,0,f,a);
+var c=this._getRGB(b);
+var g=h.data;
+for(var d=0;
+d<g.length;
+d+=4){g[d]=g[d]/255*c.r;
+g[d+1]=g[d+1]/255*c.g;
+g[d+2]=g[d+2]/255*c.b
+}e.putImageData(h,0,0)
+},_getRGB:function _getRGB(a){var b=a.substring(1,7);
+return{r:parseInt(b.substring(0,2),16),g:parseInt(b.substring(2,4),16),b:parseInt(b.substring(4,6),16)}
+}});
+ORYX.Plugins.Paint.PaintCanvas=Clazz.extend({construct:function construct(a){this.container=this._createCanvasContainer(a.canvasId,a.width,a.height);
+var b=this._createCanvas("view-canvas");
+this.viewCanvas=new ORYX.Plugins.Paint.CanvasWrapper(b);
+this.viewCanvas.resize(a.width,a.height);
+this.container.appendChild(b);
+var c=this._createCanvas("paint-canvas");
+this.paintCanvas=new ORYX.Plugins.Paint.CanvasWrapper(c);
+this.paintCanvas.resize(a.width,a.height);
+this.container.appendChild(c);
+this.shapes=[];
+this.shapeDrawnCallback=a.shapeDrawnCallback;
+this.shapeDeletedCallback=a.shapeDeletedCallback;
+this.scalingFactor=1;
+this.width=a.width;
+this.height=a.height;
+this.mouseState=new ORYX.Plugins.Paint.PaintCanvas.MouseState(c,{onMouseDown:this._onMouseDown.bind(this),onMouseUp:this._onMouseUp.bind(this),onMouseMove:this._onMouseMove.bind(this)})
+},activate:function activate(){jQuery(this.container).addClass("paint-canvas-container-active")
+},deactivate:function deactivate(){jQuery(this.container).removeClass("paint-canvas-container-active");
+this.currentAction.mouseUp(this.mouseState.parameters.pos);
+this.paintCanvas.clear()
+},setTool:function setTool(a){var b=this._getColor();
+this.currentAction=new a(b,this.paintCanvas,this._onShapeDone.bind(this))
+},setBrush:function setBrush(a,b){this.viewCanvas.setBrush(a,b);
+this.paintCanvas.setBrush(a,b);
+this._redrawShapes()
+},scale:function scale(a){this._setDimensions(this.width*a,this.height*a,a);
+this._redrawShapes();
+this.scalingFactor=a
+},setPosition:function setPosition(b,a){this.container.style.top=b+"px";
+this.container.style.left=a+"px"
+},getDomElement:function getDomElement(){return this.container
+},setOffset:function setOffset(a){jQuery(this.container).offset(a)
+},addShapeAndDraw:function addShapeAndDraw(a){this.shapes.push(a);
+this._drawShape(this.viewCanvas,a)
+},removeShape:function removeShape(a){this.shapes=this.shapes.reject(function(b){return b.id===a
+});
+this.redraw()
+},removeShapesUnderCursor:function removeShapesUnderCursor(){this._getShapesUnderCursor().each(function a(b){this.shapeDeletedCallback(b)
+}.bind(this));
+this.paintCanvas.clear()
+},hide:function hide(){this.container.style.display="none"
+},show:function show(){this.container.style.display="block"
+},isVisible:function isVisible(){return this.container.style.display!=="none"
+},redraw:function redraw(){this.viewCanvas.clear();
+this._redrawShapes()
+},moveShapes:function moveShapes(a,c){this.shapes.each(function b(d){d.move(a,c)
+});
+if(typeof this.currentAction!=="undefined"){this.currentAction.move(a,c)
+}this.viewCanvas.clear();
+this.paintCanvas.clear();
+this._redrawShapes()
+},resize:function resize(b,a){this.width=b;
+this.height=a;
+this._setDimensions(b*this.scalingFactor,a*this.scalingFactor,this.scalingFactor);
+this._redrawShapes()
+},updateColor:function updateColor(){var a=this._getColor();
+this.currentAction.setColor(a)
+},_onMouseDown:function _onMouseDown(a){if(a.inside){this.currentAction.mouseDown(this._translateMouse(a.pos))
+}},_onMouseMove:function _onMouseMove(a){if(!a.inside){return
+}if(a.mouseDown){this.currentAction.mouseMove(this._translateMouse(a.pos))
+}else{this.paintCanvas.clear();
+this._highlightShapesUnderCursor()
+}},_onMouseUp:function _onMouseUp(a){this.currentAction.mouseUp(this._translateMouse(a.pos))
+},_onShapeDone:function _onShapeDone(a){if(typeof this.shapeDrawnCallback==="function"){this.shapeDrawnCallback(a)
+}this.paintCanvas.clear()
+},_highlightShapesUnderCursor:function _highlightShapesUnderCursor(){this._getShapesUnderCursor().each(function a(b){this._drawShape(this.paintCanvas,b,3)
+}.bind(this))
+},_getShapesUnderCursor:function _getShapesUnderCursor(){if(!this.mouseState.parameters.inside){return[]
+}return this.shapes.select(function a(b){return b.isUnderCursor(this._translateMouse(this.mouseState.parameters.pos))
+}.bind(this))
+},_redrawShapes:function _redrawShapes(){for(var a=0;
+a<this.shapes.length;
+a++){this._drawShape(this.viewCanvas,this.shapes[a])
+}if(typeof this.currentAction!=="undefined"){this.currentAction.redraw()
+}},_getColor:function _getColor(){return"#000000"
+},_setDimensions:function _setDimensions(c,a,b){this._resizeDiv(this.container,c,a);
+this.paintCanvas.resize(c,a);
+this.paintCanvas.scale(b);
+this.viewCanvas.resize(c,a);
+this.viewCanvas.scale(b)
+},_drawShape:function _drawShape(c,a,d){var b=this._getColor();
+a.draw(c,b,d)
+},_createCanvasContainer:function _createCanvasContainer(d,c,a){var b=document.createElement("div");
+b.className="paint-canvas-container";
+b.id=d;
+b.style.width=c+"px";
+b.style.height=a+"px";
+return b
+},_createCanvas:function _createCanvas(d,c,a){var b=document.createElement("canvas");
+b.className="paint-canvas";
+b.id=d;
+return b
+},_resizeDiv:function _resizeDiv(c,b,a){c.style.width=b+"px";
+c.style.height=a+"px"
+},_translateMouse:function _translateMouse(a){if(typeof a==="undefined"){return undefined
+}return{left:a.left/this.scalingFactor,top:a.top/this.scalingFactor}
+}});
+ORYX.Plugins.Paint.PaintCanvas.MouseState=Clazz.extend({construct:function construct(a,b){this.element=a;
+this.callbacks=b;
+this.parameters={inside:undefined,mouseDown:false,pos:undefined};
+document.documentElement.addEventListener("mousedown",this._onMouseDown.bind(this),false);
+window.addEventListener("mousemove",this._onMouseMove.bind(this),true);
+window.addEventListener("mouseup",this._onMouseUp.bind(this),true);
+jQuery(a).mouseleave=this._onMouseLeave.bind(this)
+},_onMouseDown:function _onMouseDown(a){if(this._isInside(a)){document.onselectstart=function(){return false
+};
+this.parameters.mouseDown=true
+}else{this.parameters.mouseDown=false
+}this._rememberPosition(a);
+this._callback("onMouseDown")
+},_onMouseMove:function _onMouseMove(a){this._rememberPosition(a);
+this._callback("onMouseMove")
+},_onMouseUp:function _onMouseUp(a){if(this.parameters.mouseDown){document.onselectstart=function(){return true
+};
+this.parameters.mouseDown=false
+}this._rememberPosition(a);
+this._callback("onMouseUp")
+},_onMouseLeave:function _onMouseLeave(a){this.parameters.mouseDown=false
+},_rememberPosition:function _rememberPosition(a){this.parameters.inside=this._isInside(a);
+this.parameters.pos=this._isInside(a)?{left:a.layerX,top:a.layerY}:undefined
+},_isInside:function _isInside(a){return(a.target===this.element)
+},_callback:function _callback(a){if(typeof this.callbacks[a]==="function"){this.callbacks[a](this.parameters)
+}}});
+ORYX.Plugins.Paint.PaintCanvas.Tool=Clazz.extend({construct:function construct(b,c,a){this.done=a;
+this.canvas=c;
+this.color=b
+},getColor:function getColor(){return this.color
+},setColor:function setColor(a){this.color=a
+}});
+ORYX.Plugins.Paint.PaintCanvas.LineTool=ORYX.Plugins.Paint.PaintCanvas.Tool.extend({construct:function construct(b,c,a){arguments.callee.$.construct.apply(this,arguments);
+this._reset()
+},mouseDown:function mouseDown(a){this._addPoint(a.left,a.top);
+this.prevX=a.left;
+this.prevY=a.top
+},mouseUp:function mouseUp(b){if(typeof this.prevX!=="undefined"&&typeof this.prevY!=="undefined"){var a=new ORYX.Plugins.Paint.PaintCanvas.Line(this.points);
+this.done(a)
+}this._reset()
+},mouseMove:function mouseMove(a){this._addPoint(a.left,a.top);
+if(typeof this.prevX!=="undefined"&&typeof this.prevY!=="undefined"){this._drawLineSegment(this.prevX,this.prevY,a.left,a.top)
+}this.prevX=a.left;
+this.prevY=a.top
+},redraw:function redraw(){var a;
+var c,b;
+for(a=0;
+a<this.points.length-1;
+a++){c=this.points[a];
+b=this.points[a+1];
+this._drawLineSegment(c.x,c.y,b.x,b.y)
+}},move:function move(a,c){this.points.each(function b(d){d.x+=a;
+d.y+=c
+});
+this.prevX+=a;
+this.prevY+=c
+},_drawLineSegment:function _drawLineSegment(b,d,a,c){this.canvas.setStyle(1,this.getColor());
+this.canvas.drawLine(b,d,a,c)
+},_addPoint:function _addPoint(a,b){this.points.push({x:a,y:b})
+},_reset:function _reset(){this.points=[];
+this.prevX=undefined;
+this.prevY=undefined
+}});
+ORYX.Plugins.Paint.PaintCanvas.TwoPointTool=ORYX.Plugins.Paint.PaintCanvas.Tool.extend({construct:function construct(b,c,a,d){arguments.callee.$.construct.call(this,b,c,a);
+this.shapeClass=d;
+this._reset()
+},mouseDown:function mouseDown(a){this.start=a
+},mouseUp:function mouseUp(c){var a;
+var b=c||this.curEnd;
+if(typeof this.start!=="undefined"&&typeof b!=="undefined"){a=new this.shapeClass(this.start,b);
+this.done(a)
+}this._reset()
+},mouseMove:function mouseMove(a){if(typeof this.start==="undefined"){return
+}this.curEnd=a;
+this.canvas.clear();
+this.draw(this.canvas,this.start,a)
+},redraw:function redraw(){if(typeof this.curEnd!=="undefined"){this.draw(this.canvas,this.start,this.curEnd)
+}},move:function move(a,c){var b=function b(d){if(typeof d!=="undefined"){d.left+=a;
+d.top+=c
+}};
+b(this.start);
+b(this.curEnd)
+},_reset:function _reset(){this.start=undefined;
+this.curEnd=undefined
+}});
+ORYX.Plugins.Paint.PaintCanvas.ArrowTool=ORYX.Plugins.Paint.PaintCanvas.TwoPointTool.extend({construct:function construct(b,c,a){arguments.callee.$.construct.call(this,b,c,a,ORYX.Plugins.Paint.PaintCanvas.Arrow)
+},draw:function draw(b,c,a){b.setStyle(1,this.getColor());
+b.drawArrow(c.left,c.top,a.left,a.top)
+}});
+ORYX.Plugins.Paint.PaintCanvas.BoxTool=ORYX.Plugins.Paint.PaintCanvas.TwoPointTool.extend({construct:function construct(b,c,a){arguments.callee.$.construct.call(this,b,c,a,ORYX.Plugins.Paint.PaintCanvas.Box)
+},draw:function draw(b,c,a){b.setStyle(1,this.getColor());
+b.strokeRect(c.left,c.top,a.left-c.left,a.top-c.top)
+}});
+ORYX.Plugins.Paint.PaintCanvas.EllipseTool=ORYX.Plugins.Paint.PaintCanvas.TwoPointTool.extend({construct:function construct(b,c,a){arguments.callee.$.construct.call(this,b,c,a,ORYX.Plugins.Paint.PaintCanvas.Ellipse)
+},draw:function draw(b,c,a){b.setStyle(1,this.getColor());
+b.drawEllipse(c.left,c.top,a.left,a.top)
+}});
+ORYX.Plugins.Paint.PaintCanvas.Shape=Clazz.extend({construct:function construct(a){this.id=a||ORYX.Editor.provideId()
+}});
+ORYX.Plugins.Paint.PaintCanvas.Line=ORYX.Plugins.Paint.PaintCanvas.Shape.extend({construct:function construct(a,b){arguments.callee.$.construct.call(this,b);
+this.points=a.map(Object.clone)
+},draw:function draw(c,b,d){var a=this._getLines(this._smooth(this.points));
+c.setStyle(d||1,b);
+a.each(function e(f){c.drawLine(f.a.x,f.a.y,f.b.x,f.b.y)
+})
+},move:function move(a,c){this.points.each(function b(d){d.x+=a;
+d.y+=c
+})
+},isUnderCursor:function isUnderCursor(c){var a=this._getLines(this.points);
+return a.any(function b(d){return ORYX.Core.Math.isPointInLine(c.left,c.top,d.a.x,d.a.y,d.b.x,d.b.y,10)
+})
+},pack:function pack(){return{id:this.id,type:"Line",points:this.points}
+},unpack:function unpack(a){return new ORYX.Plugins.Paint.PaintCanvas.Line(a.points,a.id)
+},_getLines:function _getLines(c){var a=[];
+for(var b=1;
+b<c.length;
+b++){a.push({a:c[b-1],b:c[b]})
+}return a
+},_smooth:function _smooth(a){return this._mcMaster(this._fillPoints(a,5))
+},_fillPoints:function _fillPoints(n,f){var d=[n[0]];
+for(var e=1;
+e<n.length;
+e++){var l=n[e];
+var o=n[e-1];
+var m=l.x-o.x;
+var j=l.y-o.y;
+var h=Math.sqrt(m*m+j*j);
+if(h>f){var g=Math.floor(h/f);
+var c=m/g;
+var b=j/g;
+for(var a=0;
+a<g;
+a++){d.push({x:o.x+a*c,y:o.y+a*b})
+}}d.push(l)
+}return d
+},_mcMaster:function _mcMaster(h){var c=[];
+var b=10;
+var g=Math.floor(b/2);
+if(h.length<b){return h
+}for(var e=h.length-1;
+e>=0;
+e--){if(e>=h.length-g||e<=g){c=[h[e]].concat(c)
+}else{var f=0,d=0;
+for(var a=-g;
+a<-g+b;
+a++){f+=h[e+a].x;
+d+=h[e+a].y
+}c=[{x:f/b,y:d/b}].concat(c)
+}}return c
+}});
+ORYX.Plugins.Paint.PaintCanvas.TwoPointShape=ORYX.Plugins.Paint.PaintCanvas.Shape.extend({construct:function construct(c,a,b){arguments.callee.$.construct.call(this,b);
+this.start=c;
+this.end=a
+},move:function move(a,c){var b=function b(d){d.left+=a;
+d.top+=c
+};
+b(this.start);
+b(this.end)
+},abstractPack:function abstractPack(a){return{id:this.id,type:a,start:this.start,end:this.end}
+},abstractUnpack:function abstractUnpack(b,a){return new b(a.start,a.end,a.id)
+}});
+ORYX.Plugins.Paint.PaintCanvas.Arrow=ORYX.Plugins.Paint.PaintCanvas.TwoPointShape.extend({construct:function construct(c,a,b){arguments.callee.$.construct.apply(this,arguments)
+},draw:function draw(b,a,c){b.setStyle(c||1,a);
+b.drawArrow(this.start.left,this.start.top,this.end.left,this.end.top)
+},isUnderCursor:function isUnderCursor(a){return ORYX.Core.Math.isPointInLine(a.left,a.top,this.start.left,this.start.top,this.end.left,this.end.top,10)
+},pack:function pack(){return this.abstractPack("Arrow")
+},unpack:function unpack(a){return this.abstractUnpack(ORYX.Plugins.Paint.PaintCanvas.Arrow,a)
+}});
+ORYX.Plugins.Paint.PaintCanvas.Box=ORYX.Plugins.Paint.PaintCanvas.TwoPointShape.extend({construct:function construct(c,a,b){arguments.callee.$.construct.apply(this,arguments)
+},draw:function draw(b,a,c){b.setStyle(c||1,a);
+b.strokeRect(this.start.left,this.start.top,this.end.left-this.start.left,this.end.top-this.start.top)
+},isUnderCursor:function isUnderCursor(e){var b=ORYX.Core.Math.isPointInLine(e.left,e.top,this.start.left,this.start.top,this.end.left,this.start.top,10);
+var a=ORYX.Core.Math.isPointInLine(e.left,e.top,this.start.left,this.end.top,this.end.left,this.end.top,10);
+var d=ORYX.Core.Math.isPointInLine(e.left,e.top,this.start.left,this.start.top,this.start.left,this.end.top,10);
+var c=ORYX.Core.Math.isPointInLine(e.left,e.top,this.end.left,this.start.top,this.end.left,this.end.top,10);
+return b||a||d||c
+},pack:function pack(){return this.abstractPack("Box")
+},unpack:function unpack(a){return this.abstractUnpack(ORYX.Plugins.Paint.PaintCanvas.Box,a)
+}});
+ORYX.Plugins.Paint.PaintCanvas.Ellipse=ORYX.Plugins.Paint.PaintCanvas.TwoPointShape.extend({construct:function construct(c,h,d){var a={left:Math.min(c.left,h.left),top:Math.min(c.top,h.top)};
+var j={left:Math.max(c.left,h.left),top:Math.max(c.top,h.top)};
+arguments.callee.$.construct.call(this,a,j,d);
+var e=(j.left-a.left)/2;
+var b=(j.top-a.top)/2;
+var i=a.left+e;
+var g=a.top+b;
+this.isUnderCursor=function f(l){var k=false;
+if(e>5&&b>5){k=ORYX.Core.Math.isPointInEllipse(l.left,l.top,i,g,e-5,b-5)
+}return !k&&ORYX.Core.Math.isPointInEllipse(l.left,l.top,i,g,e+10,b+10)
+}
+},draw:function draw(b,a,c){b.setStyle(c||1,a);
+b.drawEllipse(this.start.left,this.start.top,this.end.left,this.end.top)
+},pack:function pack(){return this.abstractPack("Ellipse")
+},unpack:function unpack(a){return this.abstractUnpack(ORYX.Plugins.Paint.PaintCanvas.Ellipse,a)
+}});
+ORYX.Plugins.Paint.PaintCanvas.ShapeExistenceCommand=ORYX.Core.AbstractCommand.extend({construct:function construct(a,b){arguments.callee.$.construct.call(this,b);
+this.metadata.putOnStack=false;
+this.shape=a
+},getCommandData:function getCommandData(){return{shape:this.shape.pack()}
+},abstractCreateFromCommandData:function abstractCreateFromCommandData(c,d,b){var a=ORYX.Plugins.Paint.PaintCanvas[b.shape.type].prototype.unpack(b.shape);
+return new ORYX.Core.Commands[c](a,d)
+},getAffectedShapes:function getAffectedShapes(){return[]
+},createShape:function createShape(){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_PAINT_NEWSHAPE,shape:this.shape})
+},deleteShape:function deleteShape(){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_PAINT_REMOVESHAPE,shapeId:this.shape.id})
+}});
+ORYX.Core.Commands["Paint.DrawCommand"]=ORYX.Plugins.Paint.PaintCanvas.ShapeExistenceCommand.extend({construct:function construct(a,b){arguments.callee.$.construct.apply(this,arguments)
+},createFromCommandData:function createFromCommandData(b,a){return this.abstractCreateFromCommandData("Paint.DrawCommand",b,a)
+},getCommandName:function getCommandName(){return"Paint.DrawCommand"
+},getDisplayName:function getDisplayName(){return"Drew on paint layer"
+},execute:function execute(){this.createShape()
+},rollback:function rollback(){this.deleteShape()
+}});
+ORYX.Core.Commands["Paint.RemoveCommand"]=ORYX.Plugins.Paint.PaintCanvas.ShapeExistenceCommand.extend({construct:function construct(a,b){arguments.callee.$.construct.apply(this,arguments)
+},createFromCommandData:function createFromCommandData(b,a){return this.abstractCreateFromCommandData("Paint.RemoveCommand",b,a)
+},getCommandName:function getCommandName(){return"Paint.RemoveCommand"
+},getDisplayName:function getDisplayName(){return"Erased something from paint layer"
+},execute:function execute(){this.deleteShape()
+},rollback:function rollback(){this.createShape()
 }});
 if(!ORYX.Plugins){ORYX.Plugins={}
 }if(!ORYX.Config){ORYX.Config={}

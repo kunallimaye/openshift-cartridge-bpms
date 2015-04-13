@@ -55,7 +55,7 @@ if(p&&p.length>0){ORYX.Dictionary.Dictionaryitems.add(new ORYX.Dictionary.Dictio
 }}}]});
 var f=new Ext.Panel({id:"processdocspanel",title:ORYX.I18N.Dictionary.extractDicEntries,layout:"column",items:[i,c],layoutConfig:{columns:1},defaults:{columnWidth:1}});
 var h=new Ext.Panel({header:false,layout:"column",items:[{columnWidth:0.4,items:a},{columnWidth:0.6,items:f}]});
-var m=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.Dictionary.procDicEditor,height:530,width:960,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{fn:function(){m.hide()
+var m=new Ext.Window({layout:"fit",autoCreate:true,title:ORYX.I18N.Dictionary.procDicEditor,height:400,width:700,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{fn:function(){m.hide()
 }.bind(this)}],items:[h],listeners:{hide:function(){m.destroy()
 }.bind(this)},buttons:[{text:ORYX.I18N.Dictionary.Save,handler:function(){ORYX.Dictionary.Dictionaryitems.commitChanges();
 var q=new Array();

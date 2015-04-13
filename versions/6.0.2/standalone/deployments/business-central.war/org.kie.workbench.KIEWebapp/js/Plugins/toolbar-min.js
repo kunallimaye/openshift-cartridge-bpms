@@ -45,16 +45,16 @@ l.functionality=function(){if("undefined"!=typeof(pageTracker)&&"function"==type
 }return k.apply(this,arguments)
 };
 if(l.dropDownGroupIcon){var n=a[l.dropDownGroupIcon];
-if(n===undefined){n=a[l.dropDownGroupIcon]=new Ext.Toolbar.SplitButton({cls:"x-btn-icon",icon:l.dropDownGroupIcon,menu:new Ext.menu.Menu({items:[]}),listeners:{click:function(o,p){if(!o.menu.isVisible()&&!o.ignoreNextClick){o.showMenu()
+if(n===undefined){n=a[l.dropDownGroupIcon]=new Ext.Toolbar.SplitButton({iconCls:window.SpriteUtils.toUniqueId(l.dropDownGroupIcon),menu:new Ext.menu.Menu({items:[]}),listeners:{click:function(o,p){if(!o.menu.isVisible()&&!o.ignoreNextClick){o.showMenu()
 }else{o.hideMenu()
 }}}});
 this.toolbar.add(n)
-}var m={icon:l.icon,text:l.name,itemId:l.id,handler:l.toggle?undefined:l.functionality,checkHandler:l.toggle?l.functionality:undefined,listeners:{render:function(o){if(l.description){new Ext.ToolTip({target:o.getEl(),title:l.description})
+}var m={iconCls:window.SpriteUtils.toUniqueId(l.icon),text:l.name,itemId:l.id,handler:l.toggle?undefined:l.functionality,checkHandler:l.toggle?l.functionality:undefined,listeners:{render:function(o){if(l.description){new Ext.ToolTip({target:o.getEl(),title:l.description})
 }}}};
 if(l.toggle){var j=new Ext.menu.CheckItem(m)
 }else{var j=new Ext.menu.Item(m)
 }n.menu.add(j)
-}else{var j=new Ext.Toolbar.Button({icon:l.icon,cls:"x-btn-icon",itemId:l.id,tooltip:l.description,tooltipType:"title",handler:l.toggle?null:l.functionality,enableToggle:l.toggle,toggleHandler:l.toggle?l.functionality:null});
+}else{var j=new Ext.Toolbar.Button({iconCls:window.SpriteUtils.toUniqueId(l.icon),itemId:l.id,tooltip:l.description,tooltipType:"title",handler:l.toggle?null:l.functionality,enableToggle:l.toggle,toggleHandler:l.toggle?l.functionality:null});
 this.toolbar.add(j);
 j.getEl().onclick=function(){this.blur()
 }
@@ -96,15 +96,16 @@ c=0
 }this.sliceMap[g.id]=d;
 c+=h
 }.bind(this));
-if(d>0){this.insertSlicingSeperator(d,this.items.getCount()+1);
-this.insertSlicingButton("prev",d,this.items.getCount()+1);
+if(d>0){this.insertSlicingSeperator(d,-1);
+this.insertSlicingButton("prev",d,-1);
 var b=new Ext.Toolbar.Spacer();
-this.insertSlicedHelperButton(b,d,this.items.getCount()+1);
+this.insertSlicedHelperButton(b,d,-1);
 Ext.get(b.id).setWidth(this.iconStandardWidth)
 }this.maxSlice=d;
 this.setCurrentSlice(this.currentSlice)
-},insertSlicedButton:function(b,c,a){this.insertButton(a,b);
-this.sliceMap[b.id]=c
+},insertSlicedButton:function(b,c,a){if(a==-1){this.addButton(b)
+}else{this.insertButton(a,b)
+}this.sliceMap[b.id]=c
 },insertSlicedHelperButton:function(b,c,a){b.helperItem=true;
 this.insertSlicedButton(b,c,a)
 },insertSlicingSeperator:function(b,a){this.insertSlicedHelperButton(new Ext.Toolbar.Fill(),b,a)

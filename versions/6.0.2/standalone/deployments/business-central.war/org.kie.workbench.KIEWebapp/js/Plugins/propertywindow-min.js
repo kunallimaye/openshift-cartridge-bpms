@@ -2,7 +2,23 @@ if(!ORYX.Plugins){ORYX.Plugins=new Object()
 }if(!ORYX.FieldEditors){ORYX.FieldEditors={}
 }if(!ORYX.AssociationEditors){ORYX.AssociationEditors={}
 }if(!ORYX.LabelProviders){ORYX.LabelProviders={}
-}ORYX.Plugins.PropertyWindow={facade:undefined,construct:function(a){this.facade=a;
+}Ext.override(Ext.form.ComboBox,{anyMatch:false,caseSensitive:false,doQuery:function(c,b){if(c===undefined||c===null){c=""
+}var a={query:c,forceAll:b,combo:this,cancel:false};
+if(this.fireEvent("beforequery",a)===false||a.cancel){return false
+}c=a.query;
+b=a.forceAll;
+if(b===true||(c.length>=this.minChars)){if(this.lastQuery!==c){this.lastQuery=c;
+if(this.mode=="local"){this.selectedIndex=-1;
+if(b){this.store.clearFilter()
+}else{this.store.filter(this.displayField,c,this.anyMatch,this.caseSensitive)
+}this.onLoad()
+}else{this.store.baseParams[this.queryParam]=c;
+this.store.load({params:this.getParams(c)});
+this.expand()
+}}else{this.selectedIndex=-1;
+this.onLoad()
+}}}});
+ORYX.Plugins.PropertyWindow={facade:undefined,construct:function(a){this.facade=a;
 this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHOW_PROPERTYWINDOW,this.init.bind(this));
 this.facade.registerOnEvent(ORYX.CONFIG.EVENT_LOADED,this.onSelectionChanged.bind(this));
 this.init()
@@ -138,13 +154,13 @@ this.simulationProperties=[];
 this.displayProperties=[];
 if(this.shapeSelection.commonProperties){this.shapeSelection.commonProperties.each((function(p,F){var t=p.prefix()+"-"+p.id();
 var q=p.title();
-var Y=[];
+var Z=[];
 var C=this.shapeSelection.commonPropertiesValues[t];
 var N=undefined;
 var K=null;
 var G=false;
 var O=ORYX.FieldEditors[p.type()];
-if(O!==undefined){N=O.init.bind(this,t,p,Y,F)();
+if(O!==undefined){N=O.init.bind(this,t,p,Z,F)();
 if(N==null){return
 }N.on("beforehide",this.facade.enableEvent.bind(this,ORYX.CONFIG.EVENT_KEYDOWN));
 N.on("specialkey",this.specialKeyDown.bind(this))
@@ -176,8 +192,8 @@ z.on("keyup",function(i,j){this.editDirectly(t,i.getValue())
 }.bind(this));
 N=new Ext.Editor(z);
 break;
-case ORYX.CONFIG.TYPE_COLOR:var W=new Ext.ux.ColorField({allowBlank:p.optional(),msgTarget:"title",facade:this.facade});
-N=new Ext.Editor(W);
+case ORYX.CONFIG.TYPE_COLOR:var X=new Ext.ux.ColorField({allowBlank:p.optional(),msgTarget:"title",facade:this.facade});
+N=new Ext.Editor(X);
 break;
 case ORYX.CONFIG.TYPE_CHOICE:var v=p.items();
 var y=[];
@@ -185,8 +201,8 @@ if(p.id()=="tasktype"&&ORYX.CALCULATE_CURRENT_PERSPECTIVE()==ORYX.RULEFLOW_PERSP
 }if(i.refToView()[0]){G=true
 }if(i.value()=="Business Rule"||i.value()=="Script"||i.value()=="None"){if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){y.push([i.icon(),ORYX.I18N.propertyNamesTaskType[i.title()],i.value()])
 }else{y.push([i.icon(),i.title(),i.value()])
-}if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){Y.push({name:ORYX.I18N.propertyNamesTaskType[i.title()],icon:i.icon()})
-}else{Y.push({name:i.title(),icon:i.icon()})
+}if(ORYX.I18N.propertyNamesTaskType&&ORYX.I18N.propertyNamesTaskType[i.title()]&&ORYX.I18N.propertyNamesTaskType[i.title()].length>0){Z.push({name:ORYX.I18N.propertyNamesTaskType[i.title()],icon:i.icon()})
+}else{Z.push({name:i.title(),icon:i.icon()})
 }}})
 }else{v.each(function(j){if(j.value()==C){C=j.title()
 }if(j.refToView()[0]){G=true
@@ -195,35 +211,55 @@ if(ORYX.I18N.propertyNamesValue[j.title()]&&ORYX.I18N.propertyNamesValue[j.title
 }else{i=j.title()
 }if(!i){i=j.title()
 }y.push([j.icon(),i,j.value()]);
-Y.push({name:i,icon:j.icon()})
+Z.push({name:i,icon:j.icon()})
 })
 }var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
 var o=new Ext.form.ComboBox({editable:false,tpl:'<tpl for="."><div class="x-combo-list-item">{[(values.icon) ? "<img src=\'" + values.icon + "\' />" : ""]} {title}</div></tpl>',store:b,displayField:"title",valueField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true});
-o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
-}.bind(this));
-N=new Ext.Editor(o);
+if(p.id()=="tasktype"){o.on("select",function(ac,i,j){this.editDirectly(t,ac.getValue());
+var k=this.facade.getSelection();
+var ab=k.first();
+this.facade.setSelection([]);
+this.facade.getCanvas().update();
+this.facade.updateSelection();
+this.facade.setSelection([ab]);
+this.facade.getCanvas().update();
+this.facade.updateSelection();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_LOADED,elements:[ab]})
+}.bind(this))
+}else{o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
+}.bind(this))
+}N=new Ext.Editor(o);
 break;
 case ORYX.CONFIG.TYPE_DYNAMICCHOICE:var v=p.items();
 var y=[];
-v.each(function(ad){if(ad.value()==C){C=ad.title()
-}if(ad.refToView()[0]){G=true
+var aa=false;
+var R="";
+v.each(function(af){if(af.value()==C){C=af.title()
+}if(af.refToView()[0]){G=true
+}if(af.needsprop().length>0){aa=true;
+R=af.needsprop()
 }y.push(["","",""]);
-var ab=ORYX.EDITOR.getSerializedJSON();
-var ac=jsonPath(ab.evalJSON(),ad.value());
-if(ac){if(ac.toString().length>0){for(var aa=0;
-aa<ac.length;
-aa++){var ae=ac[aa].split(",");
-for(var Z=0;
-Z<ae.length;
-Z++){if(ae[Z].indexOf(":")>0){var k=ae[Z].split(":");
-y.push([ad.icon(),k[0],k[0]])
-}else{y.push([ad.icon(),ae[Z],ae[Z]])
+var ad=ORYX.EDITOR.getSerializedJSON();
+var ae=jsonPath(ad.evalJSON(),af.value());
+if(ae){if(ae.toString().length>0){for(var ac=0;
+ac<ae.length;
+ac++){var ag=ae[ac].split(",");
+for(var ab=0;
+ab<ag.length;
+ab++){if(ag[ab].indexOf(":")>0){var k=ag[ab].split(":");
+y.push([af.icon(),k[0],k[0]])
+}else{y.push([af.icon(),ag[ab],ag[ab]])
 }}}}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.PropertyWindow.noDataAvailableForProp,title:""})
-}Y.push({name:ad.title(),icon:ad.icon()})
+}Z.push({name:af.title(),icon:af.icon()})
 });
 var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
 var o=new Ext.form.ComboBox({editable:false,tpl:'<tpl for="."><div class="x-combo-list-item">{[(values.icon) ? "<img src=\'" + values.icon + "\' />" : ""]} {title}</div></tpl>',store:b,displayField:"title",valueField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true});
-o.on("select",function(k,i,j){this.editDirectly(t,k.getValue())
+o.on("select",function(ae,i,k){if(aa==true&&R.length>0){var ad=ORYX.EDITOR._pluginFacade.getSelection();
+if(ad){var j=ad.first();
+var ac="oryx-"+R;
+var ab=j.properties[ac];
+if(ab!=undefined&&ab.length<1){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"This property needs the associated property '"+R+"' to be set.",title:""})
+}}}this.editDirectly(t,ae.getValue())
 }.bind(this));
 N=new Ext.Editor(o);
 break;
@@ -231,17 +267,17 @@ case ORYX.CONFIG.TYPE_DYNAMICDATAINPUT:var y=[];
 var r=ORYX.EDITOR._pluginFacade.getSelection();
 if(r&&r.length==1){var u=r.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 y.push(["","",""]);
-var P=jsonPath(X.evalJSON(),"$.childShapes.*");
-for(var V=0;
-V<P.length;
-V++){var h=P[V];
+var P=jsonPath(Y.evalJSON(),"$.childShapes.*");
+for(var W=0;
+W<P.length;
+W++){var h=P[W];
 if(h.resourceId==s){var Q=h.properties.datainputset;
 var B=Q.split(",");
-for(var T=0;
-T<B.length;
-T++){var m=B[T];
+for(var V=0;
+V<B.length;
+V++){var m=B[V];
 if(m.indexOf(":")>0){var a=m.split(":");
 y.push(["",a[0],a[0]])
 }else{y.push(["",m,m])
@@ -255,17 +291,17 @@ case ORYX.CONFIG.TYPE_DYNAMICDATAOUTPUT:var y=[];
 var r=ORYX.EDITOR._pluginFacade.getSelection();
 if(r&&r.length==1){var u=r.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 y.push(["","",""]);
-var P=jsonPath(X.evalJSON(),"$.childShapes.*");
-for(var V=0;
-V<P.length;
-V++){var h=P[V];
+var P=jsonPath(Y.evalJSON(),"$.childShapes.*");
+for(var W=0;
+W<P.length;
+W++){var h=P[W];
 if(h.resourceId==s){var e=h.properties.dataoutputset;
 var g=e.split(",");
-for(var R=0;
-R<g.length;
-R++){var m=g[R];
+for(var S=0;
+S<g.length;
+S++){var m=g[S];
 if(m.indexOf(":")>0){var a=m.split(":");
 y.push(["",a[0],a[0]])
 }else{y.push(["",m,m])
@@ -279,17 +315,17 @@ case ORYX.CONFIG.TYPE_DYNAMICGATEWAYCONNECTIONS:var U=ORYX.Config.FACADE.getSele
 var y=[];
 if(U&&U.length==1){var u=U.first();
 var s=u.resourceId;
-var X=ORYX.EDITOR.getSerializedJSON();
+var Y=ORYX.EDITOR.getSerializedJSON();
 var x=new XMLHttpRequest;
 var d=ORYX.PATH+"processinfo";
-var c="uuid="+window.btoa(encodeURI(ORYX.UUID))+"&ppdata="+ORYX.PREPROCESSING+"&profile="+ORYX.PROFILE+"&gatewayid="+s+"&json="+encodeURIComponent(X);
+var c="uuid="+window.btoa(encodeURI(ORYX.UUID))+"&ppdata="+ORYX.PREPROCESSING+"&profile="+ORYX.PROFILE+"&gatewayid="+s+"&json="+encodeURIComponent(Y);
 x.open("POST",d,false);
 x.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 x.send(c);
 if(x.status==200){var J=x.responseText.evalJSON();
-for(var V=0;
-V<J.length;
-V++){var h=J[V];
+for(var W=0;
+W<J.length;
+W++){var h=J[W];
 y.push(["",h.sequenceflowinfo,h.sequenceflowinfo])
 }}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.errorDetOutConnections,title:""})
 }}var b=new Ext.data.SimpleStore({fields:[{name:"icon"},{name:"title"},{name:"value"}],data:y});
@@ -315,6 +351,10 @@ E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
 N=new Ext.Editor(E);
 break;
 case ORYX.CONFIG.TYPE_CALLEDELEMENT:var E=new Ext.form.ComplexCalledElementField({allowBlank:p.optional(),dataSource:this.dataSource,grid:this.grid,row:F,facade:this.facade});
+E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
+N=new Ext.Editor(E);
+break;
+case ORYX.CONFIG.TYPE_RULEFLOW_GROUP:var E=new Ext.form.ComplexRuleflowGroupElementField({allowBlank:p.optional(),dataSource:this.dataSource,grid:this.grid,row:F,facade:this.facade});
 E.on("dialogClosed",this.dialogClosed,{scope:this,row:F,col:1,field:E});
 N=new Ext.Editor(E);
 break;
@@ -386,9 +426,9 @@ C="<a href='"+C+"' target='_blank'>"+C.split("://")[1]+"</a>"
 }}}if((p.visible()&&p.visible()==true)&&p.hidden()!=true&&(p.id()!="origbordercolor"&&p.id()!="origbgcolor"&&p.id()!="isselectable")){var H=true;
 if(this.shapeSelection.shapes.length==1){if(p.fortasktypes()&&p.fortasktypes().length>0){var l=false;
 var A=p.fortasktypes().split("|");
-for(var V=0;
-V<A.size();
-V++){if(A[V]==this.shapeSelection.shapes.first().properties["oryx-tasktype"]){l=true
+for(var W=0;
+W<A.size();
+W++){if(A[W]==this.shapeSelection.shapes.first().properties["oryx-tasktype"]){l=true
 }}if(!l){H=false
 }}if(p.ifproptrue()&&p.ifproptrue().length>0){var w=false;
 var M=p.ifproptrue();
@@ -396,22 +436,22 @@ if(this.shapeSelection.shapes.first().properties["oryx-"+M]&&this.shapeSelection
 }if(!w){H=false
 }}if(p.fordistribution()&&p.fordistribution().length>0){var L=false;
 var A=p.fordistribution().split("|");
-for(var T=0;
-T<A.size();
-T++){if(A[T]==this.shapeSelection.shapes.first().properties["oryx-distributiontype"]){L=true
+for(var V=0;
+V<A.size();
+V++){if(A[V]==this.shapeSelection.shapes.first().properties["oryx-distributiontype"]){L=true
 }}if(!L){H=false
 }}}if(H){if(p.popular()){p.setPopular()
 }if(p.simulation()){p.setSimulation()
 }if(p.display()){p.setDisplay()
 }if(p.extra()){p.setExtra()
-}if(p.extra()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.properties.push([ORYX.I18N.PropertyWindow.moreProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{if(p.simulation()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.simulationProperties.push([ORYX.I18N.PropertyWindow.simulationProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{if(p.display()){var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.displayProperties.push([ORYX.I18N.PropertyWindow.displayProps,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
-}else{var S=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
-this.popularProperties.push([ORYX.I18N.PropertyWindow.oftenUsed,S,C,Y,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}if(p.extra()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.properties.push([ORYX.I18N.PropertyWindow.moreProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{if(p.simulation()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.simulationProperties.push([ORYX.I18N.PropertyWindow.simulationProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{if(p.display()){var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.displayProperties.push([ORYX.I18N.PropertyWindow.displayProps,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
+}else{var T=(ORYX.I18N.propertyNames[p.id()]&&ORYX.I18N.propertyNames[p.id()].length>0)?ORYX.I18N.propertyNames[p.id()]:q;
+this.popularProperties.push([ORYX.I18N.PropertyWindow.oftenUsed,T,C,Z,{editor:N,propId:t,type:p.type(),tooltip:(ORYX.I18N.propertyNames[p.id()+"_desc"]&&ORYX.I18N.propertyNames[p.id()+"_desc"].length>0)?ORYX.I18N.propertyNames[p.id()+"_desc"]:p.description(),renderer:K,labelProvider:this.getLabelProvider(p)}])
 }}}}}}).bind(this))
 }this.setProperties()
 },getLabelProvider:function(a){lp=ORYX.LabelProviders[a.labelProvider()];
@@ -476,41 +516,51 @@ c++){var e=a[c].id();
 b[e]=a[c].value()
 }var d=Ext.data.Record.create(f);
 return new d(b)
-},buildColumnModel:function(l){var h=[];
-for(var c=0;
-c<this.items.length;
-c++){var a=this.items[c].id();
-var d=this.items[c].name();
-var b=this.items[c].width();
-var g=this.items[c].type();
-var e;
-if(g==ORYX.CONFIG.TYPE_STRING){e=new Ext.form.TextField({allowBlank:this.items[c].optional(),width:b})
-}else{if(g==ORYX.CONFIG.TYPE_CHOICE){var f=this.items[c].items();
-var k=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",l,["select",{style:"display:none"}]);
-var j=new Ext.Template('<option value="{value}">{value}</option>');
-f.each(function(i){j.append(k,{value:i.value()})
+},buildColumnModel:function(n){var k=[];
+for(var d=0;
+d<this.items.length;
+d++){var a=this.items[d].id();
+var e=this.items[d].name();
+var b=this.items[d].width();
+var j=this.items[d].type();
+var f;
+if(j==ORYX.CONFIG.TYPE_STRING){f=new Ext.form.TextField({allowBlank:this.items[d].optional(),width:b})
+}else{if(j==ORYX.CONFIG.TYPE_CHOICE){var h=this.items[d].items();
+var m=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",n,["select",{style:"display:none"}]);
+var l=new Ext.Template('<option value="{value}">{value}</option>');
+h.each(function(i){l.append(m,{value:i.value()})
 });
-e=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:k,lazyRender:true,msgTarget:"title",width:b})
-}else{if(g==ORYX.CONFIG.TYPE_DYNAMICCHOICE){var f=this.items[c].items();
-var k=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",l,["select",{style:"display:none"}]);
-var j=new Ext.Template('<option value="{value}">{value}</option>');
-f.each(function(r){var p=ORYX.EDITOR.getSerializedJSON();
-var q=jsonPath(p.evalJSON(),r.value());
-if(q){if(q.toString().length>0){for(var o=0;
-o<q.length;
-o++){var s=q[o].split(",");
-for(var n=0;
-n<s.length;
-n++){if(s[n].indexOf(":")>0){var m=s[n].split(":");
-j.append(k,{value:m[0]})
-}else{j.append(k,{value:s[n]})
+f=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:m,lazyRender:true,msgTarget:"title",width:b})
+}else{if(j==ORYX.CONFIG.TYPE_DYNAMICCHOICE){var h=this.items[d].items();
+var m=ORYX.Editor.graft("http://www.w3.org/1999/xhtml",n,["select",{style:"display:none"}]);
+var l=new Ext.Template('<option value="{value}">{value}</option>');
+var g=false;
+var c="";
+h.each(function(t){if(t.needsprop()&&t.needsprop().length>0){g=true;
+c=t.needsprop()
+}var r=ORYX.EDITOR.getSerializedJSON();
+var s=jsonPath(r.evalJSON(),t.value());
+if(s){if(s.toString().length>0){for(var q=0;
+q<s.length;
+q++){var u=s[q].split(",");
+for(var p=0;
+p<u.length;
+p++){if(u[p].indexOf(":")>0){var o=u[p].split(":");
+l.append(m,{value:o[0]})
+}else{l.append(m,{value:u[p]})
 }}}}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.PropertyWindow.noDataAvailableForProp,title:""})
 }});
-e=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:k,lazyRender:true,msgTarget:"title",width:b})
-}else{if(g==ORYX.CONFIG.TYPE_BOOLEAN){e=new Ext.form.Checkbox({width:b})
-}else{if(g=="xpath"){e=new Ext.form.TextField({allowBlank:this.items[c].optional(),width:b})
-}}}}}h.push({id:a,header:d,dataIndex:a,resizable:true,editor:e,width:b})
-}return new Ext.grid.ColumnModel(h)
+f=new Ext.form.ComboBox({editable:false,typeAhead:true,triggerAction:"all",transform:m,lazyRender:true,msgTarget:"title",width:b});
+f.on("select",function(t,i,p){if(g==true&&c.length>0){var s=ORYX.EDITOR._pluginFacade.getSelection();
+if(s&&s.length==1){var o=s.first();
+var r="oryx-"+c;
+var q=o.properties[r];
+if(q&&q.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"This property needs the associated property '"+c+"' to be set.",title:""})
+}}}}.bind(this))
+}else{if(j==ORYX.CONFIG.TYPE_BOOLEAN){f=new Ext.form.Checkbox({width:b})
+}else{if(j=="xpath"){f=new Ext.form.TextField({allowBlank:this.items[d].optional(),width:b})
+}}}}}k.push({id:a,header:e,dataIndex:a,resizable:true,editor:f,width:b})
+}return new Ext.grid.ColumnModel(k)
 },afterEdit:function(a){a.grid.getStore().commitChanges()
 },beforeEdit:function(h){var a=this.grid.getView().getScrollState();
 var b=h.column;
@@ -776,61 +826,113 @@ this.grid.stopEditing();
 a.focus(false,100)
 }});
 Ext.form.ComplexImportsField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
-}var r=Ext.data.Record.create([{name:"type"},{name:"classname"},{name:"wsdllocation"},{name:"wsdlnamespace"}]);
-var e=new Ext.data.MemoryProxy({root:[]});
-var q=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},r),proxy:e,sorters:[{property:"type",direction:"ASC"}]});
-q.load();
-if(this.value.length>0){var j=this.value.split(",");
-for(var n=0;
-n<j.length;
-n++){var d="";
-var s,b,h;
-var c=j[n];
-var m=c.split("|");
-if(m[1]=="default"){d="default";
-s=m[0];
-b="";
-h=""
-}else{d="wsdl";
-s="";
-b=m[0];
-h=m[1]
-}q.add(new r({type:d,classname:s,wsdllocation:b,wsdlnamespace:h}))
-}}var g=new Extensive.grid.ItemDeleter();
-var l=new Array();
+}var a=ORYX.EDITOR.getSerializedJSON();
+var b=jsonPath(a.evalJSON(),"$.properties.package");
+var c=jsonPath(a.evalJSON(),"$.properties.id");
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(l){try{if(l.responseText.length>=0&&l.responseText!="false"){var x=Ext.decode(l.responseText);
+var o=new Array();
+var Q=new Array();
+Q.push("String");
+Q.push("String");
+o.push(Q);
+var k=new Array();
+k.push("Integer");
+k.push("Integer");
+o.push(k);
+var E=new Array();
+E.push("Boolean");
+E.push("Boolean");
+o.push(E);
+var v=new Array();
+v.push("Float");
+v.push("Float");
+o.push(v);
+var A=new Array();
+A.push("Object");
+A.push("Object");
+o.push(A);
 var f=new Array();
-f.push("default");
-f.push("default");
-l.push(f);
-var p=new Array();
-p.push("wsdl");
-p.push("wsdl");
-l.push(p);
-var k=Ext.id();
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:q,id:k,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"imptype",header:ORYX.I18N.PropertyWindow.importType,width:100,dataIndex:"type",editor:new Ext.form.ComboBox({id:"importTypeCombo",valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})})},{id:"classname",header:ORYX.I18N.PropertyWindow.className,width:200,dataIndex:"classname",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdllocation",header:ORYX.I18N.PropertyWindow.wsdlLocation,width:200,dataIndex:"wsdllocation",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdlnamespace",header:ORYX.I18N.PropertyWindow.wsdlNamespace,width:200,dataIndex:"wsdlnamespace",editor:new Ext.form.TextField({allowBlank:true})},g]),selModel:g,autoHeight:true,tbar:[{text:ORYX.I18N.PropertyWindow.addImport,handler:function(){q.add(new r({type:"default",classname:"",wsdllocation:"",wsdlnamespace:""}));
-a.fireEvent("cellclick",a,q.getCount()-1,1,null)
+f.push("**********");
+f.push("**********");
+o.push(f);
+var d=new Array();
+for(var u in x){var y=x[u];
+d.push(y)
+}d.sort();
+for(var I=0;
+I<d.length;
+I++){var K=new Array();
+var g=d[I];
+var w=g.split(".");
+var O=w[w.length-1];
+var C=g.substring(0,g.length-(O.length+1));
+K.push(O+" ["+C+"]");
+K.push(d[I]);
+o.push(K)
+}var F=Ext.data.Record.create([{name:"type"},{name:"classname"},{name:"customclassname"},{name:"wsdllocation"},{name:"wsdlnamespace"}]);
+var N=new Ext.data.MemoryProxy({root:[]});
+var n=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},F),proxy:N,sorters:[{property:"type",direction:"ASC"}]});
+n.load();
+if(this.value.length>0){var r=this.value.split(",");
+for(var M=0;
+M<r.length;
+M++){var R="";
+var h,s,G;
+var q=r[M];
+var j=q.split("|");
+if(j[1]=="default"){R="default";
+h=j[0];
+s="";
+G=""
+}else{R="wsdl";
+h="";
+s=j[0];
+G=j[1]
+}var p=false;
+for(var u in x){var y=x[u];
+if(y==h){p=true
+}}if(p){n.add(new F({type:R,classname:h,customclassname:"",wsdllocation:s,wsdlnamespace:G}))
+}else{n.add(new F({type:R,classname:"",customclassname:h,wsdllocation:s,wsdlnamespace:G}))
+}}}var m=new Extensive.grid.ItemDeleter();
+var B=new Array();
+var J=new Array();
+J.push("default");
+J.push("default");
+B.push(J);
+var z=new Array();
+z.push("wsdl");
+z.push("wsdl");
+B.push(z);
+var D=Ext.id();
+var H=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:n,id:D,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"imptype",header:ORYX.I18N.PropertyWindow.importType,width:100,dataIndex:"type",editor:new Ext.form.ComboBox({id:"importTypeCombo",typeAhead:true,anyMatch:true,valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})},{id:"classname",header:"Defined Class Name",width:180,dataIndex:"classname",editor:new Ext.form.ComboBox({id:"customTypeCombo",typeAhead:true,anyMatch:true,valueField:"value",displayField:"name",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})},{id:"customclassname",header:"Custom Class Name",width:180,dataIndex:"customclassname",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdllocation",header:ORYX.I18N.PropertyWindow.wsdlLocation,width:180,dataIndex:"wsdllocation",editor:new Ext.form.TextField({allowBlank:true})},{id:"wsdlnamespace",header:ORYX.I18N.PropertyWindow.wsdlNamespace,width:180,dataIndex:"wsdlnamespace",editor:new Ext.form.TextField({allowBlank:true})},m]),selModel:m,autoHeight:true,tbar:[{text:ORYX.I18N.PropertyWindow.addImport,handler:function(){n.add(new F({type:"default",classname:"",customclassname:"",wsdllocation:"",wsdlnamespace:""}));
+H.fireEvent("cellclick",H,n.getCount()-1,1,null)
 }}],clicksToEdit:1});
-var o=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForImports,height:400,width:800,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){o.hide()
-}.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-o.destroy()
-}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
-a.getView().refresh();
-a.stopEditing();
-q.data.each(function(){if(this.data.type=="default"){i+=this.data.classname+"|"+this.data.type+","
-}if(this.data.type=="wsdl"){i+=this.data.wsdllocation+"|"+this.data.wsdlnamespace+"|"+this.data.type+","
+var L=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForImports,height:400,width:900,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){L.hide()
+}.bind(this)}],items:[H],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+L.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var e="";
+H.getView().refresh();
+H.stopEditing();
+n.data.each(function(){if(this.data.type=="default"){if(this.data.classname.length>0){e+=this.data.classname+"|"+this.data.type+","
+}else{e+=this.data.customclassname+"|"+this.data.type+","
+}}if(this.data.type=="wsdl"){e+=this.data.wsdllocation+"|"+this.data.wsdlnamespace+"|"+this.data.type+","
 }});
-if(i.length>0){i=i.slice(0,-1)
-}this.setValue(i);
-this.dataSource.getAt(this.row).set("value",i);
+if(e.length>0){e=e.slice(0,-1)
+}this.setValue(e);
+this.dataSource.getAt(this.row).set("value",e);
 this.dataSource.commitChanges();
-o.hide()
+L.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-o.hide()
+L.hide()
 }.bind(this)}]});
-o.show();
-a.render();
+L.show();
+H.render();
 this.grid.stopEditing();
-a.focus(false,100)
+H.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find Data Types.",title:""})
+}}catch(P){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info  :\n"+P,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:b,pid:c,action:"showdatatypes"}})
 }});
 Ext.form.ComplexActionsField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
 }var f=Ext.data.Record.create([{name:"action"}]);
@@ -868,252 +970,372 @@ a.render();
 this.grid.stopEditing();
 a.focus(false,100)
 }});
-Ext.form.ComplexDataAssignmenField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return undefined
+Ext.form.ComplexDataAssignmenField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,addParentVars:function(h,d,l,c,b,j){if(h){if(h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"||h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#Subprocess"||h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess"){var i=h.properties["oryx-vardefs"];
+if(i&&i.length>0){var n=i.split(",");
+for(var f=0;
+f<n.length;
+f++){var e=n[f];
+var g=new Array();
+if(e.indexOf(":")>0){var o=e.split(":");
+g.push(o[0]);
+g.push(o[0]);
+b[o[0]]=o[1];
+j.push(o[0])
+}else{g.push(e);
+g.push(e);
+b[e]="java.lang.String";
+j.push(e)
+}l.push(g);
+c.push(g)
+}}if(h._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"){var a=h.properties["oryx-multipleinstancedatainput"];
+if(a&&a.length>0){var g=new Array();
+g.push(a);
+g.push(a);
+b[a]="java.lang.String";
+j.push(g);
+l.push(g);
+c.push(g)
+}var m=h.properties["oryx-multipleinstancedataoutput"];
+if(m&&m.length>0){var g=new Array();
+g.push(m);
+g.push(m);
+b[m]="java.lang.String";
+j.push(g);
+l.push(g);
+c.push(g)
+}}}if(h.parent){this.addParentVars(h.parent,d,l,c,b,j)
+}}},onTriggerClick:function(){if(this.disabled){return undefined
 }var c="";
 var f=ORYX.EDITOR.getSerializedJSON();
-var D=jsonPath(f.evalJSON(),"$.properties.vardefs");
-var l=new Array();
-var o=new Array();
+var G=jsonPath(f.evalJSON(),"$.properties.vardefs");
+var m=new Array();
+var p=new Array();
 var d=new Hash();
 var j=new Array();
 var b=new Array();
-var y=new Array();
-var k=new Array();
-var n=new Array();
-var s=new Array();
-o.push("");
-o.push("** Variable Definitions **");
-l.push(o);
-j.push(o);
-if(D){D.forEach(function(L){if(L.length>0){var I=L.split(",");
-for(var K=0;
-K<I.length;
-K++){var J=new Array();
-var M=I[K];
-if(M.indexOf(":")>0){var H=M.split(":");
-J.push(H[0]);
-J.push(H[0]);
-d[H[0]]=H[1];
-b.push(H[0])
-}else{J.push(M);
-J.push(M);
-d[M]="java.lang.String";
-b.push(M)
-}l.push(J);
-j.push(J)
-}}})
-}var p=new Array();
+var B=new Array();
+var l=new Array();
+var o=new Array();
+var t=new Array();
 p.push("");
-p.push("** Data Inputs **");
-l.push(p);
-y.push(p);
-Ext.each(this.dataSource.data.items,function(K){if((K.data.gridProperties.propId=="oryx-datainputset")||(K.data.gridProperties.propId=="oryx-datainput")){var H=K.data.value.split(",");
-for(var J=0;
-J<H.length;
-J++){var L=H[J];
-var I=new Array();
-if(L.indexOf(":")>0){var i=L.split(":");
-I.push(i[0]);
-I.push(i[0]);
+var z=false;
+var J=ORYX.EDITOR._pluginFacade.getSelection();
+if(J){var y=J.first();
+if(y&&y.parent){if(y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"||y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#Subprocess"||y.parent._stencil._jsonStencil.id=="http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess"){p.push("** Process/Subprocess Definitions **");
+m.push(p);
+j.push(p);
+z=true
+}this.addParentVars(y.parent,p,m,j,d,b)
+}}if(!z){p.push("** Variable Definitions **");
+m.push(p);
+j.push(p)
+}if(G){G.forEach(function(O){if(O.length>0){var L=O.split(",");
+for(var N=0;
+N<L.length;
+N++){var M=new Array();
+var P=L[N];
+if(P.indexOf(":")>0){var K=P.split(":");
+M.push(K[0]);
+M.push(K[0]);
+d[K[0]]=K[1];
+b.push(K[0])
+}else{M.push(P);
+M.push(P);
+d[P]="java.lang.String";
+b.push(P)
+}m.push(M);
+j.push(M)
+}}})
+}var q=new Array();
+q.push("");
+q.push("** Data Inputs **");
+m.push(q);
+B.push(q);
+Ext.each(this.dataSource.data.items,function(N){if((N.data.gridProperties.propId=="oryx-datainputset")||(N.data.gridProperties.propId=="oryx-datainput")){var K=N.data.value.split(",");
+for(var M=0;
+M<K.length;
+M++){var O=K[M];
+var L=new Array();
+if(O.indexOf(":")>0){var i=O.split(":");
+L.push(i[0]);
+L.push(i[0]);
 d[i[0]]=i[1];
-k.push(i[0])
-}else{I.push(L);
-I.push(L);
-d[L]="java.lang.String";
-k.push(L)
-}l.push(I);
-y.push(I)
+l.push(i[0])
+}else{L.push(O);
+L.push(O);
+d[O]="java.lang.String";
+l.push(O)
+}m.push(L);
+B.push(L)
 }}});
-var r=new Array();
-r.push("");
-r.push("** Data Outputs **");
-l.push(r);
-n.push(r);
-Ext.each(this.dataSource.data.items,function(K){if((K.data.gridProperties.propId=="oryx-dataoutputset")||(K.data.gridProperties.propId=="oryx-dataoutput")){var I=K.data.value.split(",");
+var s=new Array();
+s.push("");
+s.push("** Data Outputs **");
+m.push(s);
+o.push(s);
+Ext.each(this.dataSource.data.items,function(N){if((N.data.gridProperties.propId=="oryx-dataoutputset")||(N.data.gridProperties.propId=="oryx-dataoutput")){var L=N.data.value.split(",");
 for(var i=0;
-i<I.length;
-i++){var L=I[i];
-var J=new Array();
-if(L.indexOf(":")>0){var H=L.split(":");
-J.push(H[0]);
-J.push(H[0]);
-d[H[0]]=H[1];
-s.push(H[0])
-}else{J.push(L);
-J.push(L);
-d[L]="java.lang.String";
-s.push(L)
-}l.push(J);
-n.push(J)
+i<L.length;
+i++){var O=L[i];
+var M=new Array();
+if(O.indexOf(":")>0){var K=O.split(":");
+M.push(K[0]);
+M.push(K[0]);
+d[K[0]]=K[1];
+t.push(K[0])
+}else{M.push(O);
+M.push(O);
+d[O]="java.lang.String";
+t.push(O)
+}m.push(M);
+o.push(M)
 }}});
-var e=Ext.data.Record.create([{name:"atype"},{name:"from"},{name:"type"},{name:"to"},{name:"tostr"},{name:"dataType"}]);
-var B=new Ext.data.MemoryProxy({root:[]});
-var F=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},e),proxy:B,sorters:[{property:"atype",direction:"ASC"},{property:"from",direction:"ASC"},{property:"to",direction:"ASC"},{property:"tostr",direction:"ASC"}]});
-F.load();
-if(this.value.length>0){var v=this.value.split(",");
-for(var A=0;
-A<v.length;
-A++){var g=v[A];
-if(g.indexOf("=")>0){var x=g.split("=");
-var z=d[x[0]];
-if(!z){z="java.lang.String"
-}var q=x[0];
-x.shift();
-var h=x.join("=").replace(/\#\#/g,",");
+var e=Ext.data.Record.create([{name:"atype"},{name:"from"},{name:"type"},{name:"to"},{name:"tostr"},{name:"dataType"},{name:"assignment"}]);
+var E=new Ext.data.MemoryProxy({root:[]});
+var I=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},e),proxy:E,sorters:[{property:"atype",direction:"ASC"},{property:"from",direction:"ASC"},{property:"to",direction:"ASC"},{property:"tostr",direction:"ASC"}]});
+I.load();
+if(this.value.length>0){var w=this.value.split(",");
+for(var D=0;
+D<w.length;
+D++){var g=w[D];
+if(g.indexOf("=")>0){var A=g.split("=");
+if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
 h=h.replace(/\|\|/g,"=");
-if(b.indexOf(q)<0){F.add(new e({atype:(k.indexOf(q)>=0)?"DataInput":"DataOutput",from:q,type:"is equal to",to:"",tostr:h,dataType:z}))
-}}else{if(g.indexOf("->")>0){var x=g.split("->");
-var z=d[x[0]];
-if(!z){z="java.lang.String"
-}var q=x[0];
-var G=false;
-if(k.indexOf(q)>=0&&k.indexOf(x[1])>=0){G=true
-}if(k.indexOf(q)>=0&&b.indexOf(x[1])>=0){G=true
-}if(b.indexOf(q)>=0&&b.indexOf(x[1])>=0){G=true
-}if(s.indexOf(q)>=0&&k.indexOf(x[1])>=0){G=true
-}if(!G){F.add(new e({atype:(b.indexOf(q)>=0||k.indexOf(q)>=0)?"DataInput":"DataOutput",from:x[0],type:"is mapped to",to:x[1],tostr:"",dataType:z}))
-}}else{var z=d[g];
-if(!z){z="java.lang.String"
-}if(b.indexOf(g)<0){F.add(new e({atype:(b.indexOf(g)>=0||k.indexOf(g)>=0)?"DataInput":"DataOutput",from:g,type:"is equal to",to:"",tostr:"",dataType:z}))
-}}}}}F.on("update",function(I,i,H){if(H=="edit"){var J=d[i.get("from")];
-if(!J){J="java.lang.String"
-}i.set("dataType",J)
+I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(6,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
+h=h.replace(/\|\|/g,"=");
+I.add(new e({atype:"DataOutput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}else{var r=A[0];
+var C=d[r];
+if(!C){C="java.lang.String"
+}A.shift();
+var h=A.join("=").replace(/\#\#/g,",");
+h=h.replace(/\|\|/g,"=");
+I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:h,dataType:C,assignment:"false"}))
+}}}else{if(g.indexOf("->")>0){var A=g.split("->");
+if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}var k="DataInput";
+I.add(new e({atype:k,from:r,type:"is mapped to",to:A[1],tostr:"",dataType:C,assignment:"true"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(6,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}var k="DataOutput";
+I.add(new e({atype:k,from:r,type:"is mapped to",to:A[1],tostr:"",dataType:C,assignment:"true"}))
+}}}else{if(A[0].startsWith("[din]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:"",dataType:C,assignment:"false"}))
+}else{if(A[0].startsWith("[dout]")){var r=A[0].slice(5,A[0].length);
+var C=d[r];
+if(!C){C="java.lang.String"
+}I.add(new e({atype:"DataInput",from:r,type:"is equal to",to:"",tostr:"",dataType:C,assignment:"false"}))
+}}var C=d[g]
+}}}}I.on("update",function(L,i,K){if(K=="edit"){var M=d[i.get("from")];
+if(!M){M="java.lang.String"
+}i.set("dataType",M)
 }});
-var E=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})});
-var u=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-var m=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})});
-var t=new Extensive.grid.ItemDeleter();
-var w=Ext.id();
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:F,id:w,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"valueType",header:ORYX.I18N.PropertyWindow.dataType,width:180,dataIndex:"dataType",hidden:"true"},{id:"atype",header:"Assignment Type",width:180,dataIndex:"atype"},{id:"from",header:ORYX.I18N.PropertyWindow.fromObject,width:180,dataIndex:"from",editor:E},{id:"type",header:ORYX.I18N.PropertyWindow.assignmentType,width:100,dataIndex:"type",editor:u},{id:"to",header:ORYX.I18N.PropertyWindow.toObject,width:180,dataIndex:"to",editor:m},{id:"tostr",header:ORYX.I18N.PropertyWindow.toValue,width:180,dataIndex:"tostr",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},t]),selModel:t,autoHeight:true,tbar:[{text:"[ New Data Input Assignment ]",handler:function(){F.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:""}));
+var H=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:m})});
+var v=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
+var n=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:m})});
+var u=new Extensive.grid.ItemDeleter();
+var x=Ext.id();
+var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:I,id:x,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"valueType",header:ORYX.I18N.PropertyWindow.dataType,width:180,dataIndex:"dataType",hidden:"true"},{id:"atype",header:"Assignment Type",width:180,dataIndex:"atype"},{id:"from",header:ORYX.I18N.PropertyWindow.fromObject,width:180,dataIndex:"from",editor:H},{id:"type",header:ORYX.I18N.PropertyWindow.assignmentType,width:100,dataIndex:"type",editor:v},{id:"to",header:ORYX.I18N.PropertyWindow.toObject,width:180,dataIndex:"to",editor:n},{id:"tostr",header:ORYX.I18N.PropertyWindow.toValue,width:180,dataIndex:"tostr",editor:new Ext.form.TextField({name:"tostrTxt",allowBlank:true}),renderer:Ext.util.Format.htmlEncode},u]),selModel:u,autoHeight:true,tbar:[{text:"[ Input Assignment ]",handler:function(){I.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:"",assignment:"false"}));
 c="datainput";
-a.fireEvent("cellclick",a,F.getCount()-1,1,null)
-}},{text:"[ New Data Output Assignment ]",handler:function(){F.add(new e({atype:"DataOutput",from:"",type:"",to:"",tostr:""}));
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}},{text:"[ Input Mapping ]",handler:function(){I.add(new e({atype:"DataInput",from:"",type:"",to:"",tostr:"",assignment:"true"}));
+c="datainput";
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}},{text:"[ Output Mapping ]",handler:function(){I.add(new e({atype:"DataOutput",from:"",type:"",to:"",tostr:"",assignment:"true"}));
 c="dataoutput";
-a.fireEvent("cellclick",a,F.getCount()-1,1,null)
-}}],clicksToEdit:1,listeners:{beforeedit:function(K){if(K.record.data.atype=="DataInput"){var i=K.grid.getColumnModel().getCellEditor(K.column,K.row)||{};
+a.fireEvent("cellclick",a,I.getCount()-1,1,null)
+}}],clicksToEdit:1,listeners:{beforeedit:function(O){if(O.record.data.atype=="DataInput"){var i=O.grid.getColumnModel().getCellEditor(O.column,O.row)||{};
 i=i.field||{};
 if(i.name=="typeCombo"){i.destroy();
-var H=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(H))
+var K;
+if(O.record.data.assignment=="true"){K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo]]})})
+}else{K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(K))
 }if(i.name=="fromCombo"){i.destroy();
-var I=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j.concat(y)})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(I))
+var L;
+if(O.record.data.assignment=="true"){L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}else{L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(L))
 }if(i.name=="toCombo"){i.destroy();
-var J=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:y})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(J))
-}}if(K.record.data.atype=="DataOutput"){var i=K.grid.getColumnModel().getCellEditor(K.column,K.row)||{};
+var N;
+if(O.record.data.assignment=="true"){N=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}else{N=new Ext.form.ComboBox({name:"toCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:B})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(N))
+}if(i.name=="tostrTxt"){i.destroy();
+var M;
+if(O.record.data.assignment=="true"){M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true,disabled:true})
+}else{M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(M))
+}}if(O.record.data.atype=="DataOutput"){var i=O.grid.getColumnModel().getCellEditor(O.column,O.row)||{};
 i=i.field||{};
 if(i.name=="typeCombo"){i.destroy();
-var H=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo],["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(H))
+var K;
+if(O.record.data.assignment=="true"){K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is mapped to",ORYX.I18N.PropertyWindow.isMappedTo]]})})
+}else{K=new Ext.form.ComboBox({name:"typeCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:[["is equal to",ORYX.I18N.PropertyWindow.isEqualTo]]})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(K))
 }if(i.name=="fromCombo"){i.destroy();
-var I=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:n})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(I))
+var L;
+if(O.record.data.assignment=="true"){L=new Ext.form.ComboBox({name:"fromCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})
+}else{L=new Ext.form.ComboBox({name:"fromCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:o})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(L))
 }if(i.name=="toCombo"){i.destroy();
-var J=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})});
-K.grid.getColumnModel().setEditor(K.column,new Ext.grid.GridEditor(J))
+var N;
+if(O.record.data.assignment=="true"){N=new Ext.form.ComboBox({name:"toCombo",valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}else{N=new Ext.form.ComboBox({name:"toCombo",disabled:true,valueField:"name",displayField:"value",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:j})})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(N))
+}if(i.name=="tostrTxt"){i.destroy();
+var M;
+if(O.record.data.assignment=="true"){M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true,disabled:true})
+}else{M=new Ext.form.TextField({name:"tostrTxt",allowBlank:true})
+}O.grid.getColumnModel().setEditor(O.column,new Ext.grid.GridEditor(M))
 }}}}});
-var C=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForDataAssignments,height:350,width:890,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){C.hide()
+var F=new Ext.Window({layout:"anchor",autoCreate:true,title:ORYX.I18N.PropertyWindow.editorForDataAssignments,height:350,width:890,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){F.hide()
 }.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-C.destroy()
+F.destroy()
 }.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
 a.getView().refresh();
 a.stopEditing();
-F.data.each(function(){if(this.data.from.length>0&&this.data.type.length>0){if(this.data.type=="is mapped to"){if(this.data.to.length>0){if(k.indexOf(this.data.from)>=0&&k.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(k.indexOf(this.data.from)>=0&&j.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(b.indexOf(this.data.from)>=0&&j.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{if(s.indexOf(this.data.from)>=0&&k.indexOf(this.data.to)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{i+=this.data.from+"->"+this.data.to+","
-}}}}}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" does not contain a proper mapping",title:""})
-}}else{if(this.data.type=="is equal to"){if(this.data.tostr.length>0){if(b.indexOf(this.data.from)>=0){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" is invalid",title:""})
-}else{var H=this.data.tostr.replace(/,/g,"##");
-H=H.replace(/=/g,"||");
-i+=this.data.from+"="+H+","
-}}else{ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"warning",msg:"Assignment for "+this.data.from+" does not contain a proper mapping.",title:""})
-}}}}});
+I.data.each(function(){if(this.data.from.length>0&&this.data.type.length>0){var K=this.data.atype;
+if(this.data.type=="is mapped to"){if(K=="DataInput"){i+="[din]"+this.data.from+"->"+this.data.to+","
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"->"+this.data.to+","
+}}}else{if(this.data.type=="is equal to"){if(this.data.tostr.length>0){var L=this.data.tostr.replace(/,/g,"##");
+L=L.replace(/=/g,"||");
+if(K=="DataInput"){i+="[din]"+this.data.from+"="+L+","
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"="+L+","
+}}}else{if(K=="DataInput"){i+="[din]"+this.data.from+"=,"
+}else{if(K=="DataOutput"){i+="[dout]"+this.data.from+"=,"
+}}}}}}});
 if(i.length>0){i=i.slice(0,-1)
 }this.setValue(i);
 this.dataSource.getAt(this.row).set("value",i);
 this.dataSource.commitChanges();
-C.hide()
+F.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-C.hide()
+F.hide()
 }.bind(this)}]});
-C.show();
+F.show();
 a.render();
 this.grid.stopEditing();
 a.focus(false,100);
 return a
 }});
 Ext.form.NameTypeEditor=Ext.extend(Ext.form.TriggerField,{windowTitle:"",addButtonLabel:"",single:false,editable:false,readOnly:true,dtype:"",onTriggerClick:function(){if(this.disabled){return
-}var j=Ext.data.Record.create([{name:"name"},{name:"stype"},{name:"ctype"}]);
-var d=new Ext.data.MemoryProxy({root:[]});
-var g=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},j),proxy:d,sorters:[{property:"name",direction:"ASC"}]});
-g.load();
-if(this.value.length>0){var l=this.value.split(",");
-for(var h=0;
-h<l.length;
-h++){var e=l[h];
-if(e.indexOf(":")>0){var r=e.split(":");
-if(r[1]=="String"||r[1]=="Integer"||r[1]=="Boolean"||r[1]=="Float"){g.add(new j({name:r[0],stype:r[1],ctype:""}))
-}else{if(r[1]!="Object"){g.add(new j({name:r[0],stype:"Object",ctype:r[1]}))
-}else{g.add(new j({name:r[0],stype:r[1],ctype:""}))
-}}}else{g.add(new j({name:e,stype:"",ctype:""}))
-}}}var k=new Extensive.grid.ItemDeleter();
-k.setDType(this.dtype);
-var c=new Array();
+}var a=ORYX.EDITOR.getSerializedJSON();
+var b=jsonPath(a.evalJSON(),"$.properties.package");
+var c=jsonPath(a.evalJSON(),"$.properties.id");
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(f){try{if(f.responseText.length>=0&&f.responseText!="false"){var L=Ext.decode(f.responseText);
+var l=new Array();
+var s=new Array();
+s.push("String");
+s.push("String");
+l.push(s);
 var q=new Array();
-q.push("String");
-q.push("String");
-c.push(q);
-var p=new Array();
-p.push("Integer");
-p.push("Integer");
-c.push(p);
-var n=new Array();
-n.push("Boolean");
-n.push("Boolean");
-c.push(n);
-var o=new Array();
-o.push("Float");
-o.push("Float");
-c.push(o);
-var b=new Array();
-b.push("Object");
-b.push("Object");
-c.push(b);
-var f=Ext.id();
+q.push("Integer");
+q.push("Integer");
+l.push(q);
+var I=new Array();
+I.push("Boolean");
+I.push("Boolean");
+l.push(I);
+var D=new Array();
+D.push("Float");
+D.push("Float");
+l.push(D);
+var x=new Array();
+x.push("Object");
+x.push("Object");
+l.push(x);
+var A=new Array();
+A.push("**********");
+A.push("**********");
+l.push(A);
+var O=new Array();
+for(var Q in L){var H=L[Q];
+O.push(H)
+}O.sort();
+for(var v=0;
+v<O.length;
+v++){var z=new Array();
+var o=O[v];
+var w=o.split(".");
+var N=w[w.length-1];
+var u=o.substring(0,o.length-(N.length+1));
+z.push(N+" ["+u+"]");
+z.push(O[v]);
+l.push(z)
+}var h=Ext.data.Record.create([{name:"name"},{name:"stype"},{name:"ctype"}]);
+var m=new Ext.data.MemoryProxy({root:[]});
+var g=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},h),proxy:m,sorters:[{property:"name",direction:"ASC"}]});
+g.load();
+if(this.value.length>0){var B=this.value.split(",");
+for(var J=0;
+J<B.length;
+J++){var n=B[J];
+if(n.indexOf(":")>0){var E=n.split(":");
+var p=false;
+for(var G=0;
+G<l.length;
+G++){var M=l[G];
+for(var F=0;
+F<M.length;
+F++){var y=M[F];
+if(y==E[1]){p=true;
+break
+}}}if(p==true){g.add(new h({name:E[0],stype:E[1],ctype:""}))
+}else{g.add(new h({name:E[0],stype:"",ctype:E[1]}))
+}}else{g.add(new h({name:n,stype:"",ctype:""}))
+}}}var r=new Extensive.grid.ItemDeleter();
+r.setDType(this.dtype);
+var C=Ext.id();
 Ext.form.VTypes.inputNameVal=/^[a-z0-9\-\.\_]*$/i;
 Ext.form.VTypes.inputNameText="Invalid name";
-Ext.form.VTypes.inputName=function(i){return Ext.form.VTypes.inputNameVal.test(i)
+Ext.form.VTypes.inputName=function(e){return Ext.form.VTypes.inputNameVal.test(e)
 };
-var a=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:g,id:f,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"name",header:ORYX.I18N.PropertyWindow.name,width:100,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,vtype:"inputName",regex:/^[a-z0-9\-\.\_]*$/i}),renderer:Ext.util.Format.htmlEncode},{id:"stype",header:ORYX.I18N.PropertyWindow.standardType,width:100,dataIndex:"stype",editor:new Ext.form.ComboBox({id:"typeCombo",valueField:"name",displayField:"value",labelStyle:"display:none",submitValue:true,typeAhead:false,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,store:new Ext.data.SimpleStore({fields:["name","value"],data:c})})},{id:"ctype",header:ORYX.I18N.PropertyWindow.customType,width:200,dataIndex:"ctype",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},k]),selModel:k,autoHeight:true,tbar:[{text:this.addButtonLabel,handler:function(){if(this.single&&g.getCount()>0){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.OnlySingleEntry,title:""})
-}else{g.add(new j({name:"",stype:"",ctype:""}));
-a.fireEvent("cellclick",a,g.getCount()-1,1,null)
+var d=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:g,id:C,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"name",header:ORYX.I18N.PropertyWindow.name,width:100,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,vtype:"inputName",regex:/^[a-z0-9\-\.\_]*$/i}),renderer:Ext.util.Format.htmlEncode},{id:"stype",header:"Defined Types",width:200,dataIndex:"stype",editor:new Ext.form.ComboBox({typeAhead:true,anyMatch:true,id:"customTypeCombo",valueField:"value",displayField:"name",labelStyle:"display:none",submitValue:true,typeAhead:true,queryMode:"local",mode:"local",triggerAction:"all",selectOnFocus:true,hideTrigger:false,forceSelection:false,selectOnFocus:true,autoSelect:false,editable:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:l})})},{id:"ctype",header:ORYX.I18N.PropertyWindow.customType,width:200,dataIndex:"ctype",editor:new Ext.form.TextField({allowBlank:true}),renderer:Ext.util.Format.htmlEncode},r]),selModel:r,autoHeight:true,tbar:[{text:this.addButtonLabel,handler:function(){if(this.single&&g.getCount()>0){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.PropertyWindow.OnlySingleEntry,title:""})
+}else{g.add(new h({name:"",stype:"",ctype:""}));
+d.fireEvent("cellclick",d,g.getCount()-1,1,null)
 }}.bind(this)}],clicksToEdit:1});
-var m=new Ext.Window({layout:"anchor",autoCreate:true,title:this.windowTitle,height:300,width:500,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){m.hide()
-}.bind(this)}],items:[a],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
-m.destroy()
-}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var i="";
-a.stopEditing();
-a.getView().refresh();
-g.data.each(function(){if(this.data.name.length>0){if(this.data.stype.length>0){if(this.data.stype=="Object"&&this.data.ctype.length>0){i+=this.data.name+":"+this.data.ctype+","
-}else{i+=this.data.name+":"+this.data.stype+","
-}}else{if(this.data.ctype.length>0){i+=this.data.name+":"+this.data.ctype+","
-}else{i+=this.data.name+","
+var K=new Ext.Window({layout:"anchor",autoCreate:true,title:this.windowTitle,height:300,width:600,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,keys:[{key:27,fn:function(){K.hide()
+}.bind(this)}],items:[d],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+K.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.PropertyWindow.ok,handler:function(){var e="";
+d.stopEditing();
+d.getView().refresh();
+g.data.each(function(){if(this.data.name.length>0){if(this.data.stype.length>0){if(this.data.stype=="Object"&&this.data.ctype.length>0){e+=this.data.name+":"+this.data.ctype+","
+}else{e+=this.data.name+":"+this.data.stype+","
+}}else{if(this.data.ctype.length>0){e+=this.data.name+":"+this.data.ctype+","
+}else{e+=this.data.name+","
 }}}});
-if(i.length>0){i=i.slice(0,-1)
-}this.setValue(i);
-this.dataSource.getAt(this.row).set("value",i);
+if(e.length>0){e=e.slice(0,-1)
+}this.setValue(e);
+this.dataSource.getAt(this.row).set("value",e);
 this.dataSource.commitChanges();
-m.hide()
+K.hide()
 }.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
-m.hide()
+K.hide()
 }.bind(this)}]});
-m.show();
-a.render();
+K.show();
+d.render();
 this.grid.stopEditing();
-a.focus(false,100)
+d.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find Data Types.",title:""})
+}}catch(P){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info  :\n"+P,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:b,pid:c,action:"showdatatypes"}})
 }});
 Ext.form.ComplexVardefField=Ext.extend(Ext.form.NameTypeEditor,{windowTitle:ORYX.I18N.PropertyWindow.editorForVariableDefinitions,addButtonLabel:ORYX.I18N.PropertyWindow.addVariable,dtype:ORYX.CONFIG.TYPE_DTYPE_VARDEF});
 Ext.form.ComplexDataInputField=Ext.extend(Ext.form.NameTypeEditor,{windowTitle:ORYX.I18N.PropertyWindow.editorForDataInput,addButtonLabel:ORYX.I18N.PropertyWindow.addDataInput,dtype:ORYX.CONFIG.TYPE_DTYPE_DINPUT});
@@ -1356,7 +1578,87 @@ n.setHeight(P.getInnerHeight());
 if(!y){H()
 }this.grid.stopEditing()
 }});
-Ext.form.ComplexCalledElementField=Ext.extend(Ext.form.TriggerField,{editable:false,readOnly:true,onTriggerClick:function(){if(this.disabled){return
+Ext.form.ComplexRuleflowGroupElementField=Ext.extend(Ext.form.TriggerField,{editable:true,readOnly:false,onTriggerClick:function(){if(this.disabled){return
+}var b=ORYX.EDITOR.getSerializedJSON();
+var d=jsonPath(b.evalJSON(),"$.properties.package");
+var f=jsonPath(b.evalJSON(),"$.properties.id");
+var a=Ext.data.Record.create([{name:"name"},{name:"rules"},{name:"repo"},{name:"project"},{name:"branch"},{name:"fullpath"}]);
+var c=new Ext.data.MemoryProxy({root:[]});
+var e=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},a),proxy:c,sorters:[{property:"name",direction:"ASC"}]});
+e.load();
+this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:"Loading RuleFlow Groups",title:""});
+Ext.Ajax.request({url:ORYX.PATH+"calledelement",method:"POST",success:function(j){try{if(j.responseText.length>0&&j.responseText!="false"){var C=Ext.decode(j.responseText);
+for(var H in C){var z=C[H];
+var y=new Array();
+var r=z.split("||");
+var q=r[0];
+var m=r[1];
+var x=m.split("<<");
+for(var A=0;
+A<x.length;
+A++){var D=x[A].split("^^");
+var s=new Array();
+s.push(D[0]);
+s.push(D[1]);
+y.push(s)
+}var u=x[0];
+var l=u.split("^^");
+var G=l[1];
+var p=G.split("://");
+var F=p[1];
+var w=F.split("@");
+var h=w[0];
+var k=w[1];
+var o=k.split("/")[0];
+var t=k.split("/")[1];
+e.add(new a({name:q,rules:y,repo:o,project:t,branch:h,fullpath:G}))
+}e.commitChanges();
+var v=Ext.id();
+var g=new Ext.grid.EditorGridPanel({autoScroll:true,autoHeight:true,store:e,id:v,stripeRows:true,cm:new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),{id:"rfgname",header:"RuleFlow Group Name",width:200,sortable:true,dataIndex:"name",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfrulenames",header:"Rules",width:200,sortable:false,renderer:function(M,I,K,L,P,N){function i(S,U,R,T){new Ext.form.ComboBox({name:"ruleflowscombo",id:T,valueField:"value",displayField:"name",typeAhead:true,mode:"local",triggerAction:"all",selectOnFocus:true,store:new Ext.data.SimpleStore({fields:["name","value"],data:S})}).render(document.getElementById(v),U)
+}function O(S,U,R,T){new Ext.Button({text:"view",handler:function(V,Y){var X=Ext.getCmp(T).getRawValue();
+var W=Ext.getCmp(T).getValue();
+if(X&&X.length>0&&W&&W.length>0){parent.designeropenintab(X,W)
+}}}).render(document.getElementById(v),U)
+}var J="rulenamescombodiv-"+L;
+var Q="rncombo-"+L;
+i.defer(1,this,[N.getAt(L).get("rules"),J,K,Q]);
+O.defer(1,this,[N.getAt(L).get("rules"),J,K,Q]);
+return('<div id="'+J+'"></div>')
+}},{id:"rfrepository",header:"Repository",width:100,sortable:true,dataIndex:"repo",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfproject",header:"Project",width:100,sortable:true,dataIndex:"project",editor:new Ext.form.TextField({allowBlank:true,disabled:true})},{id:"rfbranch",header:"Branch",width:100,sortable:true,dataIndex:"branch",editor:new Ext.form.TextField({allowBlank:true,disabled:true})}])});
+g.on("afterrender",function(J){if(this.value.length>0){var i=0;
+var K=this.value;
+var I=g;
+e.data.each(function(){if(this.data.name==K){I.getSelectionModel().select(i,1)
+}i++
+})
+}}.bind(this));
+var n=new Ext.Panel({id:"ruleFlowGroupsPanel",title:'<center><p style="font-size:11px"><i>Select RuleFlow Group Name and click on Save</i></p></center>',layout:"column",items:[g],layoutConfig:{columns:1},defaults:{columnWidth:1}});
+var B=new Ext.Window({layout:"anchor",autoCreate:true,title:"Editor for RuleFlow Groups",height:350,width:760,modal:true,collapsible:false,fixedcenter:true,shadow:true,resizable:true,proxyDrag:true,autoScroll:true,items:[n],listeners:{hide:function(){this.fireEvent("dialogClosed",this.value);
+B.destroy()
+}.bind(this)},buttons:[{text:ORYX.I18N.Save.save,handler:function(){if(g.getSelectionModel().getSelectedCell()!=null){var i=g.getSelectionModel().getSelectedCell()[0];
+var I=e.getAt(i).data.name;
+g.stopEditing();
+g.getView().refresh();
+this.setValue(I);
+this.dataSource.getAt(this.row).set("value",I);
+this.dataSource.commitChanges();
+B.hide()
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"No data selected.",title:""})
+}}.bind(this)},{text:ORYX.I18N.PropertyWindow.cancel,handler:function(){this.setValue(this.value);
+B.hide()
+}.bind(this)}]});
+B.show();
+g.render();
+g.fireEvent("afterrender");
+this.grid.stopEditing();
+g.focus(false,100)
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Unable to find RuleFlow Groups.",title:""})
+}}catch(E){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving RuleFlow Groups info  :\n"+E,title:""})
+}}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving RuleFlow Groups info.",title:""})
+},params:{profile:ORYX.PROFILE,uuid:ORYX.UUID,ppackage:d,pid:f,action:"showruleflowgroups"}});
+this.grid.stopEditing()
+}});
+Ext.form.ComplexCalledElementField=Ext.extend(Ext.form.TriggerField,{editable:true,readOnly:false,onTriggerClick:function(){if(this.disabled){return
 }var a=Ext.data.Record.create([{name:"name"},{name:"pkgname"},{name:"imgsrc"}]);
 var e=new Ext.data.MemoryProxy({root:[]});
 var d=new Ext.data.Store({autoDestroy:true,reader:new Ext.data.JsonReader({root:"root"},a),proxy:e,sorters:[{property:"name",direction:"ASC"}]});

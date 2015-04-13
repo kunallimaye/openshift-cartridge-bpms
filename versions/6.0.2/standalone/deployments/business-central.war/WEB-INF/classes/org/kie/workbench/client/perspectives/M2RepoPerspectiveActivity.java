@@ -25,6 +25,10 @@ import javax.inject.Inject;
 
 import javax.inject.Named;
 import org.uberfire.workbench.model.PerspectiveDefinition;
+import org.uberfire.workbench.model.impl.PerspectiveDefinitionImpl;
+import java.util.HashMap;
+import java.util.Map;
+import org.uberfire.client.annotations.Perspective;
 import org.uberfire.client.mvp.AbstractWorkbenchPerspectiveActivity;
 import org.uberfire.client.mvp.PlaceManager;
 
@@ -32,13 +36,24 @@ import org.uberfire.mvp.PlaceRequest;
 
 import org.uberfire.workbench.model.menu.Menus;
 
+import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.IsWidget;
+import org.uberfire.client.mvp.TemplatedActivity;
+import org.uberfire.client.workbench.panels.impl.TemplatedWorkbenchPanelPresenter;
+import org.uberfire.mvp.impl.DefaultPlaceRequest;
+import org.uberfire.workbench.model.NamedPosition;
+import org.uberfire.workbench.model.PanelDefinition;
+import org.uberfire.workbench.model.Position;
+import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
+import org.uberfire.workbench.model.impl.PartDefinitionImpl;
+
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchPerspectiveProcessor")
 @Named("org.guvnor.m2repo.client.perspectives.GuvnorM2RepoPerspective")
 /*
  * WARNING! This class is generated. Do not modify.
  */
-public class M2RepoPerspectiveActivity extends AbstractWorkbenchPerspectiveActivity {
+public class M2RepoPerspectiveActivity extends AbstractWorkbenchPerspectiveActivity implements TemplatedActivity {
 
     private static final Collection<String> ROLES = Collections.emptyList();
 
@@ -60,13 +75,8 @@ public class M2RepoPerspectiveActivity extends AbstractWorkbenchPerspectiveActiv
 
     @Override
     public void onStartup(final PlaceRequest place) {
-        super.onStartup();
+        super.onStartup( place );
         realPresenter.onStartup();
-    }
-
-    @Override
-    public PerspectiveDefinition getPerspective() {
-        return realPresenter.getPerspective();
     }
 
     @Override
@@ -88,4 +98,32 @@ public class M2RepoPerspectiveActivity extends AbstractWorkbenchPerspectiveActiv
     public String getSignatureId() {
         return "org.kie.workbench.client.perspectives.M2RepoPerspectiveActivity";
     }
+
+    @Override
+    public IsWidget getRootWidget() {
+        return realPresenter;
+    }
+
+    @Override
+    public HasWidgets resolvePosition( NamedPosition position ) {
+        final String fieldName = position.getFieldName();
+        if ( fieldName.equals( "m2RepoEditor" ) ) {
+            return realPresenter.m2RepoEditor;
+        }
+        return null;
+    }
+
+    @Override
+    public PerspectiveDefinition getDefaultPerspectiveLayout() {
+        final PerspectiveDefinition p = new PerspectiveDefinitionImpl( TemplatedWorkbenchPanelPresenter.class.getName() );
+        p.setName( realPresenter.getClass().getName() );
+
+
+        PanelDefinition panelDefinition0 = new PanelDefinitionImpl( "PARENT_CHOOSES_TYPE" );
+        panelDefinition0.addPart(
+                new PartDefinitionImpl( new DefaultPlaceRequest( "M2RepoEditor" ) ) );
+        p.getRoot().appendChild( new NamedPosition( "m2RepoEditor" ), panelDefinition0 );
+        return p;
+    }
+
 }

@@ -2,8 +2,8 @@ if(!ORYX.Plugins){ORYX.Plugins=new Object()
 }ORYX.Plugins.View={facade:undefined,diffEditor:undefined,diffDialog:undefined,construct:function(b,a){this.facade=b;
 this.facade.registerOnEvent(ORYX.CONFIG.VOICE_COMMAND_GENERATE_IMAGE,this.showAsPNG.bind(this));
 this.facade.registerOnEvent(ORYX.CONFIG.VOICE_COMMAND_VIEW_SOURCE,this.showProcessBPMN.bind(this));
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_DRAGDROP_END,this.refreshCanvasforIE.bind(this));
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHAPE_ADDED,this.refreshCanvasforIE.bind(this));
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_DRAGDROP_END,this.refreshCanvasForIE.bind(this));
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_SHAPE_ADDED,this.refreshCanvasForIE.bind(this));
 this.zoomLevel=1;
 this.maxFitToScreenLevel=1.5;
 this.minZoomLevel=0.4;
@@ -54,16 +54,21 @@ uuidParamValue=uuidParams[1];
 window.open(ORYX.EXTERNAL_PROTOCOL+"://"+ORYX.EXTERNAL_HOST+"/"+ORYX.EXTERNAL_SUBDOMAIN+"/org.drools.guvnor.Guvnor/standaloneEditorServlet?assetsUUIDs="+uuidParamValue+"&client=oryx","Process Editor","status=0,toolbar=0,menubar=0,resizable=0,location=no,width=1400,height=1000")
 },importFromBPMN2:function(a){var c=new Ext.form.FormPanel({baseCls:"x-plain",labelWidth:50,defaultType:"textfield",items:[{text:ORYX.I18N.FromBPMN2Support.selectFile,style:"font-size:12px;margin-bottom:10px;display:block;",anchor:"100%",xtype:"label"},{fieldLabel:ORYX.I18N.FromBPMN2Support.file,name:"subject",inputType:"file",style:"margin-bottom:10px;display:block;",itemCls:"ext_specific_window_overflow"},{xtype:"textarea",hideLabel:true,name:"msg",anchor:"100% -63"}]});
 var b=new Ext.Window({autoCreate:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.FromBPMN2Support.impBPMN2,height:350,width:500,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[c],buttons:[{text:ORYX.I18N.FromBPMN2Support.impBtn,handler:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.FromBPMN2Support.impProgress,title:""});
-var d=c.items.items[2].getValue();
-Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(f){if(f.responseText.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
+var e=c.items.items[1].getValue();
+var d=false;
+if(e===undefined||e.length<=0){d=true
+}else{if(e.endsWith(".bpmn")||e.endsWith(".bpmn2")){d=true
+}}if(d){var f=c.items.items[2].getValue();
+Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(g){if(g.responseText.length<1){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
 b.hide()
-}else{try{this._loadJSON(f.responseText,"BPMN2")
-}catch(g){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+"<p>"+g+"</p>",title:""})
+}else{try{this._loadJSON(g.responseText,"BPMN2")
+}catch(h){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+"<p>"+h+"</p>",title:""})
 }b.hide()
 }}.createDelegate(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromBPMN2Error+ORYX.I18N.view.importFromBPMN2ErrorCheckLogs,title:""});
 b.hide()
-}.createDelegate(this),params:{profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),pp:ORYX.PREPROCESSING,bpmn2:d,transformto:"bpmn2json"}})
-}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
+}.createDelegate(this),params:{profile:ORYX.PROFILE,uuid:window.btoa(encodeURI(ORYX.UUID)),pp:ORYX.PREPROCESSING,bpmn2:f,transformto:"bpmn2json"}})
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Invalid file type. Must be .bpmn or .bpmn2",title:""})
+}}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
 }.bind(this)}]});
 b.on("hide",function(){b.destroy(true);
 delete b
@@ -76,11 +81,16 @@ d.readAsText(e.target.files[0],"UTF-8")
 },true)
 },importFromJSON:function(a){var c=new Ext.form.FormPanel({baseCls:"x-plain",labelWidth:50,defaultType:"textfield",items:[{text:ORYX.I18N.FromJSONSupport.selectFile,style:"font-size:12px;margin-bottom:10px;display:block;",anchor:"100%",xtype:"label"},{fieldLabel:ORYX.I18N.FromJSONSupport.file,name:"subject",inputType:"file",style:"margin-bottom:10px;display:block;",itemCls:"ext_specific_window_overflow"},{xtype:"textarea",hideLabel:true,name:"msg",anchor:"100% -63"}]});
 var b=new Ext.Window({autoCreate:true,layout:"fit",plain:true,bodyStyle:"padding:5px;",title:ORYX.I18N.FromJSONSupport.impBPMN2,height:350,width:500,modal:true,fixedcenter:true,shadow:true,proxyDrag:true,resizable:true,items:[c],buttons:[{text:ORYX.I18N.FromJSONSupport.impBtn,handler:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.FromJSONSupport.impProgress,title:""});
-var d=c.items.items[2].getValue();
-try{this._loadJSON(d,"JSON")
-}catch(f){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromJSONError+"\n"+f,title:""})
+var f=c.items.items[1].getValue();
+var d=false;
+if(f===undefined||f.length<=0){d=true
+}else{if(f.endsWith(".json")){d=true
+}}if(d){var g=c.items.items[2].getValue();
+try{this._loadJSON(g,"JSON")
+}catch(h){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.importFromJSONError+"\n"+h,title:""})
 }b.hide()
-}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
+}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Invalid file type. Must be .json",title:""})
+}}.bind(this)},{text:ORYX.I18N.Save.close,handler:function(){b.hide()
 }.bind(this)}]});
 b.on("hide",function(){b.destroy(true);
 delete b
@@ -174,9 +184,7 @@ this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success"
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
 }}else{try{this.facade.importJSON(a);
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"success",msg:ORYX.I18N.view.importSuccess+" "+b,title:""})
-}catch(e){var h=ORYX.EDITOR.getSerializedJSON();
-this.facade.importJSON(h);
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
+}catch(e){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.view.unableImportProvided+" "+b,title:""})
 }}}.bind(this))
 }else{this._showErrorMessageBox(ORYX.I18N.Oryx.title,ORYX.I18N.jPDLSupport.impFailedJson)
 }},getAllShapesToConsider:function(b,d){var a=[];
@@ -468,14 +476,29 @@ var b=Math.min((a.parentNode.getWidth()/a.getWidth()),(a.parentNode.getHeight()/
 return 0.7>b
 },_checkZoomLevelRange:function(){if(this.zoomLevel<this.minZoomLevel){this.zoomLevel=this.minZoomLevel
 }if(this.zoomLevel>this.maxZoomLevel){this.zoomLevel=this.maxZoomLevel
-}},refreshCanvasforIE:function(){if(Object.hasOwnProperty.call(window,"ActiveXObject")&&!window.ActiveXObject){var d=ORYX.EDITOR.getSerializedJSON();
+}},refreshCanvasForIE:function(b){if((Object.hasOwnProperty.call(window,"ActiveXObject")&&!window.ActiveXObject)||(navigator.appVersion.indexOf("MSIE 10")!==-1)){if(!b.shape){var c=this.facade.getSelection();
+if(c&&c.length>0&&c[0] instanceof ORYX.Core.Node){var a=c[0];
+a.properties["oryx-invisid"]=Math.random();
+b.shape=a
+}}var h=ORYX.EDITOR.getSerializedJSON();
 this.facade.setSelection(this.facade.getCanvas().getChildShapes(true));
-var a=this.facade.getSelection();
-var b=new ORYX.Plugins.Edit.ClipBoard();
-b.refresh(a,this.getAllShapesToConsider(a,true));
-var c=new ORYX.Plugins.Edit.DeleteCommand(b,this.facade);
-this.facade.executeCommands([c]);
-this.facade.importJSON(d);
-this.facade.setSelection([])
-}}};
+var d=this.facade.getSelection();
+var e=new ORYX.Plugins.Edit.ClipBoard();
+e.refresh(d,this.getAllShapesToConsider(d,true));
+var g=new ORYX.Plugins.Edit.DeleteCommand(e,this.facade);
+this.facade.executeCommands([g]);
+this.facade.importJSON(h);
+var f=false;
+f=this.findSelectedShape(b.shape,b);
+if(f){this.facade.setSelection([f])
+}this.facade.getCanvas().update();
+this.facade.updateSelection()
+}},findSelectedShape:function(a,b){var c=false;
+if(b&&b.shape){ORYX.EDITOR._canvas.getChildren().each((function(e){if(e instanceof ORYX.Core.Node||e instanceof ORYX.Core.Edge){if(b.shape.properties["oryx-invisid"]==e.properties["oryx-invisid"]){c=e
+}}if(e.getChildren().size()>0){for(var d=0;
+d<e.getChildren().size();
+d++){if(e.getChildren()[d] instanceof ORYX.Core.Node||e.getChildren()[d] instanceof ORYX.Core.Edge){this.findSelectedShape(e.getChildren()[d],b)
+}}}}).bind(this))
+}return c
+}};
 ORYX.Plugins.View=Clazz.extend(ORYX.Plugins.View);

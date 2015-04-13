@@ -2456,27 +2456,43 @@ j<l;
 while(j--){if(h[j]===k){return true
 }}return false
 }return h.indexOf(k)!=-1
-}function d(m,l,h,n){var o=m.getCursor(),k=n(m,o),p=k;
-if(!/^[\w$_]*$/.test(k.string)){k=p={start:o.ch,end:o.ch,string:"",state:k.state,className:k.string=="."?"property":null}
-}while(p.className=="property"){p=n(m,{line:o.line,ch:p.start});
-if(p.string!="."){return
-}p=n(m,{line:o.line,ch:p.start});
-if(p.string==")"){var i=1;
-do{p=n(m,{line:o.line,ch:p.start});
-switch(p.string){case")":i++;
+}function d(m,q,t,w){var k=ORYX.EDITOR.getSerializedJSON();
+var z=jsonPath(k.evalJSON(),"$.properties.package");
+var r=jsonPath(k.evalJSON(),"$.properties.id");
+var s=new XMLHttpRequest;
+var n=ORYX.PATH+"calledelement";
+var i="action=showdatatypes&profile="+ORYX.PROFILE+"&uuid="+window.btoa(encodeURI(ORYX.UUID))+"&ppackage="+z+"&pid="+r;
+s.open("POST",n,false);
+s.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+s.send(i);
+if(s.status==200){if(s.responseText&&s.responseText.length>0){try{var x=s.responseText.evalJSON();
+var o="";
+for(var A in x){var v=x[A];
+o+=v;
+o+=","
+}if(o.endsWith(",")){o=o.substr(0,o.length-1)
+}var l=m.getCursor(),p=w(m,l),u=p;
+if(!/^[\w$_]*$/.test(p.string)){p=u={start:l.ch,end:l.ch,string:"",state:p.state,className:p.string=="."?"property":null}
+}while(u.className=="property"){u=w(m,{line:l.line,ch:u.start});
+if(u.string!="."){return
+}u=w(m,{line:l.line,ch:u.start});
+if(u.string==")"){var h=1;
+do{u=w(m,{line:l.line,ch:u.start});
+switch(u.string){case")":h++;
 break;
-case"(":i--;
+case"(":h--;
 break;
 default:break
-}}while(i>0);
-p=n(m,{line:o.line,ch:p.start});
-if(p.className=="variable"){p.className="function"
+}}while(h>0);
+u=w(m,{line:l.line,ch:u.start});
+if(u.className=="variable"){u.className="function"
 }else{return
 }}if(!j){var j=[]
-}j.push(p)
-}if(h&&h=="form"){return{list:e(k,j,l),from:{line:o.line,ch:k.start},to:{line:o.line,ch:k.end}}
-}else{return{list:b(k,j,l),from:{line:o.line,ch:k.start},to:{line:o.line,ch:k.end}}
-}}CodeMirror.jbpmHint=function(h){return d(h,a,"script",function(i,j){return i.getTokenAt(j)
+}j.push(u)
+}if(t&&t=="form"){return{list:e(p,j,q),from:{line:l.line,ch:p.start},to:{line:l.line,ch:p.end}}
+}else{return{list:b(p,j,q,o),from:{line:l.line,ch:p.start},to:{line:l.line,ch:p.end}}
+}}catch(y){ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:"Error retrieving Data Types info  :\n"+y,title:""})
+}}}}CodeMirror.jbpmHint=function(h){return d(h,a,"script",function(i,j){return i.getTokenAt(j)
 })
 };
 CodeMirror.formsHint=function(h){return d(h,[],"form",function(i,j){return i.getTokenAt(j)
@@ -2484,27 +2500,28 @@ CodeMirror.formsHint=function(h){return d(h,[],"form",function(i,j){return i.get
 };
 var a=("getProcessInstance() getNodeInstance() getVariable(variableName) setVariable(variableName,value) getKnowledgeRuntime()").split(" ");
 var c=("return kcontext").split(" ");
-function b(l,j,p){var u=[],h=l.string;
-function m(v){if(v.indexOf(h)==0&&!f(u,v)){if(v.indexOf(":")>0){var i=v.split(":");
-u.push(i[0])
-}else{u.push(v)
+function b(l,j,p,r){var v=[],h=l.string;
+function m(w){if(w.indexOf(h)==0&&!f(v,w)){if(w.indexOf(":")>0){var i=w.split(":");
+v.push(i[0])
+}else{v.push(w)
 }}}if(j){var q=j.pop().string;
 if(q=="kcontext"){g(a,m)
 }}else{g(c,m);
-var s=ORYX.EDITOR.getSerializedJSON();
-var t=jsonPath(s.evalJSON(),"$.properties.vardefs");
-if(t){if(t.toString().length>0){g(t.toString().split(","),m)
-}}var k=jsonPath(s.evalJSON(),"$.properties.globals");
+var t=ORYX.EDITOR.getSerializedJSON();
+var u=jsonPath(t.evalJSON(),"$.properties.vardefs");
+if(u){if(u.toString().length>0){g(u.toString().split(","),m)
+}}var k=jsonPath(t.evalJSON(),"$.properties.globals");
 if(k){if(k.toString().length>0){g(k.toString().split(","),m)
-}}var r="";
-var o=jsonPath(s.evalJSON(),"$.childShapes.*");
+}}var s="";
+var o=jsonPath(t.evalJSON(),"$.childShapes.*");
 for(var n=0;
 n<o.length;
-n++){if(o[n].stencil.id=="DataObject"){r+=o[n].properties.name;
-r+=","
-}}if(r.endsWith(",")){r=r.substr(0,r.length-1)
-}g(r.toString().split(","),m)
-}return u
+n++){if(o[n].stencil.id=="DataObject"){s+=o[n].properties.name;
+s+=","
+}}if(s.endsWith(",")){s=s.substr(0,s.length-1)
+}g(s.toString().split(","),m);
+g(r.toString().split(","),m)
+}return v
 }function e(s,l,u){var y=[],p=s.string;
 function w(j){if(j.indexOf(p)==0&&!f(y,j)){if(j.indexOf(":")>0){var i=j.split(":");
 y.push(i[0])
@@ -2896,3 +2913,22 @@ if(v.tapToDismiss){r.click(n)
 return{error:c,info:g,options:{},success:i,warning:f}
 })()
 }(window,jQuery));
+if(!window.SpriteUtils){window.SpriteUtils={designerContextPath:"org.jbpm.designer.jBPMDesigner",stencilsetsFolder:"stencilsets",baseName:function(b){if(b){var a=new String(b).substring(b.lastIndexOf("/")+1);
+if(a.lastIndexOf(".")!=-1){a=a.substring(0,a.lastIndexOf("."))
+}return a
+}return undefined
+},toUniqueId:function(d){if(d){var c=new String(d);
+var a=d.indexOf(this.designerContextPath);
+if(a!=-1){c=c.substring(a+this.designerContextPath.length+1,c.length)
+}else{var b=d.lastIndexOf(this.stencilsetsFolder);
+if(b!=-1){c=c.substring(b,c.length)
+}}var e=c.lastIndexOf(".");
+if(e!=-1){c=c.substring(0,e)
+}c=c.replace(/\//g,"_").replace(/\./g,"_");
+return c
+}return undefined
+},isIconFile:function(a){if(typeof a!=="string"){return false
+}else{if(a.endsWith(".png")||a.endsWith(".gif")){return true
+}else{return false
+}}}}
+};

@@ -15,6 +15,7 @@ if(!a.value){throw"ORYX.Core.StencilSet.PropertyItem(construct): Value is not de
 },namespace:function(){return this._namespace
 },property:function(){return this._property
 },value:function(){return this._jsonItem.value
+},needsprop:function(){return this._jsonItem.needsprop
 },title:function(){return ORYX.Core.StencilSet.getTranslation(this._jsonItem,"title")
 },refToView:function(){return this._jsonItem.refToView
 },icon:function(){return(this._jsonItem.icon)?this.property().stencil()._source+"icons/"+this._jsonItem.icon:""

@@ -24,7 +24,7 @@ this.setNodeColors(f,c,i)
 var b=this.facade.getSelection();
 var a="";
 var c=ORYX.I18N.View.sim.processPathsTitle;
-if(b.length==1){b.each(function(d){if(d.getStencil().title()=="Embedded Subprocess"){a=d.resourceId;
+if(b.length==1){b.each(function(d){if(d.getStencil().title()=="Embedded"||d.getStencil().title()=="Event"){a=d.resourceId;
 c=ORYX.I18N.View.sim.subProcessPathsTitle
 }})
 }Ext.Ajax.request({url:ORYX.PATH+"simulation",method:"POST",success:function(k){try{if(k.responseText&&k.responseText.length>0){var r=k.responseText.evalJSON();
@@ -63,15 +63,33 @@ m.show()
 },params:{action:"getpathinfo",profile:ORYX.PROFILE,json:ORYX.EDITOR.getSerializedJSON(),ppdata:ORYX.PREPROCESSING,sel:a}})
 },getDisplayColor:function(b){var a=["#3399FF","#FFCC33","#FF99FF","#6666CC","#CCCCCC","#66FF00","#FFCCFF","#0099CC","#CC66FF","#FFFF00","#993300","#0000CC","#3300FF","#990000","#33CC00"];
 return a[b]
-},resetNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setOriginalValues(a)
+},setDefaultColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setDefaultValues(a)
 }).bind(this))
-},setOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){a.setProperty("oryx-bordercolor",a.properties["oryx-origbordercolor"]);
+},setDefaultValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){a.setProperty("oryx-bordercolor",a.properties["oryx-origbordercolor"]);
 a.setProperty("oryx-bgcolor",a.properties["oryx-origbgcolor"])
 }a.refresh();
 if(a.getChildren().size()>0){for(var b=0;
 b<a.getChildren().size();
+b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.setDefaultValues(a.getChildren()[b])
+}}}},resetNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.setOriginalValues(a)
+}).bind(this))
+},setOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){if(a.savedbordercolor!==undefined){a.setProperty("oryx-bordercolor",a.savedbordercolor);
+delete a.savedbordercolor
+}if(a.savedbgcolor!==undefined){a.setProperty("oryx-bgcolor",a.savedbgcolor);
+delete a.savedbgcolor
+}}a.refresh();
+if(a.getChildren().size()>0){for(var b=0;
+b<a.getChildren().size();
 b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.setOriginalValues(a.getChildren()[b])
-}}}},setNodeColors:function(c,b,a){this.resetNodeColors();
+}}}},saveNodeColors:function(){ORYX.EDITOR._canvas.getChildren().each((function(a){this.saveOriginalValues(a)
+}).bind(this))
+},saveOriginalValues:function(a){if(a instanceof ORYX.Core.Node||a instanceof ORYX.Core.Edge){if(a.savedbordercolor===undefined){a.savedbordercolor=a.properties["oryx-bordercolor"]
+}if(a.savedbgcolor===undefined){a.savedbgcolor=a.properties["oryx-bgcolor"]
+}}if(a.getChildren().size()>0){for(var b=0;
+b<a.getChildren().size();
+b++){if(a.getChildren()[b] instanceof ORYX.Core.Node||a.getChildren()[b] instanceof ORYX.Core.Edge){this.saveOriginalValues(a.getChildren()[b])
+}}}},setNodeColors:function(c,b,a){this.saveNodeColors();
+this.setDefaultColors();
 ORYX.EDITOR._canvas.getChildren().each((function(d){this.applyPathColors(d,b,a)
 }).bind(this))
 },applyPathColors:function(b,a,e){var d=e.split("|");

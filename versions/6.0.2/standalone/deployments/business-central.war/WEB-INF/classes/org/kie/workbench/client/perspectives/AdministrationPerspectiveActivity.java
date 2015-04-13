@@ -32,17 +32,15 @@ import org.uberfire.mvp.PlaceRequest;
 
 import org.uberfire.workbench.model.menu.Menus;
 
-import org.uberfire.workbench.model.toolbar.ToolBar;
-
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchPerspectiveProcessor")
-@Named("org.kie.workbench.client.perspectives.AdministrationPerspective")
+@Named("AdministrationPerspective")
 /*
  * WARNING! This class is generated. Do not modify.
  */
 public class AdministrationPerspectiveActivity extends AbstractWorkbenchPerspectiveActivity {
 
-    private static final Collection<String> ROLES = Arrays.asList("admin");
+    private static final Collection<String> ROLES = Collections.emptyList();
 
     private static final Collection<String> TRAITS = Collections.emptyList();
 
@@ -57,22 +55,17 @@ public class AdministrationPerspectiveActivity extends AbstractWorkbenchPerspect
 
     @Override
     public String getIdentifier() {
-        return "org.kie.workbench.client.perspectives.AdministrationPerspective";
+        return "AdministrationPerspective";
     }
 
     @Override
-    public PerspectiveDefinition getPerspective() {
+    public PerspectiveDefinition getDefaultPerspectiveLayout() {
         return realPresenter.getPerspective();
     }
 
     @Override
     public Menus getMenus() {
         return realPresenter.getMenus();
-    }
-
-    @Override
-    public ToolBar getToolBar() {
-        return realPresenter.getToolBar();
     }
 
     @Override

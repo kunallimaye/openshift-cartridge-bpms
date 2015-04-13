@@ -18,7 +18,7 @@ return true
 if(!ORYX){var ORYX={}
 }if(!ORYX.CONFIG){ORYX.CONFIG={}
 }ORYX.CONFIG.WEB_URL="org.jbpm.designer.jBPMDesigner";
-ORYX.CONFIG.MENU_INDEX={File:1,Edit:2,Undo:3,localstorage:4,"Z-Order":5,Alignment:6,Grouping:7,lockunlockgroup:8,Docker:9,colorpickergroup:"AAA",editprocessforms:"BBB",sharegroup:"CCC",importgroup:"DDD",validationandsimulation:"EEE",servicerepogroup:"FFF",fullscreengroup:"GGG",Help:"ZZZZZZ"};
+ORYX.CONFIG.MENU_INDEX={File:1,Edit:2,Undo:3,localstorage:4,"Z-Order":5,Alignment:6,Grouping:7,lockunlockgroup:8,Docker:9,colorpickergroup:"AAA",editprocessforms:"BBB",sharegroup:"CCC",importgroup:"DDD",validationandsimulation:"EEE",servicerepogroup:"FFF",paintgroup:"GGG",fullscreengroup:"HHH",Help:"ZZZZZZ"};
 ORYX.CONFIG.UUID_URL=function(b,a){if(b===undefined){b=ORYX.UUID
 }if(a===undefined){a=ORYX.PROFILE
 }if(ORYX.PATH===undefined){ORYX.PATH="designer/"
@@ -156,6 +156,7 @@ ORYX.CONFIG.TYPE_DTYPE_VARDEF="vardef";
 ORYX.CONFIG.TYPE_DTYPE_DINPUT="dinput";
 ORYX.CONFIG.TYPE_DTYPE_DOUTPUT="doutput";
 ORYX.CONFIG.TYPE_DTYPE_GLOBAL="global";
+ORYX.CONFIG.TYPE_RULEFLOW_GROUP="ruleflowgroup";
 ORYX.CONFIG.LABEL_LINE_DISTANCE=2;
 ORYX.CONFIG.LABEL_DEFAULT_LINE_HEIGHT=12;
 ORYX.CONFIG.ENABLE_MORPHMENU_BY_HOVER=true;
@@ -178,6 +179,7 @@ ORYX.CONFIG.EVENT_KEYUP="keyup";
 ORYX.CONFIG.EVENT_LOADED="editorloaded";
 ORYX.CONFIG.EVENT_EXECUTE_COMMANDS="executeCommands";
 ORYX.CONFIG.EVENT_STENCIL_SET_LOADED="stencilSetLoaded";
+ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD="stencilSetReLoad";
 ORYX.CONFIG.EVENT_SELECTION_CHANGED="selectionchanged";
 ORYX.CONFIG.EVENT_SHAPEADDED="shapeadded";
 ORYX.CONFIG.EVENT_PROPERTY_CHANGED="propertyChanged";
@@ -425,6 +427,7 @@ this.simulationEventData="";
 this.simulationEventAggregationData="";
 this.simulationInstancesData="";
 this.simulationHTCostData="";
+this.simulationHTResourceData="";
 this.simulationChartTitle="";
 this.simulationChartId="";
 this.simulationChartNodeName="";
@@ -498,11 +501,11 @@ var f=this.getCanvas().rootNode.parentNode;
 this.centerContentPanel=new Ext.Panel({autoScroll:true,cmargins:{left:0,right:0},border:false,items:{layout:"fit",autoHeight:true,el:f}});
 this.resultsChartPanel=new Ext.Panel({border:false,id:"simchart",html:"<svg></svg>"});
 this.simResultsContentPanel=new Ext.Panel({id:"simresultscontent",autoScroll:true,autoheight:true,border:false,items:[{xtype:"component",id:"simchartframe",anchor:"100%",autoScroll:true,autoEl:{tag:"iframe",src:ORYX.BASE_FILE_PATH+"simulation/default.jsp",width:"100%",height:"500",frameborder:"0",scrolling:"auto"}}]});
-this.simInfoPanel=new Ext.Panel({bodyStyle:"background:#ffff;font-size:9px;font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;padding-left:5px;",id:"siminfopanel",title:ORYX.I18N.View.sim.resultsInfo,autoScroll:true,autoheight:true,border:false,html:""});
-this.simResultsTree=new Ext.tree.TreePanel({id:"simresultscharts",title:ORYX.I18N.View.sim.resultsGraphs,layout:"fit",animate:true,loader:new Ext.tree.TreeLoader(),rootVisible:false,autoScroll:true,scroll:true,viewConfig:{style:{overflow:"auto"}},lines:true,listeners:{click:{fn:this._chartSelected.bind(this)}}});
+this.simInfoPanel=new Ext.Panel({bodyStyle:"background:#ffff;font-size:9px;font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;padding-left:5px;",id:"siminfopanel",title:ORYX.I18N.View.sim.resultsInfo,autoScroll:true,autoheight:false,height:300,border:false,html:""});
+this.simResultsTree=new Ext.tree.TreePanel({id:"simresultscharts",title:ORYX.I18N.View.sim.resultsGraphs,animate:true,loader:new Ext.tree.TreeLoader(),rootVisible:false,scroll:true,autoScroll:true,autoheight:true,viewConfig:{style:{overflow:"scroll",overflowY:"scroll",overflowX:"scroll"}},lines:true,listeners:{click:{fn:this._chartSelected.bind(this)}}});
 var a=new Ext.tree.TreeNode({draggable:false,id:"simcharts"});
 this.simResultsTree.setRootNode(a);
-this.simResultsContentPanelLayout=new Ext.Panel({width:"100%",height:1000,layout:"border",items:[{xtype:"panel",region:"east",margins:"5 0 0 5",layout:"anchor",anchor:"100%",width:300,border:false,collapsible:true,autoscroll:true,split:false,minSize:100,maxSize:500,autoheight:true,cmargins:"5 5 0 5",items:[this.simInfoPanel,this.simResultsTree]},{xtype:"panel",region:"center",layout:"anchor",anchor:"100%",border:false,autoscroll:true,autoheight:true,margins:"5 5 0 0",items:[this.simResultsContentPanel]}]});
+this.simResultsContentPanelLayout=new Ext.Panel({width:"100%",autoscroll:true,layout:"border",items:[{xtype:"panel",region:"east",margins:"5 0 0 5",layout:"fit",anchor:"100%",width:300,border:false,collapsible:true,autoscroll:true,split:false,cmargins:"5 5 0 5",bodyCfg:{style:{overflow:"auto"}},autoScroll:true,items:[this.simResultsTree,this.simInfoPanel]},{xtype:"panel",region:"center",layout:"fit",anchor:"100%",border:false,autoscroll:true,autoheight:true,margins:"5 5 0 0",items:[this.simResultsContentPanel]}]});
 var g={id:"maintabs",region:"center",cls:"x-panel-editor-center",autoScroll:false,cmargins:{left:0,right:0},activeTab:0,border:false,tabPosition:"top",anchor:"100%",deferredRender:false,listeners:{tabchange:function(h,i){this.centerContentTabPannel.doLayout();
 this.simResultsContentPanelLayout.doLayout();
 h.doLayout()
@@ -1248,7 +1251,9 @@ var g=d.split(" ").member("transient");
 if(g){return""
 }var a="<"+f.nodeName;
 if(!b){a+=' xmlns="'+(f.namespaceURI?f.namespaceURI:XMLNS.XHTML)+'" xmlns:oryx="http://oryx-editor.org"'
-}c.each(function(h){a+=" "+h.nodeName+'="'+h.nodeValue+'"'
+}c.each(function(h){var i=h.nodeValue;
+if(i.indexOf("&")!==-1||i.indexOf(">")!==-1||i.indexOf("<")!==-1||i.indexOf('"')!==-1){i=Ext.util.Format.htmlEncode(i)
+}a+=" "+h.nodeName+'="'+i+'"'
 });
 if(e.length==0){a+="/>"
 }else{a+=">";
@@ -2430,6 +2435,7 @@ if(!a.value){throw"ORYX.Core.StencilSet.PropertyItem(construct): Value is not de
 },namespace:function(){return this._namespace
 },property:function(){return this._property
 },value:function(){return this._jsonItem.value
+},needsprop:function(){return this._jsonItem.needsprop
 },title:function(){return ORYX.Core.StencilSet.getTranslation(this._jsonItem,"title")
 },refToView:function(){return this._jsonItem.refToView
 },icon:function(){return(this._jsonItem.icon)?this.property().stencil()._source+"icons/"+this._jsonItem.icon:""
@@ -2622,14 +2628,15 @@ this._cachedContainPC[b.containingStencil.id()]=c
 return a
 },_cacheMorph:function(b){var a=this._cachedMorphRS[b];
 if(!a){a=[];
-if(this._morphingRules.keys().include(b)){a=this._stencils.select(function(c){return c.roles().include(b)
+if(this._morphingRules.keys().include(b)){a=this._stencils.select(function(c){if(!c){return false
+}return c.roles().include(b)
 })
 }this._cachedMorphRS[b]=a
 }return a
 },outgoingEdgeStencils:function(a){if(!a.sourceShape&&!a.sourceStencil){return[]
 }if(a.sourceShape){a.sourceStencil=a.sourceShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){if(d.type()==="edge"){var c=Object.clone(a);
+this._stencils.each((function(d){if(d&&d.type()==="edge"){var c=Object.clone(a);
 c.edgeStencil=d;
 if(this.canConnect(c)){b.push(d)
 }}}).bind(this));
@@ -2637,7 +2644,7 @@ return b
 },incomingEdgeStencils:function(a){if(!a.targetShape&&!a.targetStencil){return[]
 }if(a.targetShape){a.targetStencil=a.targetShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){if(d.type()==="edge"){var c=Object.clone(a);
+this._stencils.each((function(d){if(d&&d.type()==="edge"){var c=Object.clone(a);
 c.edgeStencil=d;
 if(this.canConnect(c)){b.push(d)
 }}}).bind(this));
@@ -2646,19 +2653,19 @@ return b
 }if(b.targetShape){b.targetStencil=b.targetShape.getStencil()
 }if(b.edgeShape){b.edgeStencil=b.edgeShape.getStencil()
 }var a=[];
-this._stencils.each((function(d){var c=Object.clone(b);
+this._stencils.each((function(d){if(d){var c=Object.clone(b);
 c.sourceStencil=d;
 if(this.canConnect(c)){a.push(d)
-}}).bind(this));
+}}}).bind(this));
 return a
 },targetStencils:function(a){if(!a||!a.edgeShape&&!a.edgeStencil){return[]
 }if(a.sourceShape){a.sourceStencil=a.sourceShape.getStencil()
 }if(a.edgeShape){a.edgeStencil=a.edgeShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){var c=Object.clone(a);
+this._stencils.each((function(d){if(d){var c=Object.clone(a);
 c.targetStencil=d;
 if(this.canConnect(c)){b.push(d)
-}}).bind(this));
+}}}).bind(this));
 return b
 },canConnect:function(c){if(!c||(!c.sourceShape&&!c.sourceStencil&&!c.targetShape&&!c.targetStencil)||!c.edgeShape&&!c.edgeStencil){return false
 }if(c.sourceShape){c.sourceStencil=c.sourceShape.getStencil()
@@ -2750,8 +2757,8 @@ return a
 },morphStencils:function(b){if(!b.stencil&&!b.shape){return[]
 }if(b.shape){b.stencil=b.shape.getStencil()
 }var a=[];
-b.stencil.roles().each(function(c){this._cacheMorph(c).each(function(d){a.push(d)
-})
+b.stencil.roles().each(function(c){this._cacheMorph(c).each(function(d){if(d){a.push(d)
+}})
 }.bind(this));
 return a.uniq()
 },baseMorphs:function(){var a=[];
@@ -2802,11 +2809,14 @@ return c
 }var a=b.getStencil().roles().any(function(d){return d==c
 });
 return a||b.getStencil().id()==(b.getStencil().namespace()+c)
-},_stencilsWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a))?true:false
+},_stencilsWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a))?true:false
 })
-},_edgesWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a)&&b.type()==="edge")?true:false
+},_edgesWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a)&&b.type()==="edge")?true:false
 })
-},_nodesWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a)&&b.type()==="node")?true:false
+},_nodesWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a)&&b.type()==="node")?true:false
 })
 },_getMaximumOccurrence:function(b,c){var a;
 c.roles().each((function(e){var d=this._cardinalityRules[e];

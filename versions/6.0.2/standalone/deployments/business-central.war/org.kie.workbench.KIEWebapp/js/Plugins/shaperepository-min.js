@@ -4,6 +4,8 @@ this._currentParent;
 this._canContain=undefined;
 this._canAttach=undefined;
 this._patternData;
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_LOADED,this.setStencilSets.bind(this));
+this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD,this.setStencilSets.bind(this));
 this.shapeList=new Ext.tree.TreeNode({});
 var a=new Ext.tree.TreePanel({cls:"shaperepository",loader:new Ext.tree.TreeLoader(),root:this.shapeList,autoScroll:true,rootVisible:false,lines:false,anchors:"0, -30"});
 var d=this.facade.addToRegion("west",a,ORYX.I18N.ShapeRepository.title);
@@ -17,8 +19,7 @@ b.beforeDragOver=this.beforeDragOver.bind(this,b);
 b.beforeDragEnter=function(){this._lastOverElement=false;
 return true
 }.bind(this);
-this.setStencilSets();
-this.facade.registerOnEvent(ORYX.CONFIG.EVENT_STENCIL_SET_LOADED,this.setStencilSets.bind(this))
+this.setStencilSets()
 },setStencilSets:function(){var a=this.shapeList.firstChild;
 while(a){this.shapeList.removeChild(a);
 a=this.shapeList.firstChild
@@ -34,12 +35,14 @@ e=e.sortBy(function(h){return h.position()
 });
 e.each((function(j){if(j.hidden()){return
 }var h=j.groups();
-h.each((function(k){if(!g[k]){if(Ext.isIE){g[k]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true,expanded:true});
-g[k].expand()
-}else{g[k]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true})
-}b.appendChild(g[k]);
-g[k].render()
-}this.createStencilTreeNode(g[k],j)
+h.each((function(l){var k=l;
+if(ORYX.I18N.propertyNames[l]&&ORYX.I18N.propertyNames[l].length>0){k=ORYX.I18N.propertyNames[l]
+}if(!g[l]){if(Ext.isIE){g[l]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true,expanded:true});
+g[l].expand()
+}else{g[l]=new Ext.tree.TreeNode({text:k,allowDrag:false,allowDrop:false,iconCls:"headerShapeRepImg",cls:"headerShapeRepChild",singleClickExpand:true})
+}b.appendChild(g[l]);
+g[l].render()
+}this.createStencilTreeNode(g[l],j)
 }).bind(this));
 if(h.length==0){this.createStencilTreeNode(b,j)
 }var i=ORYX.CONFIG.STENCIL_GROUP_ORDER();
@@ -47,17 +50,19 @@ b.sort(function(l,k){return i[d.namespace()][l.text]-i[d.namespace()][k.text]
 })
 }).bind(this))
 }).bind(this))
-},createStencilTreeNode:function(c,d){var a=d.id().split("#");
+},createStencilTreeNode:function(c,d){try{var a=d.id().split("#");
 var b=ORYX.I18N.propertyNames[a[1]];
 if(!b){b=d.title()
 }else{if(b.length<=0){b=d.title()
-}}var f=new Ext.tree.TreeNode({text:b,icon:decodeURIComponent(d.icon()),allowDrag:false,allowDrop:false,iconCls:"ShapeRepEntreeImg",cls:"ShapeRepEntree"});
-c.appendChild(f);
-f.render();
-var e=f.getUI();
-e.elNode.setAttributeNS(null,"title",d.description());
-Ext.dd.Registry.register(e.elNode,{node:e.node,handles:[e.elNode,e.textNode].concat($A(e.elNode.childNodes)),isHandle:false,type:d.id(),title:d.title(),namespace:d.namespace()})
-},drop:function(m,k,b){this._lastOverElement=undefined;
+}}var h;
+if(window.SpriteUtils.isIconFile(d.icon())){h=new Ext.tree.TreeNode({text:b,iconCls:window.SpriteUtils.toUniqueId(d.icon()),allowDrag:false,allowDrop:false})
+}else{h=new Ext.tree.TreeNode({text:b,icon:decodeURIComponent(d.icon()),allowDrag:false,allowDrop:false,iconCls:"ShapeRepEntreeImg",cls:"ShapeRepEntree"})
+}if(c===undefined){}else{c.appendChild(h);
+h.render()
+}var f=h.getUI();
+f.elNode.setAttributeNS(null,"title",d.description());
+Ext.dd.Registry.register(f.elNode,{node:f.node,handles:[f.elNode,f.textNode].concat($A(f.elNode.childNodes)),isHandle:false,type:d.id(),title:d.title(),namespace:d.namespace()})
+}catch(g){}},drop:function(m,k,b){this._lastOverElement=undefined;
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.added"});
 this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_HIGHLIGHT_HIDE,highlightId:"shapeRepo.attached"});
 var l=m.getProxy();

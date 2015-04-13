@@ -17,12 +17,12 @@ package org.kie.workbench.client.perspectives;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.guvnor.m2repo.client.event.M2RepoRefreshEvent;
 import org.guvnor.m2repo.client.event.M2RepoSearchEvent;
@@ -31,26 +31,24 @@ import org.jboss.errai.ioc.client.container.SyncBeanManager;
 import org.kie.workbench.client.resources.i18n.AppConstants;
 import org.kie.workbench.common.widgets.client.search.ContextualSearch;
 import org.kie.workbench.common.widgets.client.search.SearchBehavior;
-import org.uberfire.client.annotations.Perspective;
 import org.uberfire.client.annotations.WorkbenchMenu;
+import org.uberfire.client.annotations.WorkbenchPanel;
 import org.uberfire.client.annotations.WorkbenchPerspective;
 import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.util.Layouts;
 import org.uberfire.lifecycle.OnStartup;
 import org.uberfire.mvp.Command;
-import org.uberfire.mvp.impl.DefaultPlaceRequest;
-import org.uberfire.workbench.model.PanelType;
-import org.uberfire.workbench.model.PerspectiveDefinition;
-import org.uberfire.workbench.model.impl.PartDefinitionImpl;
-import org.uberfire.workbench.model.impl.PerspectiveDefinitionImpl;
 import org.uberfire.workbench.model.menu.MenuFactory;
 import org.uberfire.workbench.model.menu.Menus;
 
 /**
  * A Perspective to show M2_REPO related screen
  */
-@Dependent
+@ApplicationScoped
 @WorkbenchPerspective(identifier = "org.guvnor.m2repo.client.perspectives.GuvnorM2RepoPerspective", isDefault = false)
-public class M2RepoPerspective {
+public class M2RepoPerspective extends FlowPanel {
+
+    private AppConstants constants = AppConstants.INSTANCE;
 
     @Inject
     private ContextualSearch contextualSearch;
@@ -67,47 +65,19 @@ public class M2RepoPerspective {
     @Inject
     private SyncBeanManager iocManager;
 
-    private PerspectiveDefinition perspective;
-    private Menus menus;
+    @Inject
+    @WorkbenchPanel(parts = "M2RepoEditor")
+    FlowPanel m2RepoEditor;
 
     @PostConstruct
     private void init() {
-        buildPerspective();
-        buildMenuBar();
-    }
-
-    private void buildPerspective() {
-        this.perspective = new PerspectiveDefinitionImpl( PanelType.ROOT_STATIC );
-        this.perspective.setTransient( true );
-        this.perspective.setName( "M2 Repository Explorer" );
-
-        this.perspective.getRoot().addPart( new PartDefinitionImpl( new DefaultPlaceRequest( "M2RepoEditor" ) ) );
+        Layouts.setToFillParent( m2RepoEditor );
+        add( m2RepoEditor );
     }
 
     @WorkbenchMenu
     public Menus getMenus() {
-        return this.menus;
-    }
-
-    @Perspective
-    public PerspectiveDefinition getPerspective() {
-        return this.perspective;
-    }
-
-    @OnStartup
-    public void onStartup() {
-        contextualSearch.setSearchBehavior( new SearchBehavior() {
-            @Override
-            public void execute( String searchFilter ) {
-                searchEvents.fire( new M2RepoSearchEvent( searchFilter ) );
-            }
-
-        } );
-
-    }
-
-    private void buildMenuBar() {
-        this.menus = MenuFactory.newTopLevelMenu(AppConstants.INSTANCE.Upload() )
+        return MenuFactory.newTopLevelMenu( constants.Upload() )
                 .respondsWith( new Command() {
                     @Override
                     public void execute() {
@@ -125,7 +95,7 @@ public class M2RepoPerspective {
                     }
                 } )
                 .endMenu()
-                .newTopLevelMenu( AppConstants.INSTANCE.Refresh() )
+                .newTopLevelMenu( constants.Refresh() )
                 .respondsWith( new Command() {
                     @Override
                     public void execute() {
@@ -134,6 +104,18 @@ public class M2RepoPerspective {
                 } )
                 .endMenu()
                 .build();
+    }
+
+    @OnStartup
+    public void onStartup() {
+        contextualSearch.setSearchBehavior( new SearchBehavior() {
+            @Override
+            public void execute( String searchFilter ) {
+                searchEvents.fire( new M2RepoSearchEvent( searchFilter ) );
+            }
+
+        } );
+
     }
 
 }

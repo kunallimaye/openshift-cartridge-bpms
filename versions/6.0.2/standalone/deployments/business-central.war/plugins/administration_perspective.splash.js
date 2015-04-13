@@ -3,6 +3,6 @@ $registerSplashScreen({
     templateUrl: "administration_perspective.splash.html",
     body_height: 371,
     title: "Help",
-    display_next_time: true,
-    interception_points: ["org.kie.workbench.client.perspectives.AdministrationPerspective"]
+    display_next_time: false,
+    interception_points: ["AdministrationPerspective"]
 });

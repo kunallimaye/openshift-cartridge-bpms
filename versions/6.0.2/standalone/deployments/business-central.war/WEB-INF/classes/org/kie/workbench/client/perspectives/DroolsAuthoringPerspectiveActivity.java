@@ -32,11 +32,9 @@ import org.uberfire.mvp.PlaceRequest;
 
 import org.uberfire.workbench.model.menu.Menus;
 
-import org.uberfire.workbench.model.toolbar.ToolBar;
-
 @Dependent
 @Generated("org.uberfire.annotations.processors.WorkbenchPerspectiveProcessor")
-@Named("org.kie.workbench.client.perspectives.DroolsAuthoringPerspective")
+@Named("AuthoringPerspective")
 /*
  * WARNING! This class is generated. Do not modify.
  */
@@ -57,22 +55,22 @@ public class DroolsAuthoringPerspectiveActivity extends AbstractWorkbenchPerspec
 
     @Override
     public String getIdentifier() {
-        return "org.kie.workbench.client.perspectives.DroolsAuthoringPerspective";
+        return "AuthoringPerspective";
     }
 
     @Override
-    public PerspectiveDefinition getPerspective() {
+    public boolean isTransient() {
+        return false;
+    }
+
+    @Override
+    public PerspectiveDefinition getDefaultPerspectiveLayout() {
         return realPresenter.getPerspective();
     }
 
     @Override
     public Menus getMenus() {
         return realPresenter.getMenus();
-    }
-
-    @Override
-    public ToolBar getToolBar() {
-        return realPresenter.getToolBar();
     }
 
     @Override

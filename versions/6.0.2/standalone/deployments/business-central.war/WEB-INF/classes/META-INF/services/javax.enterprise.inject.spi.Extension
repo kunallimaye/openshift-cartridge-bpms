@@ -1,3 +1,2 @@
-org.jbpm.shared.services.cdi.BootOnLoadExtension
-org.uberfire.commons.services.cdi.StartupBeanExtension
-org.uberfire.security.server.cdi.SecurityExtension
+org.kie.internal.runtime.cdi.BootOnLoadExtension
+org.jbpm.console.ng.bd.backend.server.profile.ProfileManagerExtension

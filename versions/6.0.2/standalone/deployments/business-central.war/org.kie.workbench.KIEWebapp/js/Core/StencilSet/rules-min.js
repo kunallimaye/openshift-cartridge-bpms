@@ -156,14 +156,15 @@ this._cachedContainPC[b.containingStencil.id()]=c
 return a
 },_cacheMorph:function(b){var a=this._cachedMorphRS[b];
 if(!a){a=[];
-if(this._morphingRules.keys().include(b)){a=this._stencils.select(function(c){return c.roles().include(b)
+if(this._morphingRules.keys().include(b)){a=this._stencils.select(function(c){if(!c){return false
+}return c.roles().include(b)
 })
 }this._cachedMorphRS[b]=a
 }return a
 },outgoingEdgeStencils:function(a){if(!a.sourceShape&&!a.sourceStencil){return[]
 }if(a.sourceShape){a.sourceStencil=a.sourceShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){if(d.type()==="edge"){var c=Object.clone(a);
+this._stencils.each((function(d){if(d&&d.type()==="edge"){var c=Object.clone(a);
 c.edgeStencil=d;
 if(this.canConnect(c)){b.push(d)
 }}}).bind(this));
@@ -171,7 +172,7 @@ return b
 },incomingEdgeStencils:function(a){if(!a.targetShape&&!a.targetStencil){return[]
 }if(a.targetShape){a.targetStencil=a.targetShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){if(d.type()==="edge"){var c=Object.clone(a);
+this._stencils.each((function(d){if(d&&d.type()==="edge"){var c=Object.clone(a);
 c.edgeStencil=d;
 if(this.canConnect(c)){b.push(d)
 }}}).bind(this));
@@ -180,19 +181,19 @@ return b
 }if(b.targetShape){b.targetStencil=b.targetShape.getStencil()
 }if(b.edgeShape){b.edgeStencil=b.edgeShape.getStencil()
 }var a=[];
-this._stencils.each((function(d){var c=Object.clone(b);
+this._stencils.each((function(d){if(d){var c=Object.clone(b);
 c.sourceStencil=d;
 if(this.canConnect(c)){a.push(d)
-}}).bind(this));
+}}}).bind(this));
 return a
 },targetStencils:function(a){if(!a||!a.edgeShape&&!a.edgeStencil){return[]
 }if(a.sourceShape){a.sourceStencil=a.sourceShape.getStencil()
 }if(a.edgeShape){a.edgeStencil=a.edgeShape.getStencil()
 }var b=[];
-this._stencils.each((function(d){var c=Object.clone(a);
+this._stencils.each((function(d){if(d){var c=Object.clone(a);
 c.targetStencil=d;
 if(this.canConnect(c)){b.push(d)
-}}).bind(this));
+}}}).bind(this));
 return b
 },canConnect:function(c){if(!c||(!c.sourceShape&&!c.sourceStencil&&!c.targetShape&&!c.targetStencil)||!c.edgeShape&&!c.edgeStencil){return false
 }if(c.sourceShape){c.sourceStencil=c.sourceShape.getStencil()
@@ -284,8 +285,8 @@ return a
 },morphStencils:function(b){if(!b.stencil&&!b.shape){return[]
 }if(b.shape){b.stencil=b.shape.getStencil()
 }var a=[];
-b.stencil.roles().each(function(c){this._cacheMorph(c).each(function(d){a.push(d)
-})
+b.stencil.roles().each(function(c){this._cacheMorph(c).each(function(d){if(d){a.push(d)
+}})
 }.bind(this));
 return a.uniq()
 },baseMorphs:function(){var a=[];
@@ -336,11 +337,14 @@ return c
 }var a=b.getStencil().roles().any(function(d){return d==c
 });
 return a||b.getStencil().id()==(b.getStencil().namespace()+c)
-},_stencilsWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a))?true:false
+},_stencilsWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a))?true:false
 })
-},_edgesWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a)&&b.type()==="edge")?true:false
+},_edgesWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a)&&b.type()==="edge")?true:false
 })
-},_nodesWithRole:function(a){return this._stencils.findAll(function(b){return(b.roles().member(a)&&b.type()==="node")?true:false
+},_nodesWithRole:function(a){return this._stencils.findAll(function(b){if(!b){return false
+}return(b.roles().member(a)&&b.type()==="node")?true:false
 })
 },_getMaximumOccurrence:function(b,c){var a;
 c.roles().each((function(e){var d=this._cardinalityRules[e];

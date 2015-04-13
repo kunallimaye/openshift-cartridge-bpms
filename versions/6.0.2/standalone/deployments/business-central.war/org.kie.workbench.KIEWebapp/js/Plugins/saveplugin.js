@@ -249,6 +249,8 @@ ORYX.Plugins.SavePlugin = Clazz.extend({
                 }
             }
 
+            parent.designersignalexpectconcurrentupdate(ORYX.UUID);
+
             Ext.Ajax.request({
                 url: ORYX.PATH + 'assetservice',
                 method: 'POST',
@@ -256,7 +258,7 @@ ORYX.Plugins.SavePlugin = Clazz.extend({
                     try {
                         if(response.responseText && response.responseText.length > 0) {
                             var saveResponse = response.responseText.evalJSON();
-                            if(saveResponse.errors && saveResponse.errors.lengt > 0) {
+                            if(saveResponse.errors && saveResponse.errors.length > 0) {
                                 var errors = saveResponse.errors;
                                 for(var j=0; j < errors.length; j++) {
                                     var errormessageobj = errors[j];
@@ -344,7 +346,7 @@ ORYX.Plugins.SavePlugin = Clazz.extend({
                 params: {
                     action: 'updateasset',
                     profile: ORYX.PROFILE,
-                    assetcontent: ORYX.EDITOR.getSerializedJSON(),
+                    assetcontent: window.btoa(encodeURIComponent(ORYX.EDITOR.getSerializedJSON())),
                     pp: ORYX.PREPROCESSING,
                     assetid: window.btoa(encodeURI(ORYX.UUID)),
                     assetcontenttransform: 'jsontobpmn2',
@@ -367,7 +369,7 @@ ORYX.Plugins.SavePlugin = Clazz.extend({
             var processJSON = ORYX.EDITOR.getSerializedJSON();
             var saveAjaxObj = new XMLHttpRequest;
             var saveURL = ORYX.PATH + "assetservice";
-            var saveParams  = "action=updateasset&profile=" + ORYX.PROFILE + "&pp=" + ORYX.PREPROCESSING + "&assetid=" + window.btoa(encodeURI(ORYX.UUID)) + "&assetcontenttransform=jsontobpmn2&assetcontent=" + encodeURIComponent(processJSON);
+            var saveParams  = "action=updateasset&profile=" + ORYX.PROFILE + "&pp=" + ORYX.PREPROCESSING + "&assetid=" + window.btoa(encodeURI(ORYX.UUID)) + "&assetcontenttransform=jsontobpmn2&assetcontent=" + window.btoa(encodeURIComponent(processJSON));
             saveAjaxObj.open("POST",saveURL,false);
             saveAjaxObj.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             saveAjaxObj.send(saveParams);

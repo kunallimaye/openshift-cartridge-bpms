@@ -93,7 +93,9 @@ var g=d.split(" ").member("transient");
 if(g){return""
 }var a="<"+f.nodeName;
 if(!b){a+=' xmlns="'+(f.namespaceURI?f.namespaceURI:XMLNS.XHTML)+'" xmlns:oryx="http://oryx-editor.org"'
-}c.each(function(h){a+=" "+h.nodeName+'="'+h.nodeValue+'"'
+}c.each(function(h){var i=h.nodeValue;
+if(i.indexOf("&")!==-1||i.indexOf(">")!==-1||i.indexOf("<")!==-1||i.indexOf('"')!==-1){i=Ext.util.Format.htmlEncode(i)
+}a+=" "+h.nodeName+'="'+i+'"'
 });
 if(e.length==0){a+="/>"
 }else{a+=">";

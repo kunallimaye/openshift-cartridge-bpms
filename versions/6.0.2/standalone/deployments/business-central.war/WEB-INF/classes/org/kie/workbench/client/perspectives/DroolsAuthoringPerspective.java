@@ -15,7 +15,7 @@
  */
 package org.kie.workbench.client.perspectives;
 
-import javax.annotation.PostConstruct;
+import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -28,27 +28,24 @@ import org.kie.workbench.common.widgets.client.menu.RepositoryMenu;
 import org.uberfire.client.annotations.Perspective;
 import org.uberfire.client.annotations.WorkbenchMenu;
 import org.uberfire.client.annotations.WorkbenchPerspective;
-import org.uberfire.client.annotations.WorkbenchToolBar;
 import org.uberfire.client.mvp.PlaceManager;
+import org.uberfire.client.workbench.panels.impl.MultiListWorkbenchPanelPresenter;
+import org.uberfire.client.workbench.panels.impl.SimpleWorkbenchPanelPresenter;
 import org.uberfire.mvp.Command;
 import org.uberfire.mvp.PlaceRequest;
 import org.uberfire.mvp.impl.DefaultPlaceRequest;
+import org.uberfire.workbench.model.CompassPosition;
 import org.uberfire.workbench.model.PanelDefinition;
-import org.uberfire.workbench.model.PanelType;
 import org.uberfire.workbench.model.PerspectiveDefinition;
-import org.uberfire.workbench.model.Position;
 import org.uberfire.workbench.model.impl.PanelDefinitionImpl;
 import org.uberfire.workbench.model.impl.PartDefinitionImpl;
 import org.uberfire.workbench.model.impl.PerspectiveDefinitionImpl;
 import org.uberfire.workbench.model.menu.MenuFactory;
+import org.uberfire.workbench.model.menu.MenuItem;
 import org.uberfire.workbench.model.menu.Menus;
-import org.uberfire.workbench.model.toolbar.IconType;
-import org.uberfire.workbench.model.toolbar.ToolBar;
-import org.uberfire.workbench.model.toolbar.impl.DefaultToolBar;
-import org.uberfire.workbench.model.toolbar.impl.DefaultToolBarItem;
 
 @ApplicationScoped
-@WorkbenchPerspective(identifier = "org.kie.workbench.client.perspectives.DroolsAuthoringPerspective")
+@WorkbenchPerspective(identifier = "AuthoringPerspective", isTransient = false)
 public class DroolsAuthoringPerspective {
 
     private AppConstants constants = AppConstants.INSTANCE;
@@ -68,45 +65,23 @@ public class DroolsAuthoringPerspective {
     @Inject
     private RepositoryMenu repositoryMenu;
 
-    private PerspectiveDefinition perspective;
-    private Menus menus;
-    private ToolBar toolBar;
-
-    @PostConstruct
-    public void init() {
-        buildPerspective();
-        buildMenuBar();
-        buildToolBar();
-    }
-
     @Perspective
     public PerspectiveDefinition getPerspective() {
-        return this.perspective;
+        PerspectiveDefinitionImpl perspective = new PerspectiveDefinitionImpl( MultiListWorkbenchPanelPresenter.class.getName() );
+        perspective.setName( constants.Project_Authoring() );
+
+        final PanelDefinition west = new PanelDefinitionImpl( SimpleWorkbenchPanelPresenter.class.getName() );
+        west.setWidth( 400 );
+        west.addPart( new PartDefinitionImpl( new DefaultPlaceRequest( "org.kie.guvnor.explorer" ) ) );
+
+        perspective.getRoot().insertChild( CompassPosition.WEST, west );
+
+        return perspective;
     }
 
     @WorkbenchMenu
     public Menus getMenus() {
-        return this.menus;
-    }
-
-    @WorkbenchToolBar
-    public ToolBar getToolBar() {
-        return this.toolBar;
-    }
-
-    private void buildPerspective() {
-        this.perspective = new PerspectiveDefinitionImpl( PanelType.ROOT_LIST );
-        this.perspective.setName( constants.Project_Authoring() );
-
-        final PanelDefinition west = new PanelDefinitionImpl( PanelType.SIMPLE );
-        west.setWidth( 400 );
-        west.addPart( new PartDefinitionImpl( new DefaultPlaceRequest( "org.kie.guvnor.explorer" ) ) );
-
-        this.perspective.getRoot().insertChild( Position.WEST, west );
-    }
-
-    private void buildMenuBar() {
-        this.menus = MenuFactory
+        return MenuFactory
                 .newTopLevelMenu( constants.explore() )
                 .menus()
                 .menu( constants.inboxIncomingChanges() )
@@ -142,27 +117,9 @@ public class DroolsAuthoringPerspective {
                 .newTopLevelMenu( constants.newItem() )
                 .withItems( newResourcesMenu.getMenuItems() )
                 .endMenu()
-                .newTopLevelMenu( constants.tools() )
-                .withItems( projectMenu.getMenuItems() )
-                .endMenu()
                 .newTopLevelMenu( AppConstants.INSTANCE.Repository() )
                 .withItems( repositoryMenu.getMenuItems() )
                 .endMenu().build();
-    }
-
-    private void buildToolBar() {
-        this.toolBar = new DefaultToolBar( "guvnor.new.item" );
-        final String tooltip = AppConstants.INSTANCE.newItem();
-        final Command command = new Command() {
-            @Override
-            public void execute() {
-                newResourcePresenter.show();
-            }
-        };
-        toolBar.addItem( new DefaultToolBarItem( IconType.FILE,
-                                                 tooltip,
-                                                 command ) );
-
     }
 
 }

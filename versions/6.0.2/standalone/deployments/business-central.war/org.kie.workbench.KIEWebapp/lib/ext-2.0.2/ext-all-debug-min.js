@@ -5038,10 +5038,9 @@ delete this.el
 }},setZIndex:function(a){this.zIndex=a;
 if(this.el){this.el.setStyle("z-index",a)
 }}};
-Ext.Shadow.Pool=function(){var b=[];
-var a=Ext.isIE?'<div class="x-ie-shadow"></div>':'<div class="x-shadow"><div class="xst"><div class="xstl"></div><div class="xstc"></div><div class="xstr"></div></div><div class="xsc"><div class="xsml"></div><div class="xsmc"></div><div class="xsmr"></div></div><div class="xsb"><div class="xsbl"></div><div class="xsbc"></div><div class="xsbr"></div></div></div>';
+Ext.Shadow.Pool=function(){var b=[],a=Ext.isIE?'<div class="x-ie-shadow"></div>':'<div class="x-shadow"><div class="xst"><div class="xstl"></div><div class="xstc"></div><div class="xstr"></div></div><div class="xsc"><div class="xsml"></div><div class="xsmc"></div><div class="xsmr"></div></div><div class="xsb"><div class="xsbl"></div><div class="xsbc"></div><div class="xsbr"></div></div></div>';
 return{pull:function(){var c=b.shift();
-if(!c){c=Ext.get(Ext.DomHelper.insertHtml("beforeBegin",document.body.firstChild,a));
+if(!c){c=Ext.get(Ext.DomHelper.insertHtml("beforeBegin",Ext.getBody().first().dom,a));
 c.autoBoxAdjust=false
 }return c
 },push:function(c){b.push(c)

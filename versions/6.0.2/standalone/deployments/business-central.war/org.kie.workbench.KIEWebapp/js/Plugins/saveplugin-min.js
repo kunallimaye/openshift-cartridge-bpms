@@ -41,8 +41,9 @@ ORYX.PROCESS_SAVED=false
 if(a&&a==true){b=prompt("Save this item","Check in comment");
 if(b==null){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.Save.saveCancelled,title:""});
 return
-}}Ext.Ajax.request({url:ORYX.PATH+"assetservice",method:"POST",success:function(g){try{if(g.responseText&&g.responseText.length>0){var k=g.responseText.evalJSON();
-if(k.errors&&k.errors.lengt>0){var l=k.errors;
+}}parent.designersignalexpectconcurrentupdate(ORYX.UUID);
+Ext.Ajax.request({url:ORYX.PATH+"assetservice",method:"POST",success:function(g){try{if(g.responseText&&g.responseText.length>0){var k=g.responseText.evalJSON();
+if(k.errors&&k.errors.length>0){var l=k.errors;
 for(var h=0;
 h<l.length;
 h++){var d=l[h];
@@ -59,12 +60,12 @@ Ext.Ajax.request({url:ORYX.PATH+"transformer",method:"POST",success:function(e){
 }}}else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+": "+i,title:""})
 }}catch(i){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+": "+i,title:""})
 }}.bind(this),failure:function(){this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"error",msg:ORYX.I18N.Save.unableToSave+".",title:""})
-}.bind(this),params:{action:"updateasset",profile:ORYX.PROFILE,assetcontent:ORYX.EDITOR.getSerializedJSON(),pp:ORYX.PREPROCESSING,assetid:window.btoa(encodeURI(ORYX.UUID)),assetcontenttransform:"jsontobpmn2",commitmessage:b}})
+}.bind(this),params:{action:"updateasset",profile:ORYX.PROFILE,assetcontent:window.btoa(encodeURIComponent(ORYX.EDITOR.getSerializedJSON())),pp:ORYX.PREPROCESSING,assetid:window.btoa(encodeURI(ORYX.UUID)),assetcontenttransform:"jsontobpmn2",commitmessage:b}})
 }else{this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,ntype:"info",msg:ORYX.I18N.Save.noChanges,title:""})
 }},saveSync:function(){if(!ORYX.PROCESS_SAVED){var k=ORYX.EDITOR.getSerializedJSON();
 var a=new XMLHttpRequest;
 var b=ORYX.PATH+"assetservice";
-var d="action=updateasset&profile="+ORYX.PROFILE+"&pp="+ORYX.PREPROCESSING+"&assetid="+window.btoa(encodeURI(ORYX.UUID))+"&assetcontenttransform=jsontobpmn2&assetcontent="+encodeURIComponent(k);
+var d="action=updateasset&profile="+ORYX.PROFILE+"&pp="+ORYX.PREPROCESSING+"&assetid="+window.btoa(encodeURI(ORYX.UUID))+"&assetcontenttransform=jsontobpmn2&assetcontent="+window.btoa(encodeURIComponent(k));
 a.open("POST",b,false);
 a.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 a.send(d);

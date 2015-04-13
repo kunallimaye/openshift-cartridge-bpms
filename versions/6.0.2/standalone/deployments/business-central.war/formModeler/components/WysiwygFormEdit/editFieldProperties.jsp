@@ -18,6 +18,7 @@
 <%@ page import="org.jbpm.formModeler.service.LocaleManager"%>
 <%@ page import="org.apache.commons.lang.StringEscapeUtils"%>
 <%@ page import="org.jbpm.formModeler.components.editor.WysiwygFormEditor" %>
+<%@ page import="org.apache.commons.lang.StringUtils" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%@ taglib prefix="static" uri="static-resources.tld" %>
 <%@ taglib uri="http://jakarta.apache.org/taglibs/i18n-1.0" prefix="i18n" %>
@@ -39,12 +40,13 @@
             <form action="<factory:formUrl/>" id="<factory:encode name="updateFormField"/>" method="POST" enctype="multipart/form-data">
             <factory:handler bean="org.jbpm.formModeler.components.editor.WysiwygFormEditor" action="saveFieldProperties"/>
             <input type="hidden" name="<%=WysiwygFormEditor.ACTION_TO_DO%>" id="<factory:encode name="actionToDo"/>" value="<%=WysiwygFormEditor.ACTION_SAVE_FIELD_PROPERTIES%>"/>
+            <input type="hidden" name="<%=WysiwygFormEditor.CHANGED_FIELD%>" id="<%=WysiwygFormEditor.CHANGED_FIELD%>" value=""/>
 
             <table border="0" class="EditFieldProperties">
             <tr>
                 <td align="left" colspan="3">
                     <div class="headerEditFP">
-                        <input type="image" onclick="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_CANCEL_FIELD_EDITION%>');this.onclick=function(){return false;}" style="cursor:hand; float: left; margin-right: 10px; margin-left: 5px;" src="<static:image relativePath="actions/close.png"/>"><i18n:message key="properties">Properties</i18n:message> (<%=StringEscapeUtils.escapeHtml((String) fieldName)%>)
+                        <input type="image" onclick="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_CLOSE_FIELD_EDITION%>');this.onclick=function(){return false;}" style="cursor:hand; float: left; margin-right: 10px; margin-left: 5px;" src="<static:image relativePath="actions/close.png"/>"><i18n:message key="properties">Properties</i18n:message> (<%=StringEscapeUtils.escapeHtml((String) fieldName)%>)
                     </div>
                 </td>
             </tr>
@@ -52,7 +54,7 @@
             <td colspan="3">
             <table class="FormFieldProperties">
             <tr>
-                <td><i18n:message key="fieldType">!!!Tipo de campo</i18n:message></td>
+                <td><i18n:message key="fieldType">!!!Tipo de campo</i18n:message>:</td>
             </tr>
             <tr>
                 <td colspan="3">
@@ -61,14 +63,7 @@
                             <select name="fieldType" class="skn-input" style="width:200px" onchange="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_CHANGE_FIELD_TYPE%>'); submitAjaxForm(this.form);return false;">
                         </mvc:fragment>
                         <mvc:fragment name="output">
-                            <mvc:fragmentValue name="id" id="id">
-                                <option value="<%=id%>"><i18n:message key='<%="fieldType." + id%>'/></option>
-                            </mvc:fragmentValue>
-                        </mvc:fragment>
-                        <mvc:fragment name="outputSelected">
-                            <mvc:fragmentValue name="id" id="id">
-                                <option value="<%=id%>" selected><i18n:message key='<%="fieldType." + id%>'/></option>
-                            </mvc:fragmentValue>
+                                <option value="<mvc:fragmentValue name="id"/>" <mvc:fragmentValue name="selected"/>><mvc:fragmentValue name="label"/></option>
                         </mvc:fragment>
                         <mvc:fragment name="outputEnd">
                             </select>
@@ -202,20 +197,21 @@
         </tr>
     </mvc:fragment>
     <%------------------------------------------------------------------------------------------------------------%>
+    <mvc:fragment name="outputApplyButton">
+        <tr>
+          <td colspan="3">
+            <table>
+              <tr>
+                <td><input type="submit" value="<i18n:message key="apply"> !!!Apply </i18n:message>" class="skn-button_alt"
+                           onclick="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_SAVE_FIELD_PROPERTIES%>');"></td>
+                <td><i18n:message key="apply_note"> !!!Apply to update</i18n:message></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+    </mvc:fragment>
     <mvc:fragment name="outputEnd">
         <mvc:fragmentValue name="fieldName" id="fieldName">
-            <tr>
-                <td align="center" colspan="3">
-                    <table>
-                        <tr>
-                            <td><input type="submit" value="<i18n:message key="save"> !!!Save </i18n:message>" class="skn-button"
-                                       onclick="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_SAVE_FIELD_PROPERTIES%>');"></td>
-                            <td><input type="submit" value="<i18n:message key="cancel"> !!!Cancel </i18n:message>" class="skn-button_alt"
-                                       onclick="$('#<factory:encode name="actionToDo"/>').val('<%=WysiwygFormEditor.ACTION_CANCEL_FIELD_EDITION%>');"></td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
             </table>
             </td>
             </tr>
@@ -224,6 +220,25 @@
             </form>
             </div>
             <script type="text/javascript" defer="defer">
+                $('#<factory:encode name="updateFormField"/> *').filter(':input').each(function(){
+                    $(this).focus(function() {
+                        $("#<%=WysiwygFormEditor.CHANGED_FIELD%>").val($(this).attr("name"));
+                    })
+                });
+<%
+            if (!StringUtils.isEmpty((String) fieldName)) {
+%>
+                $('#<factory:encode name="updateFormField"/> *').filter(':input').each(function(){
+                    if ($(this).attr("name") == "<%=fieldName%>") {
+                        var x = window.scrollX, y = window.scrollY;
+                        $(this).focus();
+                        window.scrollTo(x, y);
+                        return false;
+                    }
+                });
+<%
+            }
+%>
                 setAjax("<factory:encode name="updateFormField"/>");
             </script>
         </mvc:fragmentValue>

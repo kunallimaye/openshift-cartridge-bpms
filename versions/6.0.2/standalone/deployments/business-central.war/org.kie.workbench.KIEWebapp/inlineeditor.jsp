@@ -10,31 +10,29 @@
     <meta http-equiv="PRAGMA" content="NO-CACHE">
     <meta http-equiv="Expires" content="-1">
     <link xmlns="http://www.w3.org/1999/xhtml" rel="icon" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/jbpm.gif" />
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/prototype-1.5.1.js" type="text/javascript"></script>
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/path_parser.js" type="text/javascript"></script>
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/ext-2.0.2/adapter/ext/ext-base.js" type="text/javascript"></script>
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/ext-2.0.2/ext-all.js" type="text/javascript"></script>
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/ext-2.0.2/color-field.js" type="text/javascript"></script>
+  <!-- lib scripts -->
+  <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/compressed/designer-lib.js" type="text/javascript"></script>
+  <!-- ext scripts -->
+  <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/compressed/designer-ext.js" type="text/javascript"></script>
+
     <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/jquery-1.7.2.min.js" type="text/javascript"></script>
     <script xmlns="http://www.w3.org/1999/xhtml" type="text/javascript">jQuery.noConflict();</script>
-    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/handlebars-1.0.0.beta.6.js" type="text/javascript"></script>
+
     <style xmlns="http://www.w3.org/1999/xhtml" media="screen" type="text/css">@import url("<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/lib/ext-2.0.2/resources/css/ext-all.css");
     .extensive-remove {
         background-image: url(<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/images/remove.gif) ! important;
     }</style>
     <!-- utility scripts -->
     <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/compressed/designer-utils.js" type="text/javascript"></script>
-    <!-- styles -->
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/codemirror.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/cmdialog.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/fullscreen.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/mic.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/notifications.css" type="text/css" />
-    <script xmlns="http://www.w3.org/1999/xhtml" type="text/javascript" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/CFInstall.min.js"></script>
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/theme-default.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/xtheme-gray-colors.css" type="text/css" />
-    <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/xtheme-gray.css" type="text/css" />
-    <!-- schemas -->
+
+  <!-- compressed stylesheets -->
+  <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/designer-compressed-stylesheets.css" type="text/css" />
+  <!-- The sprite css files included here must come after the ext css because the classes override classes in ext styles -->
+  <link xmlns="http://www.w3.org/1999/xhtml" rel="Stylesheet" media="screen" href="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/css/sprites/sprite-stylesheets.css" type="text/css" />
+
+  <script xmlns="http://www.w3.org/1999/xhtml" type="text/javascript" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/CFInstall.min.js"></script>
+
+  <!-- schemas -->
     <link xmlns="http://www.w3.org/1999/xhtml" rel="schema.dc" href="http://purl.org/dc/elements/1.1/" />
     <link xmlns="http://www.w3.org/1999/xhtml" rel="schema.dcTerms" href="http://purl.org/dc/terms/" />
     <link xmlns="http://www.w3.org/1999/xhtml" rel="schema.b3mn" href="http://b3mn.org" />
@@ -52,7 +50,11 @@
 
 </head>
 <body style="overflow:hidden;" onload="startit();">
-    <div id="Definition"></div>
+    <div id="Definition"> <!-- <canvas id="comp"></canvas> --> </div>
+    <!-- <video id="video" autoplay width="300" style="display:none"></video>
+    <canvas id="canvas" style="width:300px;display:none;"></canvas>
+    <script xmlns="http://www.w3.org/1999/xhtml" src="<%=request.getContextPath()%>/org.jbpm.designer.jBPMDesigner/js/gestures/gesture.js" type="text/javascript"></script>
+    -->
 
     <script>
         if(parent.document.getElementById(ORYX.EDITORID) && parent.document.getElementById(ORYX.EDITORID).parentNode && parent.document.getElementById(ORYX.EDITORID).parentNode.parentNode) {

@@ -17,6 +17,7 @@
 --%>
 <%@ page import="org.apache.commons.lang.StringUtils" %>
 <%@ page import="org.jbpm.formModeler.core.processing.fieldHandlers.DateFieldHandler" %>
+<%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 <%@ taglib prefix="static" uri="static-resources.tld" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%@ taglib uri="http://jakarta.apache.org/taglibs/i18n-1.0" prefix="i18n" %>
@@ -24,115 +25,139 @@
 <mvc:formatter name="DateFieldHandlerFormatter">
     <mvc:fragment name="output">
         <mvc:fragmentValue name="name" id="name">
-            <mvc:fragmentValue name="title" id="title">
-                <mvc:fragmentValue name="styleclass" id="styleclass">
-                    <mvc:fragmentValue name="size" id="size">
-                        <mvc:fragmentValue name="maxlength" id="maxlength">
-                            <mvc:fragmentValue name="tabindex" id="tabindex">
-                                <mvc:fragmentValue name="value" id="value">
-                                    <mvc:fragmentValue name="accesskey" id="accesskey">
-                                        <mvc:fragmentValue name="alt" id="alt">
-                                            <mvc:fragmentValue name="cssStyle" id="cssStyle">
-                                                <mvc:fragmentValue name="height" id="height">
-                                                    <mvc:fragmentValue name="readonly" id="readonly">
-                                                        <mvc:fragmentValue name="uid" id="uid">
-                                                            <mvc:fragmentValue name="timePattern" id="timePattern">
-                                                                <mvc:fragmentValue name="inputPattern" id="inputPattern">
-                                                                        <table border="0" cellpadding="0"
-                                                                               cellspacing="0"
-                                                                               class="dynInputStyle <%=StringUtils.defaultString((String) styleclass, "")%>"
-                                                                                <%=cssStyle != null ? " style=\"" + cssStyle + "\"" : ""%>>
-                                                                            <tr valign="top">
-                                                                                <td>
-                                                                                    <input type="text"
-                                                                                           name="<%=name%>"
-                                                                                           onchange="processFormInputChange(this)"
-                                                                                           id="<%=uid%>"
-                                                                                            <%=title!=null?("title=\""+title+"\""):""%>
-                                                                                           class="dynInputStyle <%=StringUtils.defaultString((String) styleclass, "skn-input")%>"
-                                                                                            <%=size!=null ? " size=\""+size+"\"":""%>
-                                                                                            <%=maxlength!=null ? " maxlength=\""+maxlength+"\"":""%>
-                                                                                            <%=tabindex!=null ? " tabindex=\""+tabindex+"\"":""%>
-                                                                                            <%=accesskey!=null ? " accesskey=\""+accesskey+"\"":""%>
-                                                                                            <%=alt!=null ? " alt=\""+alt+"\"":""%>
-                                                                                            <%=cssStyle!=null ? " style=\""+cssStyle+"\"":""%>
-                                                                                            <%=height!=null ? " height=\""+height+"\"":""%>
-                                                                                           readonly
-                                                                                            <%=Boolean.TRUE.equals(readonly)? " disabled ":""%>
-                                                                                           value="<%=value%>">
-                                                                                    <%
-                                                                                        if (!Boolean.TRUE.equals(readonly)) {
-                                                                                    %>
-                                                                                    <script >
-                                                                                        $(function() {
-                                                                                            $("input[id='<%=uid%>']").datetimepicker({
-                                                                                                dateFormat:"<%=inputPattern%>",
-                                                                                                timeFormat:"<%=timePattern%>"
-                                                                                            })
-                                                                                        });
-                                                                                    </script>
-                                                                                    <%
-                                                                                        }
-                                                                                    %>
-                                                                                </td>
-                                                                                <td style="padding-left:5px;">
-                                                                                    <input type="hidden"
-                                                                                           name="<%=name + DateFieldHandler.HAS_CHANGED_PARAM%>"
-                                                                                           id="<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>"
-                                                                                           value="false"/>
-                                                                                    <a href="#"
-                                                                                            <%
-                                                                                                if (!Boolean.TRUE.equals(readonly)) {
-                                                                                            %>
-                                                                                       onclick="document.getElementById('<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>').value = true;
-                                                                                               $('input[id=\'<%=uid%>\']').datetimepicker('show');
-                                                                                               return false;"
-                                                                                            <%
-                                                                                            } else {
-                                                                                            %>
-                                                                                       onclick="return false"
-                                                                                            <%
-                                                                                                }
-                                                                                            %>
-                                                                                            >
-                                                                                        <img src="<static:image relativePath="general/16x16/ico-calendar.png"/>"
-                                                                                             border="0">
-                                                                                    </a>
-                                                                                </td>
-                                                                                <%
-                                                                                    if (!Boolean.TRUE.equals(readonly)) {
-                                                                                %>
-                                                                                <td>
-                                                                                    <a href="#">
-                                                                                        <img src="<static:image relativePath="general/16x16/ico-trash.png"/>"
-                                                                                             border="0"
-                                                                                             onclick="var dt = document.getElementById('<%=uid%>');
-                                                                                                     dt.value='';
-                                                                                                     $('input[id=\'<%=uid%>\']').datetimepicker('hide');
-                                                                                                     document.getElementById('<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>').value = true;
-                                                                                                     processFormInputChange(dt);
-                                                                                                     return false;">
-                                                                                    </a>
-                                                                                </td>
-                                                                                <%
-                                                                                    }
-                                                                                %>
-                                                                            </tr>
-                                                                        </table>
-                                                                </mvc:fragmentValue>
-                                                            </mvc:fragmentValue>
-                                                        </mvc:fragmentValue>
-                                                    </mvc:fragmentValue>
-                                                </mvc:fragmentValue>
-                                            </mvc:fragmentValue>
-                                        </mvc:fragmentValue>
-                                    </mvc:fragmentValue>
-                                </mvc:fragmentValue>
-                            </mvc:fragmentValue>
-                        </mvc:fragmentValue>
-                    </mvc:fragmentValue>
-                </mvc:fragmentValue>
-            </mvc:fragmentValue>
+        <mvc:fragmentValue name="title" id="title">
+        <mvc:fragmentValue name="styleclass" id="styleclass">
+        <mvc:fragmentValue name="size" id="size">
+        <mvc:fragmentValue name="maxlength" id="maxlength">
+        <mvc:fragmentValue name="tabindex" id="tabindex">
+        <mvc:fragmentValue name="value" id="value">
+        <mvc:fragmentValue name="accesskey" id="accesskey">
+        <mvc:fragmentValue name="alt" id="alt">
+        <mvc:fragmentValue name="cssStyle" id="cssStyle">
+        <mvc:fragmentValue name="height" id="height">
+        <mvc:fragmentValue name="readonly" id="readonly">
+        <mvc:fragmentValue name="timePattern" id="timePattern">
+        <mvc:fragmentValue name="inputPattern" id="inputPattern">
+        <mvc:fragmentValue name="uid" id="uid">
+        <mvc:fragmentValue name="onChangeScript" id="onChangeScript">
+<div class="dynInputStyle <%=StringUtils.defaultString((String) styleclass, "")%>"
+    style="display: table; <%=cssStyle%>">
+    <div style="display: table-row;">
+        <div style="display: table-cell;">
+            <input type="text"
+                   name="<%=name%>"
+                   id="<%=uid%>"
+                    <%=title!=null?("title=\""+title+"\""):""%>
+                   class="dynInputStyle <%=StringUtils.defaultString((String) styleclass, "skn-input")%>"
+                    <%=size!=null ? " size=\""+size+"\"":""%>
+                    <%=maxlength!=null ? " maxlength=\""+maxlength+"\"":""%>
+                    <%=tabindex!=null ? " tabindex=\""+tabindex+"\"":""%>
+                    <%=accesskey!=null ? " accesskey=\""+accesskey+"\"":""%>
+                    <%=alt!=null ? " alt=\""+alt+"\"":""%>
+                    <%=cssStyle!=null ? " style=\""+cssStyle+"\"":""%>
+                    <%=height!=null ? " height=\""+height+"\"":""%>
+                   readonly
+                    <%=Boolean.TRUE.equals(readonly)? " disabled ":""%>
+                   value="<%=value%>">
+            <%
+                if (!Boolean.TRUE.equals(readonly)) {
+            %>
+            <script >
+                $(function() {
+                    $("input[id='<%=uid%>']").datetimepicker({
+                        dateFormat:"<%=inputPattern%>",
+                        timeFormat:"<%=timePattern%>",
+                        onClose:function(ct){
+                            processFormInputChange($('#<%=uid%>').get(0))
+<%
+        if (onChangeScript != null) {
+%>
+                            try {
+                                eval('<%=StringEscapeUtils.escapeJavaScript(StringEscapeUtils.escapeHtml((String)onChangeScript))%>');
+                            } catch (err) {
+                                alert('Error executing inline js: ' + scriptCode);
+                            }
+<%
+    }
+%>
+                        }
+                    })
+                });
+            </script>
+            <%
+                }
+            %>
+        </div>
+        <div style="display: table-cell;">
+            <input type="hidden"
+                   name="<%=name + DateFieldHandler.HAS_CHANGED_PARAM%>"
+                   id="<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>"
+                   value="false"/>
+            <a href="#"
+                    <%
+                        if (!Boolean.TRUE.equals(readonly)) {
+                    %>
+               onclick="document.getElementById('<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>').value = true;
+                       $('input[id=\'<%=uid%>\']').datetimepicker('show');
+                       return false;"
+                    <%
+                    } else {
+                    %>
+               onclick="return false"
+                    <%
+                        }
+                    %>
+                    >
+                <img src="<static:image relativePath="general/16x16/ico-calendar.png"/>"
+                     border="0">
+            </a>
+        </div>
+<%
+    if (!Boolean.TRUE.equals(readonly)) {
+%>
+        <div style="display: table-cell;">
+            <a href="#">
+                <img src="<static:image relativePath="general/16x16/ico-remove.png"/>"
+                     border="0"
+                     onclick="var dt = document.getElementById('<%=uid%>');
+                             dt.value='';
+                             $('input[id=\'<%=uid%>\']').datetimepicker('hide');
+                             document.getElementById('<%=uid + DateFieldHandler.HAS_CHANGED_PARAM%>').value = true;
+                             processFormInputChange(dt);
+<%
+    if (onChangeScript != null) {
+%>
+                             try {
+                                 eval('<%=StringEscapeUtils.escapeJavaScript(StringEscapeUtils.escapeHtml((String)onChangeScript))%>');
+                             } catch (err) {
+                                 alert('Error executing inline js: ' + scriptCode);
+                             }
+<%
+    }
+%>
+                             return false;">
+            </a>
+        </div>
+<%
+    }
+%>
+    </div>
+</div>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
+        </mvc:fragmentValue>
         </mvc:fragmentValue>
     </mvc:fragment>
 </mvc:formatter>

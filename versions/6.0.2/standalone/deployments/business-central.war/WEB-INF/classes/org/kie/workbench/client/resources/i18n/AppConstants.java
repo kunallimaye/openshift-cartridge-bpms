@@ -42,6 +42,12 @@ public interface AppConstants
 
     String Administration();
 
+    String Contributors();
+
+    String Timeline();
+
+    String People();
+
     String Authoring();
 
     String Process_Management();
@@ -54,13 +60,17 @@ public interface AppConstants
 
     String Home();
 
+    String Home_Page();
+
     String Process_Definitions();
 
     String Process_Instances();
 
     String Deploy();
 
-    String Deployments();
+    String Rule_Deployments();
+
+    String Process_Deployments();
 
     String newItem();
 
@@ -72,11 +82,13 @@ public interface AppConstants
 
     String find();
 
+    String PlugIns();
+
+    String Extensions();
+
     String missingDefaultPerspective();
 
     String explore();
-
-    String files();
 
     String repositories();
 
@@ -86,8 +98,6 @@ public interface AppConstants
 
     String newRepository();
 
-    String projects();
-
     String inboxIncomingChanges();
 
     String inboxRecentlyEdited();
@@ -96,30 +106,8 @@ public interface AppConstants
 
     String tools();
 
-    String homeDiscover();
-
-    String homeDiscoverCaption();
-
-    String homeTheKnowledgeLifeCycle();
-
-    String homeAuthor();
-
-    String homeAuthorCaption();
-
-    String homeDeploy();
-
-    String homeDeployCaption();
-
-    String homeWork();
-
-    String homeWorkCaption();
-
-    String homeImprove();
-
-    String homeImproveCaption();
-
     String User();
-    
+
     String Role();
 
     String Jobs();
@@ -133,5 +121,11 @@ public interface AppConstants
     String Upload();
 
     String Refresh();
+
+    String Asset_Management();
+
+    String Apps();
+
+    String logoBannerError();
 
 }

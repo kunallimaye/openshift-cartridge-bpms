@@ -1,7 +1,7 @@
 if(!ORYX){var ORYX={}
 }if(!ORYX.CONFIG){ORYX.CONFIG={}
 }ORYX.CONFIG.WEB_URL="org.jbpm.designer.jBPMDesigner";
-ORYX.CONFIG.MENU_INDEX={File:1,Edit:2,Undo:3,localstorage:4,"Z-Order":5,Alignment:6,Grouping:7,lockunlockgroup:8,Docker:9,colorpickergroup:"AAA",editprocessforms:"BBB",sharegroup:"CCC",importgroup:"DDD",validationandsimulation:"EEE",servicerepogroup:"FFF",fullscreengroup:"GGG",Help:"ZZZZZZ"};
+ORYX.CONFIG.MENU_INDEX={File:1,Edit:2,Undo:3,localstorage:4,"Z-Order":5,Alignment:6,Grouping:7,lockunlockgroup:8,Docker:9,colorpickergroup:"AAA",editprocessforms:"BBB",sharegroup:"CCC",importgroup:"DDD",validationandsimulation:"EEE",servicerepogroup:"FFF",paintgroup:"GGG",fullscreengroup:"HHH",Help:"ZZZZZZ"};
 ORYX.CONFIG.UUID_URL=function(b,a){if(b===undefined){b=ORYX.UUID
 }if(a===undefined){a=ORYX.PROFILE
 }if(ORYX.PATH===undefined){ORYX.PATH="designer/"
@@ -139,6 +139,7 @@ ORYX.CONFIG.TYPE_DTYPE_VARDEF="vardef";
 ORYX.CONFIG.TYPE_DTYPE_DINPUT="dinput";
 ORYX.CONFIG.TYPE_DTYPE_DOUTPUT="doutput";
 ORYX.CONFIG.TYPE_DTYPE_GLOBAL="global";
+ORYX.CONFIG.TYPE_RULEFLOW_GROUP="ruleflowgroup";
 ORYX.CONFIG.LABEL_LINE_DISTANCE=2;
 ORYX.CONFIG.LABEL_DEFAULT_LINE_HEIGHT=12;
 ORYX.CONFIG.ENABLE_MORPHMENU_BY_HOVER=true;
@@ -161,6 +162,7 @@ ORYX.CONFIG.EVENT_KEYUP="keyup";
 ORYX.CONFIG.EVENT_LOADED="editorloaded";
 ORYX.CONFIG.EVENT_EXECUTE_COMMANDS="executeCommands";
 ORYX.CONFIG.EVENT_STENCIL_SET_LOADED="stencilSetLoaded";
+ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD="stencilSetReLoad";
 ORYX.CONFIG.EVENT_SELECTION_CHANGED="selectionchanged";
 ORYX.CONFIG.EVENT_SHAPEADDED="shapeadded";
 ORYX.CONFIG.EVENT_PROPERTY_CHANGED="propertyChanged";

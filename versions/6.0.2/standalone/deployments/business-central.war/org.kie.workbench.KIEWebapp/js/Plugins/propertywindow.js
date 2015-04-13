@@ -39,6 +39,49 @@ if (!ORYX.LabelProviders) {
 }
 
 
+Ext.override(Ext.form.ComboBox, {
+    anyMatch: false,
+    caseSensitive: false,
+    doQuery: function(q, forceAll){
+        if(q === undefined || q === null){
+            q = '';
+        }
+        var qe = {
+            query: q,
+            forceAll: forceAll,
+            combo: this,
+            cancel:false
+        };
+        if(this.fireEvent('beforequery', qe)===false || qe.cancel){
+            return false;
+        }
+        q = qe.query;
+        forceAll = qe.forceAll;
+        if(forceAll === true || (q.length >= this.minChars)){
+            if(this.lastQuery !== q){
+                this.lastQuery = q;
+                if(this.mode == 'local'){
+                    this.selectedIndex = -1;
+                    if(forceAll){
+                        this.store.clearFilter();
+                    }else{
+                        this.store.filter(this.displayField, q, this.anyMatch, this.caseSensitive);
+                    }
+                    this.onLoad();
+                }else{
+                    this.store.baseParams[this.queryParam] = q;
+                    this.store.load({
+                        params: this.getParams(q)
+                    });
+                    this.expand();
+                }
+            }else{
+                this.selectedIndex = -1;
+                this.onLoad();
+            }
+        }
+    }
+});
 
 ORYX.Plugins.PropertyWindow = {
 
@@ -698,24 +741,54 @@ ORYX.Plugins.PropertyWindow = {
 								selectOnFocus:true
 							});
 
-							editorCombo.on('select', function(combo, record, index) {
-								this.editDirectly(key, combo.getValue());
-							}.bind(this))
+
+                            if (pair.id() == "tasktype") {
+                                editorCombo.on('select', function(combo, record, index) {
+                                    this.editDirectly(key, combo.getValue());
+
+                                    var currentSelection = this.facade.getSelection();
+                                    var currentSelectionFirst = currentSelection.first();
+                                    this.facade.setSelection([]);
+                                    this.facade.getCanvas().update();
+                                    this.facade.updateSelection();
+                                    this.facade.setSelection([currentSelectionFirst]);
+                                    this.facade.getCanvas().update();
+                                    this.facade.updateSelection();
+                                    this.facade.raiseEvent({
+                                        type: ORYX.CONFIG.EVENT_LOADED,
+                                        elements: [currentSelectionFirst]
+                                    });
+                                }.bind(this));
+                            } else {
+                                editorCombo.on('select', function(combo, record, index) {
+                                    this.editDirectly(key, combo.getValue());
+                                }.bind(this));
+                            }
 
 							editorGrid = new Ext.Editor(editorCombo);
 
 							break;
 
                             case ORYX.CONFIG.TYPE_DYNAMICCHOICE:
+
                             var items = pair.items();
 
                             var options = [];
+                            var doAlert = false;
+                            var doAlertOnProp = "";
+
                             items.each(function(value) {
                                 if(value.value() == attribute)
                                     attribute = value.title();
 
                                 if(value.refToView()[0])
                                     refToViewFlag = true;
+
+
+                                if(value.needsprop().length > 0) {
+                                    doAlert = true;
+                                    doAlertOnProp = value.needsprop();
+                                }
 
                                 // add first blank for reset possiblity
                                 options.push(["", "", ""]);
@@ -760,7 +833,6 @@ ORYX.Plugins.PropertyWindow = {
                             });
 
                             // Set the grid Editor
-
                             var editorCombo = new Ext.form.ComboBox({
                                 editable: false,
                                 tpl: '<tpl for="."><div class="x-combo-list-item">{[(values.icon) ? "<img src=\'" + values.icon + "\' />" : ""]} {title}</div></tpl>',
@@ -774,8 +846,25 @@ ORYX.Plugins.PropertyWindow = {
                             });
 
                             editorCombo.on('select', function(combo, record, index) {
+                                if(doAlert == true && doAlertOnProp.length > 0) {
+                                    var selection = ORYX.EDITOR._pluginFacade.getSelection();
+                                    if(selection) {
+                                        var shape = selection.first();
+                                        var alertPropName = "oryx-" + doAlertOnProp;
+                                        var alertPropVal = shape.properties[alertPropName];
+                                        if(alertPropVal != undefined && alertPropVal.length < 1) {
+                                            ORYX.EDITOR._pluginFacade.raiseEvent({
+                                                type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                                                ntype		: 'warning',
+                                                msg         : "This property needs the associated property '"+ doAlertOnProp + "' to be set.",
+                                                title       : ''
+
+                                            });
+                                        }
+                                    }
+                                }
                                 this.editDirectly(key, combo.getValue());
-                            }.bind(this))
+                            }.bind(this));
 
                             editorGrid = new Ext.Editor(editorCombo);
 
@@ -1011,7 +1100,20 @@ ORYX.Plugins.PropertyWindow = {
 							cf.on('dialogClosed', this.dialogClosed, {scope:this, row:index, col:1,field:cf});							
 							editorGrid = new Ext.Editor(cf);
 							break;
-							
+
+
+                        case ORYX.CONFIG.TYPE_RULEFLOW_GROUP:
+                            var cf = new Ext.form.ComplexRuleflowGroupElementField({
+                                allowBlank: pair.optional(),
+                                dataSource:this.dataSource,
+                                grid:this.grid,
+                                row:index,
+                                facade:this.facade
+                            });
+                            cf.on('dialogClosed', this.dialogClosed, {scope:this, row:index, col:1,field:cf});
+                            editorGrid = new Ext.Editor(cf);
+                            break;
+
 						case ORYX.CONFIG.TYPE_CUSTOM:
 							var cf = new Ext.form.ComplexCustomField({
 								allowBlank: pair.optional(),
@@ -1563,11 +1665,21 @@ Ext.extend(Ext.form.ComplexListField, Ext.form.TriggerField,  {
 				editor = new Ext.form.ComboBox(
 					{ editable: false, typeAhead: true, triggerAction: 'all', transform:select, lazyRender:true,  msgTarget:'title', width : width});
             } else if(type == ORYX.CONFIG.TYPE_DYNAMICCHOICE) {
+
                 var items = this.items[i].items();
                 var select = ORYX.Editor.graft("http://www.w3.org/1999/xhtml", parent, ['select', {style:'display:none'}]);
                 var optionTmpl = new Ext.Template('<option value="{value}">{value}</option>');
+
+                var doAlert = false;
+                var doAlertOnProp = "";
                 items.each(function(value){
                     // evaluate each value expression
+
+                    if(value.needsprop() && value.needsprop().length > 0) {
+                        doAlert = true;
+                        doAlertOnProp = value.needsprop();
+                    }
+
                     var processJSON = ORYX.EDITOR.getSerializedJSON();
                     var expressionresults = jsonPath(processJSON.evalJSON(), value.value());
                     if(expressionresults) {
@@ -1596,7 +1708,36 @@ Ext.extend(Ext.form.ComplexListField, Ext.form.TriggerField,  {
                 });
 
                 editor = new Ext.form.ComboBox(
-                    { editable: false, typeAhead: true, triggerAction: 'all', transform:select, lazyRender:true,  msgTarget:'title', width : width});
+                    {
+                        editable: false,
+                        typeAhead: true,
+                        triggerAction: 'all',
+                        transform:select,
+                        lazyRender:true,
+                        msgTarget:'title',
+                        width : width
+                    });
+
+                editor.on('select', function(combo, record, index) {
+                    if(doAlert == true && doAlertOnProp.length > 0) {
+                        var selection = ORYX.EDITOR._pluginFacade.getSelection();
+                        if(selection && selection.length == 1) {
+                            var shape = selection.first();
+                            var alertPropName = "oryx-" + doAlertOnProp;
+                            var alertPropVal = shape.properties[alertPropName];
+                            if(alertPropVal && alertPropVal.length < 1) {
+                                this.facade.raiseEvent({
+                                    type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                                    ntype		: 'warning',
+                                    msg         : "This property needs the associated property '"+ doAlertOnProp + "' to be set.",
+                                    title       : ''
+
+                                });
+                            }
+                        }
+                    }
+                }.bind(this));
+
             } else if (type == ORYX.CONFIG.TYPE_BOOLEAN) {
 				editor = new Ext.form.Checkbox( { width : width } );
 			} else if (type == "xpath") {
@@ -2653,221 +2794,382 @@ Ext.form.ComplexImportsField = Ext.extend(Ext.form.TriggerField,  {
     	if(this.disabled){
             return;
         }
-    	var ImportDef = Ext.data.Record.create([
-            {
-                name: 'type'
-            },
-            {
-                name: 'classname'
-            },
-            {
-                name: 'wsdllocation'
-            },
-            {
-                name: 'wsdlnamespace'
-            }
-        ]);
-    	
-    	var importsProxy = new Ext.data.MemoryProxy({
-            root: []
-        });
-    	
-    	var imports = new Ext.data.Store({
-    		autoDestroy: true,
-            reader: new Ext.data.JsonReader({
-                root: "root"
-            }, ImportDef),
-            proxy: importsProxy,
-            sorters: [{
-                property: 'type',
-                direction:'ASC'
-            }]
-        });
-    	imports.load();
 
-        // sample 'com.sample.Myclass|default,location|namespace|wsdl
-    	if(this.value.length > 0) {
-    		var valueParts = this.value.split(",");
-            for(var i=0; i < valueParts.length; i++) {
-                var type = "";
-                var classname, location, namespace;
-    			var nextPart = valueParts[i];
+        var processJSON = ORYX.EDITOR.getSerializedJSON();
+        var processPackage = jsonPath(processJSON.evalJSON(), "$.properties.package");
+        var processId = jsonPath(processJSON.evalJSON(), "$.properties.id");
 
-                var innerParts = nextPart.split("|");
-                if(innerParts[1] == "default") {
-                    type = "default";
-                    classname = innerParts[0];
-                    location = "";
-                    namespace = "";
-                } else {
-                    type = "wsdl";
-                    classname = "";
-                    location = innerParts[0];
-                    namespace = innerParts[1];
-                }
-    			imports.add(new ImportDef({
-                    'type': type,
-                    'classname': classname,
-                    'wsdllocation': location,
-                    'wsdlnamespace': namespace
-                }));
-    		}
-    	}
-    	
-    	var itemDeleter = new Extensive.grid.ItemDeleter();
-        var impordata = new Array();
-        var defaultType = new Array();
-        defaultType.push("default");
-        defaultType.push("default");
-        impordata.push(defaultType);
+        Ext.Ajax.request({
+            url: ORYX.PATH + 'calledelement',
+            method: 'POST',
+            success: function(response) {
+                try {
+                    if(response.responseText.length >= 0 && response.responseText != "false") {
+                        var responseJson = Ext.decode(response.responseText);
+                        var customTypeData = new Array();
 
-        var wsdlType = new Array();
-        wsdlType.push("wsdl");
-        wsdlType.push("wsdl");
-        impordata.push(wsdlType);
+                        // set some predefined defaults
+                        var stringType = new Array();
+                        stringType.push("String");
+                        stringType.push("String");
+                        customTypeData.push(stringType);
+                        var integerType = new Array();
+                        integerType.push("Integer");
+                        integerType.push("Integer");
+                        customTypeData.push(integerType);
+                        var booleanType = new Array();
+                        booleanType.push("Boolean");
+                        booleanType.push("Boolean");
+                        customTypeData.push(booleanType);
+                        var floatType = new Array();
+                        floatType.push("Float");
+                        floatType.push("Float");
+                        customTypeData.push(floatType);
+                        var objectType = new Array();
+                        objectType.push("Object");
+                        objectType.push("Object");
+                        customTypeData.push(objectType);
+                        var dividerType = new Array();
+                        dividerType.push("**********");
+                        dividerType.push("**********");
+                        customTypeData.push(dividerType);
 
-    	var gridId = Ext.id();
-    	var grid = new Ext.grid.EditorGridPanel({
-            autoScroll: true,
-            autoHeight: true,
-            store: imports,
-            id: gridId,
-            stripeRows: true,
-            cm: new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),
-                {
-                    id: 'imptype',
-                    header: ORYX.I18N.PropertyWindow.importType,
-                    width: 100,
-                    dataIndex: 'type',
-                    editor: new Ext.form.ComboBox({
-                        id: 'importTypeCombo',
-                        valueField:'name',
-                        displayField:'value',
-                        labelStyle:'display:none',
-                        submitValue : true,
-                        typeAhead: false,
-                        queryMode: 'local',
-                        mode: 'local',
-                        triggerAction: 'all',
-                        selectOnFocus:true,
-                        hideTrigger: false,
-                        forceSelection: false,
-                        selectOnFocus:true,
-                        autoSelect:false,
-                        store: new Ext.data.SimpleStore({
-                            fields: [
-                                'name',
-                                'value'
-                            ],
-                            data: impordata
-                        })
-                    })
-                },
-                {
-                    id: 'classname',
-                    header: ORYX.I18N.PropertyWindow.className,
-                    width: 200,
-                    dataIndex: 'classname',
-                    editor: new Ext.form.TextField({ allowBlank: true })
-                },
-                {
-                    id: 'wsdllocation',
-                    header: ORYX.I18N.PropertyWindow.wsdlLocation,
-                    width: 200,
-                    dataIndex: 'wsdllocation',
-                    editor: new Ext.form.TextField({ allowBlank: true })
-                },
-                {
-                    id: 'wsdlnamespace',
-                    header: ORYX.I18N.PropertyWindow.wsdlNamespace,
-                    width: 200,
-                    dataIndex: 'wsdlnamespace',
-                    editor: new Ext.form.TextField({ allowBlank: true })
-                },
-                itemDeleter]),
-    		selModel: itemDeleter,
-            autoHeight: true,
-            tbar: [{
-                text: ORYX.I18N.PropertyWindow.addImport,
-                handler : function(){
-                	imports.add(new ImportDef({
-                        'type': 'default',
-                        'classname': '',
-                        'wsdllocation' : '',
-                        'wsdlnamespace' : ''
-                    }));
-                    grid.fireEvent('cellclick', grid, imports.getCount()-1, 1, null);
-                }
-            }],
-            clicksToEdit: 1
-        });
-    	
-    	var dialog = new Ext.Window({ 
-			layout		: 'anchor',
-			autoCreate	: true, 
-			title		: ORYX.I18N.PropertyWindow.editorForImports,
-			height		: 400,
-			width		: 800,
-			modal		: true,
-			collapsible	: false,
-			fixedcenter	: true, 
-			shadow		: true, 
-			resizable   : true,
-			proxyDrag	: true,
-			autoScroll  : true,
-			keys:[{
-				key	: 27,
-				fn	: function(){
-						dialog.hide()
-				}.bind(this)
-			}],
-			items		:[grid],
-			listeners	:{
-				hide: function(){
-					this.fireEvent('dialogClosed', this.value);
-					//this.focus.defer(10, this);
-					dialog.destroy();
-				}.bind(this)				
-			},
-			buttons		: [{
-                text: ORYX.I18N.PropertyWindow.ok,
-                handler: function(){	 
-                	var outValue = "";
-                	grid.getView().refresh();
-                	grid.stopEditing();
-                	imports.data.each(function() {
+
+                        var unsortedData= new Array();
+                        for(var key in responseJson){
+                            var keyVal = responseJson[key];
+                            unsortedData.push(keyVal);
+                        }
+                        unsortedData.sort();
+
+                        for(var t = 0 ; t < unsortedData.length; t++ ) {
+                            var newCustomType = new Array();
+
+                            var presStr = unsortedData[t];
+                            var presStrParts = presStr.split(".");
+
+                            var classPart = presStrParts[presStrParts.length-1];
+                            var pathPart = presStr.substring(0, presStr.length - (classPart.length + 1));
+
+
+                            newCustomType.push(classPart + " [" + pathPart + "]");
+                            newCustomType.push(unsortedData[t]);
+                            customTypeData.push(newCustomType);
+                        }
+
+                        var ImportDef = Ext.data.Record.create([
+                            {
+                                name: 'type'
+                            },
+                            {
+                                name: 'classname'
+                            },
+                            {
+                                name: 'customclassname'
+                            },
+                            {
+                                name: 'wsdllocation'
+                            },
+                            {
+                                name: 'wsdlnamespace'
+                            }
+                        ]);
+
+                        var importsProxy = new Ext.data.MemoryProxy({
+                            root: []
+                        });
+
+                        var imports = new Ext.data.Store({
+                            autoDestroy: true,
+                            reader: new Ext.data.JsonReader({
+                                root: "root"
+                            }, ImportDef),
+                            proxy: importsProxy,
+                            sorters: [{
+                                property: 'type',
+                                direction:'ASC'
+                            }]
+                        });
+                        imports.load();
+
                         // sample 'com.sample.Myclass|default,location|namespace|wsdl
-                        if(this.data['type'] == "default") {
-                            outValue += this.data['classname'] + "|" + this.data['type'] + ",";
+                        if(this.value.length > 0) {
+                            var valueParts = this.value.split(",");
+                            for(var i=0; i < valueParts.length; i++) {
+                                var type = "";
+                                var classname, location, namespace;
+                                var nextPart = valueParts[i];
+
+                                var innerParts = nextPart.split("|");
+                                if(innerParts[1] == "default") {
+                                    type = "default";
+                                    classname = innerParts[0];
+                                    location = "";
+                                    namespace = "";
+                                } else {
+                                    type = "wsdl";
+                                    classname = "";
+                                    location = innerParts[0];
+                                    namespace = innerParts[1];
+                                }
+
+                                var founddefined = false;
+                                for(var key in responseJson){
+                                    var keyVal = responseJson[key];
+                                    if(keyVal == classname) {
+                                        founddefined = true;
+                                    }
+                                }
+
+                                if(founddefined) {
+                                    imports.add(new ImportDef({
+                                        'type': type,
+                                        'classname': classname,
+                                        'customclassname': "",
+                                        'wsdllocation': location,
+                                        'wsdlnamespace': namespace
+                                    }));
+                                } else {
+                                    imports.add(new ImportDef({
+                                        'type': type,
+                                        'classname': "",
+                                        'customclassname': classname,
+                                        'wsdllocation': location,
+                                        'wsdlnamespace': namespace
+                                    }));
+                                }
+                            }
                         }
-                        if(this.data['type'] == "wsdl") {
-                            outValue += this.data['wsdllocation'] + "|" + this.data['wsdlnamespace'] + "|" + this.data['type'] + ",";
-                        }
+
+                        var itemDeleter = new Extensive.grid.ItemDeleter();
+                        var impordata = new Array();
+                        var defaultType = new Array();
+                        defaultType.push("default");
+                        defaultType.push("default");
+                        impordata.push(defaultType);
+
+                        var wsdlType = new Array();
+                        wsdlType.push("wsdl");
+                        wsdlType.push("wsdl");
+                        impordata.push(wsdlType);
+
+                        var gridId = Ext.id();
+                        var grid = new Ext.grid.EditorGridPanel({
+                            autoScroll: true,
+                            autoHeight: true,
+                            store: imports,
+                            id: gridId,
+                            stripeRows: true,
+                            cm: new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),
+                                {
+                                    id: 'imptype',
+                                    header: ORYX.I18N.PropertyWindow.importType,
+                                    width: 100,
+                                    dataIndex: 'type',
+                                    editor: new Ext.form.ComboBox({
+                                        id: 'importTypeCombo',
+                                        typeAhead: true,
+                                        anyMatch: true,
+                                        valueField:'name',
+                                        displayField:'value',
+                                        labelStyle:'display:none',
+                                        submitValue : true,
+                                        typeAhead: false,
+                                        queryMode: 'local',
+                                        mode: 'local',
+                                        triggerAction: 'all',
+                                        selectOnFocus:true,
+                                        hideTrigger: false,
+                                        forceSelection: false,
+                                        selectOnFocus:true,
+                                        autoSelect:false,
+                                        store: new Ext.data.SimpleStore({
+                                            fields: [
+                                                'name',
+                                                'value'
+                                            ],
+                                            data: impordata
+                                        })
+                                    })
+                                },
+                                {
+                                    id: 'classname',
+                                    header: "Defined Class Name",
+                                    width: 180,
+                                    dataIndex: 'classname',
+                                    editor: new Ext.form.ComboBox({
+                                        id: 'customTypeCombo',
+                                        typeAhead: true,
+                                        anyMatch: true,
+                                        valueField:'value',
+                                        displayField:'name',
+                                        labelStyle:'display:none',
+                                        submitValue : true,
+                                        typeAhead: false,
+                                        queryMode: 'local',
+                                        mode: 'local',
+                                        triggerAction: 'all',
+                                        selectOnFocus:true,
+                                        hideTrigger: false,
+                                        forceSelection: false,
+                                        selectOnFocus:true,
+                                        autoSelect:false,
+                                        store: new Ext.data.SimpleStore({
+                                            fields: [
+                                                'name',
+                                                'value'
+                                            ],
+                                            data: customTypeData
+                                        })
+                                    })
+                                },
+                                {
+                                    id: 'customclassname',
+                                    header: "Custom Class Name",
+                                    width: 180,
+                                    dataIndex: 'customclassname',
+                                    editor: new Ext.form.TextField({ allowBlank: true })
+                                },
+                                {
+                                    id: 'wsdllocation',
+                                    header: ORYX.I18N.PropertyWindow.wsdlLocation,
+                                    width: 180,
+                                    dataIndex: 'wsdllocation',
+                                    editor: new Ext.form.TextField({ allowBlank: true })
+                                },
+                                {
+                                    id: 'wsdlnamespace',
+                                    header: ORYX.I18N.PropertyWindow.wsdlNamespace,
+                                    width: 180,
+                                    dataIndex: 'wsdlnamespace',
+                                    editor: new Ext.form.TextField({ allowBlank: true })
+                                },
+                                itemDeleter]),
+                            selModel: itemDeleter,
+                            autoHeight: true,
+                            tbar: [{
+                                text: ORYX.I18N.PropertyWindow.addImport,
+                                handler : function(){
+                                    imports.add(new ImportDef({
+                                        'type': 'default',
+                                        'classname': '',
+                                        'customclassname': '',
+                                        'wsdllocation' : '',
+                                        'wsdlnamespace' : ''
+                                    }));
+                                    grid.fireEvent('cellclick', grid, imports.getCount()-1, 1, null);
+                                }
+                            }],
+                            clicksToEdit: 1
+                        });
+
+                        var dialog = new Ext.Window({
+                            layout		: 'anchor',
+                            autoCreate	: true,
+                            title		: ORYX.I18N.PropertyWindow.editorForImports,
+                            height		: 400,
+                            width		: 900,
+                            modal		: true,
+                            collapsible	: false,
+                            fixedcenter	: true,
+                            shadow		: true,
+                            resizable   : true,
+                            proxyDrag	: true,
+                            autoScroll  : true,
+                            keys:[{
+                                key	: 27,
+                                fn	: function(){
+                                    dialog.hide()
+                                }.bind(this)
+                            }],
+                            items		:[grid],
+                            listeners	:{
+                                hide: function(){
+                                    this.fireEvent('dialogClosed', this.value);
+                                    //this.focus.defer(10, this);
+                                    dialog.destroy();
+                                }.bind(this)
+                            },
+                            buttons		: [{
+                                text: ORYX.I18N.PropertyWindow.ok,
+                                handler: function(){
+                                    var outValue = "";
+                                    grid.getView().refresh();
+                                    grid.stopEditing();
+                                    imports.data.each(function() {
+                                        // sample 'com.sample.Myclass|default,location|namespace|wsdl
+                                        if(this.data['type'] == "default") {
+                                            if(this.data['classname'].length > 0) {
+                                                outValue += this.data['classname'] + "|" + this.data['type'] + ",";
+                                            } else {
+                                                outValue += this.data['customclassname'] + "|" + this.data['type'] + ",";
+                                            }
+                                        }
+                                        if(this.data['type'] == "wsdl") {
+                                            outValue += this.data['wsdllocation'] + "|" + this.data['wsdlnamespace'] + "|" + this.data['type'] + ",";
+                                        }
+                                    });
+                                    if(outValue.length > 0) {
+                                        outValue = outValue.slice(0, -1)
+                                    }
+                                    this.setValue(outValue);
+                                    this.dataSource.getAt(this.row).set('value', outValue)
+                                    this.dataSource.commitChanges()
+
+                                    dialog.hide()
+                                }.bind(this)
+                            }, {
+                                text: ORYX.I18N.PropertyWindow.cancel,
+                                handler: function(){
+                                    this.setValue(this.value);
+                                    dialog.hide()
+                                }.bind(this)
+                            }]
+                        });
+
+                        dialog.show();
+                        grid.render();
+
+                        this.grid.stopEditing();
+                        grid.focus( false, 100 );
+
+
+                    } else {
+                        this.facade.raiseEvent({
+                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                            ntype		: 'error',
+                            msg         : 'Unable to find Data Types.',
+                            title       : ''
+
+                        });
+                    }
+                } catch(e) {
+                    this.facade.raiseEvent({
+                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                        ntype		: 'error',
+                        msg         : 'Error retrieving Data Types info '+' :\n' + e,
+                        title       : ''
+
                     });
-                	if(outValue.length > 0) {
-                		outValue = outValue.slice(0, -1)
-                	}
-					this.setValue(outValue);
-					this.dataSource.getAt(this.row).set('value', outValue)
-					this.dataSource.commitChanges()
+                }
+            }.bind(this),
+            failure: function(){
+                this.facade.raiseEvent({
+                    type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                    ntype		: 'error',
+                    msg         : 'Error retrieving Data Types info.',
+                    title       : ''
 
-					dialog.hide()
-                }.bind(this)
-            }, {
-                text: ORYX.I18N.PropertyWindow.cancel,
-                handler: function(){
-					this.setValue(this.value);
-                	dialog.hide()
-                }.bind(this)
-            }]
-		});		
-				
-		dialog.show();		
-		grid.render();
-
-		this.grid.stopEditing();
-		grid.focus( false, 100 );
-    	
+                });
+            },
+            params: {
+                profile: ORYX.PROFILE,
+                uuid : ORYX.UUID,
+                ppackage: processPackage,
+                pid: processId,
+                action: 'showdatatypes'
+            }
+        });
     }
 });
 
@@ -3009,10 +3311,73 @@ Ext.form.ComplexActionsField = Ext.extend(Ext.form.TriggerField,  {
     }
 });
 
-Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
+ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
     editable: false,
     readOnly: true,
-    /**
+
+     addParentVars : function(thisNode, varDataTitle, varData, variableDefsOnly, dataTypeMap, variableDefsOnlyVals) {
+         if(thisNode) {
+             if(thisNode._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"
+                 || thisNode._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#Subprocess"
+                 || thisNode._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess") {
+
+                 var vardefsprop = thisNode.properties["oryx-vardefs"];
+                 if(vardefsprop && vardefsprop.length > 0) {
+                     var vardefspropParts = vardefsprop.split(",");
+                     for(var k=0; k < vardefspropParts.length; k++) {
+                         var nextPart = vardefspropParts[k];
+                         var innerVal = new Array();
+                         if(nextPart.indexOf(":") > 0) {
+                             var innerParts = nextPart.split(":");
+                             innerVal.push(innerParts[0]);
+                             innerVal.push(innerParts[0]);
+                             dataTypeMap[innerParts[0]] = innerParts[1];
+                             variableDefsOnlyVals.push(innerParts[0]);
+                         } else {
+                             innerVal.push(nextPart);
+                             innerVal.push(nextPart);
+                             dataTypeMap[nextPart] = "java.lang.String";
+                             variableDefsOnlyVals.push(nextPart);
+                         }
+                         varData.push(innerVal);
+                         variableDefsOnly.push(innerVal);
+                     }
+                 }
+
+                 if(thisNode._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess") {
+                     var midatainputsprop = thisNode.properties["oryx-multipleinstancedatainput"];
+                     if(midatainputsprop && midatainputsprop.length > 0) {
+                         var innerVal = new Array();
+                         innerVal.push(midatainputsprop);
+                         innerVal.push(midatainputsprop);
+                         dataTypeMap[midatainputsprop] = "java.lang.String";
+                         variableDefsOnlyVals.push(innerVal);
+
+                         varData.push(innerVal);
+                         variableDefsOnly.push(innerVal);
+                     }
+
+
+                     var midataOutputsprop = thisNode.properties["oryx-multipleinstancedataoutput"];
+                     if(midataOutputsprop && midataOutputsprop.length > 0) {
+                         var innerVal = new Array();
+                         innerVal.push(midataOutputsprop);
+                         innerVal.push(midataOutputsprop);
+                         dataTypeMap[midataOutputsprop] = "java.lang.String";
+                         variableDefsOnlyVals.push(innerVal);
+
+                         varData.push(innerVal);
+                         variableDefsOnly.push(innerVal);
+                     }
+                 }
+             }
+             if(thisNode.parent) {
+                 this.addParentVars(thisNode.parent, varDataTitle, varData, variableDefsOnly, dataTypeMap, variableDefsOnlyVals);
+             }
+         }
+     },
+
+     /**
      * If the trigger was clicked a dialog has to be opened
      * to enter the values for the complex property.
      */
@@ -3037,9 +3402,35 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
         var dataOutputsOnlyVals = new Array();
 
         varDataTitle.push("");
-        varDataTitle.push("** Variable Definitions **");
-        varData.push(varDataTitle);
-        variableDefsOnly.push(varDataTitle);
+
+        // for MIsub children add MIsub vardefs and mid data inputs and outputs
+        var addedTitle = false;
+        var selection = ORYX.EDITOR._pluginFacade.getSelection();
+        if(selection) {
+            var selected = selection.first();
+            if(selected && selected.parent) {
+
+                if(selected.parent._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#MultipleInstanceSubprocess"
+                    || selected.parent._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#Subprocess"
+                    || selected.parent._stencil._jsonStencil.id == "http://b3mn.org/stencilset/bpmn2.0#AdHocSubprocess") {
+
+
+                    varDataTitle.push("** Process/Subprocess Definitions **");
+                    varData.push(varDataTitle);
+                    variableDefsOnly.push(varDataTitle);
+                    addedTitle = true;
+                }
+
+                this.addParentVars(selected.parent, varDataTitle, varData, variableDefsOnly, dataTypeMap, variableDefsOnlyVals);
+            }
+        }
+
+        if(!addedTitle) {
+            varDataTitle.push("** Variable Definitions **");
+            varData.push(varDataTitle);
+            variableDefsOnly.push(varDataTitle);
+        }
+
         if(processVars) {
         	processVars.forEach(function(item){
             	if(item.length > 0) {
@@ -3065,6 +3456,7 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
         	    }
         	});
         }
+
 
         var dataInputsTitle = new Array();
         dataInputsTitle.push("");
@@ -3136,7 +3528,9 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
         }, {
         	name: 'tostr'
         }, {
-                name: 'dataType'
+            name: 'dataType'
+        }, {
+            name: 'assignment'
         }
         ]);
     	
@@ -3174,72 +3568,231 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
     			var nextPart = valueParts[i];
     			if(nextPart.indexOf("=") > 0) {
                             var innerParts = nextPart.split("=");
-                            var dataType = dataTypeMap[innerParts[0]];
-                            if (!dataType){
-                                dataType = "java.lang.String";
-                            }
-                            var fromPart = innerParts[0];
-                            innerParts.shift(); // removes the first item from the array
-            				var escapedp = innerParts.join('=').replace(/\#\#/g , ",");
-                            escapedp = escapedp.replace(/\|\|/g , "=");
 
-                            if(variableDefsOnlyVals.indexOf(fromPart) < 0) {
+                            if(innerParts[0].startsWith("[din]")) {
+                                var fromPart = innerParts[0].slice(5, innerParts[0].length);
+                                var dataType = dataTypeMap[fromPart];
+                                if (!dataType){
+                                    dataType = "java.lang.String";
+                                }
+                                innerParts.shift(); // removes the first item from the array
+                                var escapedp = innerParts.join('=').replace(/\#\#/g , ",");
+                                escapedp = escapedp.replace(/\|\|/g , "=");
                                 dataassignments.add(new DataAssignment({
-                                    atype: ( dataInputsOnlyVals.indexOf(fromPart) >= 0 ) ? "DataInput" : "DataOutput",
+                                    atype: "DataInput",
                                     from: fromPart,
                                     type: "is equal to",
                                     to: "",
                                     tostr: escapedp,
-                                    dataType: dataType
+                                    dataType: dataType,
+                                    assignment: "false"
                                 }));
-                            }
-    			} else if(nextPart.indexOf("->") > 0) {
-                            var innerParts = nextPart.split("->");
-                            var dataType = dataTypeMap[innerParts[0]];
-                            if (!dataType){
-                                dataType = "java.lang.String";
-                            }
-                            var fromPart = innerParts[0];
-                            var hasErrors = false;
-                            if( dataInputsOnlyVals.indexOf(fromPart) >= 0 && dataInputsOnlyVals.indexOf(innerParts[1]) >= 0 ){
-                                hasErrors = true;
-                            }
-                            if( dataInputsOnlyVals.indexOf(fromPart) >= 0 && variableDefsOnlyVals.indexOf(innerParts[1]) >= 0 ){
-                                hasErrors = true;
-                            }
-                            if( variableDefsOnlyVals.indexOf(fromPart) >= 0 && variableDefsOnlyVals.indexOf(innerParts[1]) >= 0 ){
-                                hasErrors = true;
-                            }
-                            if( dataOutputsOnlyVals.indexOf(fromPart) >= 0 && dataInputsOnlyVals.indexOf(innerParts[1]) >= 0 ){
-                                hasErrors = true;
+
+                            } else if(innerParts[0].startsWith("[dout]")) {
+                                var fromPart = innerParts[0].slice(6, innerParts[0].length);
+                                var dataType = dataTypeMap[fromPart];
+                                if (!dataType){
+                                    dataType = "java.lang.String";
+                                }
+                                innerParts.shift(); // removes the first item from the array
+                                var escapedp = innerParts.join('=').replace(/\#\#/g , ",");
+                                escapedp = escapedp.replace(/\|\|/g , "=");
+                                dataassignments.add(new DataAssignment({
+                                    atype: "DataOutput",
+                                    from: fromPart,
+                                    type: "is equal to",
+                                    to: "",
+                                    tostr: escapedp,
+                                    dataType: dataType,
+                                    assignment: "false"
+                                }));
+                            } else {
+                                // for custom tasks we need to deal with no definition
+                                var fromPart = innerParts[0];
+                                var dataType = dataTypeMap[fromPart];
+                                if (!dataType){
+                                    dataType = "java.lang.String";
+                                }
+                                innerParts.shift(); // removes the first item from the array
+                                var escapedp = innerParts.join('=').replace(/\#\#/g , ",");
+                                escapedp = escapedp.replace(/\|\|/g , "=");
+                                dataassignments.add(new DataAssignment({
+                                    atype: "DataInput",
+                                    from: fromPart,
+                                    type: "is equal to",
+                                    to: "",
+                                    tostr: escapedp,
+                                    dataType: dataType,
+                                    assignment: "false"
+                                }));
+
                             }
 
-                            if(!hasErrors) {
+//                            var dataType = dataTypeMap[innerParts[0]];
+//                            if (!dataType){
+//                                dataType = "java.lang.String";
+//                            }
+//                            var fromPart = innerParts[0];
+//                            innerParts.shift(); // removes the first item from the array
+//            				var escapedp = innerParts.join('=').replace(/\#\#/g , ",");
+//                            escapedp = escapedp.replace(/\|\|/g , "=");
+//
+//                            if(variableDefsOnlyVals.indexOf(fromPart) < 0) {
+//                                dataassignments.add(new DataAssignment({
+//                                    atype: ( dataInputsOnlyVals.indexOf(fromPart) >= 0 ) ? "DataInput" : "DataOutput",
+//                                    from: fromPart,
+//                                    type: "is equal to",
+//                                    to: "",
+//                                    tostr: escapedp,
+//                                    dataType: dataType
+//                                }));
+//                            }
+    			} else if(nextPart.indexOf("->") > 0) {
+                            var innerParts = nextPart.split("->");
+
+                            if(innerParts[0].startsWith("[din]")) {
+                                var fromPart = innerParts[0].slice(5, innerParts[0].length);
+                                var dataType = dataTypeMap[fromPart];
+                                if (!dataType){
+                                    dataType = "java.lang.String";
+                                }
+                                var outType = "DataInput";
                                 dataassignments.add(new DataAssignment({
-                                    atype: ( variableDefsOnlyVals.indexOf(fromPart) >= 0 || dataInputsOnlyVals.indexOf(fromPart) >= 0 ) ? "DataInput" : "DataOutput",
-                                    from: innerParts[0],
+                                    atype: outType,
+                                    from: fromPart,
                                     type: "is mapped to",
                                     to: innerParts[1],
                                     tostr: "",
-                                    dataType: dataType
+                                    dataType: dataType,
+                                    assignment: "true"
+                                }));
+                            } else if(innerParts[0].startsWith("[dout]")) {
+                                var fromPart = innerParts[0].slice(6, innerParts[0].length);
+                                var dataType = dataTypeMap[fromPart];
+                                if (!dataType){
+                                    dataType = "java.lang.String";
+                                }
+                                var outType = "DataOutput";
+                                dataassignments.add(new DataAssignment({
+                                    atype: outType,
+                                    from: fromPart,
+                                    type: "is mapped to",
+                                    to: innerParts[1],
+                                    tostr: "",
+                                    dataType: dataType,
+                                    assignment: "true"
                                 }));
                             }
+
+//                            var dataType = dataTypeMap[innerParts[0]];
+//                            if (!dataType){
+//                                dataType = "java.lang.String";
+//                            }
+//                            var fromPart = innerParts[0];
+//                            var hasErrors = false;
+//                            if( dataInputsOnlyVals.indexOf(fromPart) >= 0 && dataInputsOnlyVals.indexOf(innerParts[1]) >= 0 ){
+//                                // if its also process var - pass
+//                                if(variableDefsOnlyVals.indexOf(fromPart) < 0) {
+//                                    hasErrors = true;
+//                                }
+//                            }
+//                            if( dataInputsOnlyVals.indexOf(fromPart) >= 0 && variableDefsOnlyVals.indexOf(innerParts[1]) >= 0 ){
+//                                var noVars = (variableDefsOnlyVals.indexOf(fromPart) < 0);
+//                                var noDOuts = (dataOutputsOnlyVals.indexOf(fromPart) < 0);
+//
+//                                if(noVars && noDOuts) {
+//                                    hasErrors = true;
+//                                }
+//                            }
+//                            if( variableDefsOnlyVals.indexOf(fromPart) >= 0 && variableDefsOnlyVals.indexOf(innerParts[1]) >= 0 ){
+//                                // if its also a data input - pass
+//                                if( dataInputsOnlyVals.indexOf(innerParts[1]) < 0 && dataOutputsOnlyVals.indexOf(innerParts[1]) ) {
+//                                    hasErrors = true;
+//                                }
+//                            }
+//                            if( dataOutputsOnlyVals.indexOf(fromPart) >= 0 && dataInputsOnlyVals.indexOf(innerParts[1]) >= 0 ){
+//                                if(variableDefsOnlyVals.indexOf(fromPart) < 0) {
+//                                    hasErrors = true;
+//                                }
+//                            }
+//
+//                            if(!hasErrors) {
+//                                var outType = "";
+//                                if(variableDefsOnlyVals.indexOf(fromPart) >= 0) {
+//                                    if(dataOutputsOnlyVals.indexOf(fromPart) >= 0) {
+//                                        if(dataInputsOnlyVals.indexOf(innerParts[1]) >= 0) {
+//                                            outType = "DataInput";
+//                                        } else {
+//                                            outType = "DataOutput";
+//                                        }
+//                                    } else {
+//                                        outType = "DataInput";
+//                                    }
+//                                } else if(dataInputsOnlyVals.indexOf(fromPart) >= 0) {
+//                                    if(dataOutputsOnlyVals.indexOf(fromPart) >= 0) {
+//                                        outType = "DataOutput";
+//                                    } else {
+//                                        outType = "DataInput";
+//                                    }
+//                                } else {
+//                                    outType = "DataOutput";
+//                                }
+//                                dataassignments.add(new DataAssignment({
+//                                    atype: outType,
+//                                    from: innerParts[0],
+//                                    type: "is mapped to",
+//                                    to: innerParts[1],
+//                                    tostr: "",
+//                                    dataType: dataType
+//                                }));
+//                            }
     			} else {
     				// default to equality
-    				var dataType = dataTypeMap[nextPart];
-                    if (!dataType){
-                        dataType = "java.lang.String";
-                    }
-                    if(variableDefsOnlyVals.indexOf(nextPart) < 0) {
+                    if(innerParts[0].startsWith("[din]")) {
+                        var fromPart = innerParts[0].slice(5, innerParts[0].length);
+                        var dataType = dataTypeMap[fromPart];
+                        if (!dataType){
+                            dataType = "java.lang.String";
+                        }
                         dataassignments.add(new DataAssignment({
-                            atype: ( variableDefsOnlyVals.indexOf(nextPart) >= 0 || dataInputsOnlyVals.indexOf(nextPart) >= 0 ) ? "DataInput" : "DataOutput",
-                            from: nextPart,
+                            atype: "DataInput",
+                            from: fromPart,
                             type: "is equal to",
                             to: "",
                             tostr: "",
-                            dataType: dataType
+                            dataType: dataType,
+                            assignment: "false"
+                        }));
+                    } else if(innerParts[0].startsWith("[dout]")) {
+                        var fromPart = innerParts[0].slice(5, innerParts[0].length);
+                        var dataType = dataTypeMap[fromPart];
+                        if (!dataType){
+                            dataType = "java.lang.String";
+                        }
+                        dataassignments.add(new DataAssignment({
+                            atype: "DataInput",
+                            from: fromPart,
+                            type: "is equal to",
+                            to: "",
+                            tostr: "",
+                            dataType: dataType,
+                            assignment: "false"
                         }));
                     }
+    				var dataType = dataTypeMap[nextPart];
+//                    if (!dataType){
+//                        dataType = "java.lang.String";
+//                    }
+//                    if(variableDefsOnlyVals.indexOf(nextPart) < 0) {
+//                        dataassignments.add(new DataAssignment({
+//                            atype: ( variableDefsOnlyVals.indexOf(nextPart) >= 0 || dataInputsOnlyVals.indexOf(nextPart) >= 0 ) ? "DataInput" : "DataOutput",
+//                            from: nextPart,
+//                            type: "is equal to",
+//                            to: "",
+//                            tostr: "",
+//                            dataType: dataType
+//                        }));
+//                    }
     			}
     		}
     	}
@@ -3351,34 +3904,51 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
                 header: ORYX.I18N.PropertyWindow.toValue,
                 width: 180,
                 dataIndex: 'tostr',
-                editor: new Ext.form.TextField({ allowBlank: true }),
+                editor: new Ext.form.TextField({ name: "tostrTxt", allowBlank: true }),
                 renderer: Ext.util.Format.htmlEncode
     		}, itemDeleter]),
     		selModel: itemDeleter,
             autoHeight: true,
             tbar: [{
-                text: "[ New Data Input Assignment ]",
+                    text: "[ Input Assignment ]",
+                    handler : function(){
+                        dataassignments.add(new DataAssignment({
+                            atype: 'DataInput',
+                            from: '',
+                            type: '',
+                            to: '',
+                            tostr: '',
+                            assignment: "false"
+                        }));
+                        newAssignmentType = "datainput";
+                        grid.fireEvent('cellclick', grid, dataassignments.getCount()-1, 1, null);
+                    }
+                },
+                {
+                text: "[ Input Mapping ]",
                 handler : function(){
                 	dataassignments.add(new DataAssignment({
                         atype: 'DataInput',
                         from: '',
                         type: '',
                         to: '',
-                        tostr: ''
+                        tostr: '',
+                        assignment: "true"
                     }));
                     newAssignmentType = "datainput";
                     grid.fireEvent('cellclick', grid, dataassignments.getCount()-1, 1, null);
                 }
                 },
                 {
-                    text: "[ New Data Output Assignment ]",
+                    text: "[ Output Mapping ]",
                     handler : function(){
                         dataassignments.add(new DataAssignment({
                             atype: 'DataOutput',
                             from: '',
                             type: '',
                             to: '',
-                            tostr: ''
+                            tostr: '',
+                            assignment: "true"
                         }));
                         newAssignmentType = "dataoutput";
                         grid.fireEvent('cellclick', grid, dataassignments.getCount()-1, 1, null);
@@ -3392,138 +3962,302 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
                         ed = ed.field || {};
                         if(ed.name == "typeCombo") {
                             ed.destroy();
-                            var newTypeCombo = new Ext.form.ComboBox({
-                                name: 'typeCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: [
-                                        ['is mapped to',ORYX.I18N.PropertyWindow.isMappedTo],
-                                        ['is equal to',ORYX.I18N.PropertyWindow.isEqualTo]
-                                    ]
-                                })
-                            });
+
+                            var newTypeCombo;
+                            if(e.record.data.assignment == "true") {
+                                newTypeCombo = new Ext.form.ComboBox({
+                                    name: 'typeCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: [
+                                            ['is mapped to',ORYX.I18N.PropertyWindow.isMappedTo]
+                                        ]
+                                    })
+                                });
+                            } else {
+                                newTypeCombo = new Ext.form.ComboBox({
+                                    name: 'typeCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: [
+                                            ['is equal to',ORYX.I18N.PropertyWindow.isEqualTo]
+                                        ]
+                                    })
+                                });
+                            }
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newTypeCombo));
                         }
                         if(ed.name == "fromCombo") {
                             ed.destroy();
 
-                            var newFromCombo = new Ext.form.ComboBox({
-                                name: 'fromCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: variableDefsOnly.concat(dataInputsOnly)
-                                })
-                            });
+                            var newFromCombo;
+                            if(e.record.data.assignment == "true") {
+                                newFromCombo = new Ext.form.ComboBox({
+                                    name: 'fromCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: variableDefsOnly
+                                    })
+                                });
+                            } else {
+                                newFromCombo = new Ext.form.ComboBox({
+                                    name: 'fromCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: dataInputsOnly
+                                    })
+                                });
+                            }
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newFromCombo));
                         }
 
                         if(ed.name == "toCombo") {
                             ed.destroy();
-                            var newToCombo = new Ext.form.ComboBox({
-                                name: 'toCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: dataInputsOnly
-                                })
-                            });
+
+                            var newToCombo;
+                            if(e.record.data.assignment == "true") {
+                                newToCombo = new Ext.form.ComboBox({
+                                    name: 'toCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: dataInputsOnly
+                                    })
+                                });
+                            } else {
+                                newToCombo = new Ext.form.ComboBox({
+                                    name: 'toCombo',
+                                    disabled: true,
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: dataInputsOnly
+                                    })
+                                });
+                                //newToCombo.disable();
+                            }
+
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newToCombo));
                         }
+
+                        if(ed.name == "tostrTxt") {
+                            ed.destroy();
+                            var newToStrField;
+
+                            if(e.record.data.assignment == "true") {
+                                newToStrField = new Ext.form.TextField({ name: "tostrTxt", allowBlank: true, disabled: true })
+                            } else {
+                                newToStrField = new Ext.form.TextField({ name: "tostrTxt", allowBlank: true })
+                            }
+
+                            e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newToStrField));
+
+                        }
+
                     }
                     if(e.record.data.atype == "DataOutput") {
                         var ed = e.grid.getColumnModel().getCellEditor(e.column, e.row) || {};
                         ed = ed.field || {};
                         if(ed.name == "typeCombo") {
                             ed.destroy();
-                            var newTypeCombo = new Ext.form.ComboBox({
-                                name: 'typeCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: [
-                                        ['is mapped to',ORYX.I18N.PropertyWindow.isMappedTo],
-                                        ['is equal to',ORYX.I18N.PropertyWindow.isEqualTo]
-                                    ]
-                                })
-                            });
+
+                            var newTypeCombo;
+                            if(e.record.data.assignment == "true") {
+                                newTypeCombo = new Ext.form.ComboBox({
+                                    name: 'typeCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: [
+                                            ['is mapped to',ORYX.I18N.PropertyWindow.isMappedTo]
+                                        ]
+                                    })
+                                });
+                            } else {
+                                newTypeCombo = new Ext.form.ComboBox({
+                                    name: 'typeCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: [
+                                            ['is equal to',ORYX.I18N.PropertyWindow.isEqualTo]
+                                        ]
+                                    })
+                                });
+                            }
+
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newTypeCombo));
                         }
                         if(ed.name == "fromCombo") {
                             ed.destroy();
 
-                            var newFromCombo = new Ext.form.ComboBox({
-                                name: 'fromCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: dataOutputsOnly
-                                })
-                            });
+                            var newFromCombo;
+                            if(e.record.data.assignment == "true") {
+                                newFromCombo = new Ext.form.ComboBox({
+                                    name: 'fromCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: dataOutputsOnly
+                                    })
+                                });
+                            } else {
+                                newFromCombo = new Ext.form.ComboBox({
+                                    name: 'fromCombo',
+                                    disabled: true,
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: dataOutputsOnly
+                                    })
+                                });
+                            }
+
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newFromCombo));
                         }
 
                         if(ed.name == "toCombo") {
                             ed.destroy();
-                            var newToCombo = new Ext.form.ComboBox({
-                                name: 'toCombo',
-                                valueField:'name',
-                                displayField:'value',
-                                typeAhead: true,
-                                mode: 'local',
-                                triggerAction: 'all',
-                                selectOnFocus:true,
-                                store: new Ext.data.SimpleStore({
-                                    fields: [
-                                        'name',
-                                        'value'
-                                    ],
-                                    data: variableDefsOnly
-                                })
-                            });
+
+                            var newToCombo;
+                            if(e.record.data.assignment == "true") {
+                                newToCombo = new Ext.form.ComboBox({
+                                    name: 'toCombo',
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: variableDefsOnly
+                                    })
+                                });
+                            } else {
+                                newToCombo = new Ext.form.ComboBox({
+                                    name: 'toCombo',
+                                    disabled: true,
+                                    valueField:'name',
+                                    displayField:'value',
+                                    typeAhead: true,
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: variableDefsOnly
+                                    })
+                                });
+                            }
+
                             e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newToCombo));
                         }
+
+                        if(ed.name == "tostrTxt") {
+                            ed.destroy();
+                            var newToStrField;
+
+                            if(e.record.data.assignment == "true") {
+                                newToStrField = new Ext.form.TextField({ name: "tostrTxt", allowBlank: true, disabled: true })
+                            } else {
+                                newToStrField = new Ext.form.TextField({ name: "tostrTxt", allowBlank: true })
+                            }
+
+                            e.grid.getColumnModel().setEditor(e.column, new Ext.grid.GridEditor(newToStrField));
+
+                        }
+
                     }
                 }
             }
@@ -3563,77 +4297,112 @@ Ext.form.ComplexDataAssignmenField = Ext.extend(Ext.form.TriggerField,  {
                 	grid.stopEditing();
                 	dataassignments.data.each(function() {
                 		if(this.data['from'].length > 0 && this.data["type"].length > 0) {
+                            var daType = this.data['atype'];
                 			if(this.data["type"] == "is mapped to") {
-                                if(this.data['to'].length > 0) {
-                                    // type specific checks
-                                    if(dataInputsOnlyVals.indexOf(this.data['from']) >= 0 && dataInputsOnlyVals.indexOf(this.data['to']) >= 0) {
-                                        ORYX.EDITOR._pluginFacade.raiseEvent({
-                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                            ntype		: 'warning',
-                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
-                                            title       : ''
-
-                                        });
-                                    } else  if(dataInputsOnlyVals.indexOf(this.data['from']) >= 0 && variableDefsOnly.indexOf(this.data['to']) >= 0) {
-                                        ORYX.EDITOR._pluginFacade.raiseEvent({
-                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                            ntype		: 'warning',
-                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
-                                            title       : ''
-
-                                        });
-                                    } else if(variableDefsOnlyVals.indexOf(this.data['from']) >= 0 && variableDefsOnly.indexOf(this.data['to']) >= 0) {
-                                        ORYX.EDITOR._pluginFacade.raiseEvent({
-                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                            ntype		: 'warning',
-                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
-                                            title       : ''
-
-                                        });
-                                    } else if(dataOutputsOnlyVals.indexOf(this.data['from']) >= 0 && dataInputsOnlyVals.indexOf(this.data['to']) >= 0) {
-                                        ORYX.EDITOR._pluginFacade.raiseEvent({
-                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                            ntype		: 'warning',
-                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
-                                            title       : ''
-
-                                        });
-                                    } else {
-                                        outValue += this.data['from'] + "->" + this.data['to'] + ",";
-                                    }
-                                } else {
-                                    ORYX.EDITOR._pluginFacade.raiseEvent({
-                                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                        ntype		: 'warning',
-                                        msg         : "Assignment for " + this.data['from'] + " does not contain a proper mapping",
-                                        title       : ''
-
-                                    });
+                                if(daType == "DataInput") {
+                                    outValue += "[din]" + this.data['from'] + "->" + this.data['to'] + ",";
+                                } else if(daType == "DataOutput") {
+                                    outValue += "[dout]" + this.data['from'] + "->" + this.data['to'] + ",";
                                 }
+
+
+//                                if(this.data['to'].length > 0) {
+//                                    // type specific checks
+//                                    if(dataInputsOnlyVals.indexOf(this.data['from']) >= 0 && dataInputsOnlyVals.indexOf(this.data['to']) >= 0) {
+//                                        // if its also vardef -- pass
+//                                        if(variableDefsOnlyVals.indexOf(this.data['from']) < 0) {
+//                                            ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                                type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                                ntype		: 'warning',
+//                                                msg         : "1Assignment for " + this.data['from'] + " is invalid",
+//                                                title       : ''
+//
+//                                            });
+//                                        } else {
+//                                            outValue += this.data['from'] + "->" + this.data['to'] + ",";
+//                                        }
+//                                    } else  if(dataInputsOnlyVals.indexOf(this.data['from']) >= 0 && variableDefsOnly.indexOf(this.data['to']) >= 0) {
+//                                        var noVars = (variableDefsOnlyVals.indexOf(this.data['from']) < 0);
+//                                        var noDOuts = (dataOutputsOnlyVals.indexOf(this.data['from']) < 0);
+//                                        if(noVars && noDOuts) {
+//                                            ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                                type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                                ntype		: 'warning',
+//                                                msg         : "2Assignment for " + this.data['from'] + " is invalid",
+//                                                title       : ''
+//
+//                                            });
+//                                        } else {
+//                                            outValue += this.data['from'] + "->" + this.data['to'] + ",";
+//                                        }
+//                                    } else if(variableDefsOnlyVals.indexOf(this.data['from']) >= 0 && variableDefsOnlyVals.indexOf(this.data['to']) >= 0) {
+//                                        if( (dataInputsOnlyVals.indexOf(this.data['from']) < 0) && (dataOutputsOnlyVals.indexOf(this.data['from']) < 0)) {
+//                                            ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                                type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                                ntype		: 'warning',
+//                                                msg         : "3Assignment for " + this.data['from'] + " is invalid",
+//                                                title       : ''
+//
+//                                            });
+//                                        } else {
+//                                            outValue += this.data['from'] + "->" + this.data['to'] + ",";
+//                                        }
+//                                    } else if(dataOutputsOnlyVals.indexOf(this.data['from']) >= 0 && dataInputsOnlyVals.indexOf(this.data['to']) >= 0) {
+//                                        if(variableDefsOnlyVals.indexOf(this.data['from']) < 0) {
+//                                            ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                                type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                                ntype		: 'warning',
+//                                                msg         : "4Assignment for " + this.data['from'] + " is invalid",
+//                                                title       : ''
+//
+//                                            });
+//                                        } else {
+//                                            outValue += this.data['from'] + "->" + this.data['to'] + ",";
+//                                        }
+//                                    } else {
+//                                        outValue += this.data['from'] + "->" + this.data['to'] + ",";
+//                                    }
+//                                } else {
+//                                    ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                        ntype		: 'warning',
+//                                        msg         : "5Assignment for " + this.data['from'] + " does not contain a proper mapping",
+//                                        title       : ''
+//
+//                                    });
+//                                }
                 			} else if(this.data["type"] == "is equal to") {
                                 if(this.data['tostr'].length > 0) {
-                                    // type specific checks
-                                    if(variableDefsOnlyVals.indexOf(this.data['from']) >= 0) {
-                                        ORYX.EDITOR._pluginFacade.raiseEvent({
-                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                            ntype		: 'warning',
-                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
-                                            title       : ''
-
-                                        });
-                                    }  else {
-                                        var escapedc = this.data['tostr'].replace(/,/g , "##");
-                                        escapedc = escapedc.replace(/=/g, '||');
-                                        outValue += this.data['from'] + "=" + escapedc + ",";
+                                    var escapedc = this.data['tostr'].replace(/,/g , "##");
+                                    escapedc = escapedc.replace(/=/g, '||');
+                                    if(daType == "DataInput") {
+                                        outValue += "[din]" + this.data['from'] + "=" + escapedc + ",";
+                                    } else if(daType == "DataOutput") {
+                                        outValue += "[dout]" + this.data['from'] + "=" + escapedc + ",";
                                     }
-                                } else {
-                                    ORYX.EDITOR._pluginFacade.raiseEvent({
-                                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
-                                        ntype		: 'warning',
-                                        msg         : "Assignment for " + this.data['from'] + " does not contain a proper mapping.",
-                                        title       : ''
 
-                                    });
+
+                                    // type specific checks
+//                                    if(variableDefsOnlyVals.indexOf(this.data['from']) >= 0) {
+//                                        ORYX.EDITOR._pluginFacade.raiseEvent({
+//                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+//                                            ntype		: 'warning',
+//                                            msg         : "Assignment for " + this.data['from'] + " is invalid",
+//                                            title       : ''
+//
+//                                        });
+//                                    }  else {
+//                                        var escapedc = this.data['tostr'].replace(/,/g , "##");
+//                                        escapedc = escapedc.replace(/=/g, '||');
+//                                        outValue += this.data['from'] + "=" + escapedc + ",";
+//                                    }
+                                } else {
+                                    // allow blank tostr values (e.g service tasks)
+                                    if(daType == "DataInput") {
+                                        outValue += "[din]" + this.data['from'] + "=" + "" + ",";
+                                    } else if(daType == "DataOutput") {
+                                        outValue += "[dout]" + this.data['from'] + "=" + "" + ",";
+                                    }
                                 }
                 			}
                 		}
@@ -3685,247 +4454,327 @@ Ext.form.NameTypeEditor = Ext.extend(Ext.form.TriggerField,  {
             return;
         }
 
-    	var VarDef = Ext.data.Record.create([{
-            name: 'name'
-        }, {
-            name: 'stype'
-        }, {
-            name: 'ctype'
-        }]);
+        var processJSON = ORYX.EDITOR.getSerializedJSON();
+        var processPackage = jsonPath(processJSON.evalJSON(), "$.properties.package");
+        var processId = jsonPath(processJSON.evalJSON(), "$.properties.id");
 
-    	var vardefsProxy = new Ext.data.MemoryProxy({
-            root: []
-        });
+        Ext.Ajax.request({
+            url: ORYX.PATH + 'calledelement',
+            method: 'POST',
+            success: function(response) {
+                try {
+                    if(response.responseText.length >= 0 && response.responseText != "false") {
+                        var responseJson = Ext.decode(response.responseText);
+                        var customTypeData = new Array();
 
-    	var vardefs = new Ext.data.Store({
-    		autoDestroy: true,
-            reader: new Ext.data.JsonReader({
-                root: "root"
-            }, VarDef),
-            proxy: vardefsProxy,
-            sorters: [{
-                property: 'name',
-                direction:'ASC'
-            }]
-        });
-    	vardefs.load();
+                        // set some predefined defaults
+                        var stringType = new Array();
+                        stringType.push("String");
+                        stringType.push("String");
+                        customTypeData.push(stringType);
+                        var integerType = new Array();
+                        integerType.push("Integer");
+                        integerType.push("Integer");
+                        customTypeData.push(integerType);
+                        var booleanType = new Array();
+                        booleanType.push("Boolean");
+                        booleanType.push("Boolean");
+                        customTypeData.push(booleanType);
+                        var floatType = new Array();
+                        floatType.push("Float");
+                        floatType.push("Float");
+                        customTypeData.push(floatType);
+                        var objectType = new Array();
+                        objectType.push("Object");
+                        objectType.push("Object");
+                        customTypeData.push(objectType);
+                        var dividerType = new Array();
+                        dividerType.push("**********");
+                        dividerType.push("**********");
+                        customTypeData.push(dividerType);
 
-    	if(this.value.length > 0) {
-    		var valueParts = this.value.split(",");
-    		for(var i=0; i < valueParts.length; i++) {
-    			var nextPart = valueParts[i];
-    			if(nextPart.indexOf(":") > 0) {
-    				var innerParts = nextPart.split(":");
-    				if(innerParts[1] == "String" || innerParts[1] == "Integer" || innerParts[1] == "Boolean" || innerParts[1] == "Float") {
-    					vardefs.add(new VarDef({
-                            name: innerParts[0],
-                            stype: innerParts[1],
-                            ctype: ''
-                        }));
-    				} else {
-    					if(innerParts[1] != "Object") {
-    						vardefs.add(new VarDef({
-                                name: innerParts[0],
-                                stype: 'Object',
-                                ctype: innerParts[1]
-                            }));
-    					} else {
-    						vardefs.add(new VarDef({
-                                name: innerParts[0],
-                                stype: innerParts[1],
-                                ctype: ''
-                            }));
-    					}
-    				}
-    			} else {
-    				vardefs.add(new VarDef({
-                        name: nextPart,
-                        stype: '',
-                        ctype: ''
-                    }));
-    			}
-    		}
+                        var unsortedData= new Array();
+                        for(var key in responseJson){
+                            var keyVal = responseJson[key];
+                            unsortedData.push(keyVal);
+                        }
+                        unsortedData.sort();
+                        for(var t = 0 ; t < unsortedData.length; t++ ) {
+                            var newCustomType = new Array();
 
-    	}
+                            var presStr = unsortedData[t];
+                            var presStrParts = presStr.split(".");
 
-    	var itemDeleter = new Extensive.grid.ItemDeleter();
-        itemDeleter.setDType(this.dtype);
+                            var classPart = presStrParts[presStrParts.length-1];
+                            var pathPart = presStr.substring(0, presStr.length - (classPart.length + 1));
 
-    	var typeData = new Array();
-    	var stringType = new Array();
-    	stringType.push("String");
-    	stringType.push("String");
-    	typeData.push(stringType);
-    	var integerType = new Array();
-    	integerType.push("Integer");
-    	integerType.push("Integer");
-    	typeData.push(integerType);
-    	var booleanType = new Array();
-    	booleanType.push("Boolean");
-    	booleanType.push("Boolean");
-    	typeData.push(booleanType);
-    	var floatType = new Array();
-    	floatType.push("Float");
-    	floatType.push("Float");
-    	typeData.push(floatType);
-    	var objectType = new Array();
-    	objectType.push("Object");
-    	objectType.push("Object");
-    	typeData.push(objectType);
 
-    	var gridId = Ext.id();
-    	Ext.form.VTypes["inputNameVal"] = /^[a-z0-9\-\.\_]*$/i;
-        Ext.form.VTypes["inputNameText"] = 'Invalid name';
-        Ext.form.VTypes["inputName"] = function(v){
-        	return Ext.form.VTypes["inputNameVal"].test(v);
-        };
-    	var grid = new Ext.grid.EditorGridPanel({
-            autoScroll: true,
-            autoHeight: true,
-            store: vardefs,
-            id: gridId,
-            stripeRows: true,
-            cm: new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(), {
-            	id: 'name',
-                header: ORYX.I18N.PropertyWindow.name,
-                width: 100,
-                dataIndex: 'name',
-                editor: new Ext.form.TextField({ allowBlank: true, vtype: 'inputName', regex: /^[a-z0-9\-\.\_]*$/i }),
-                renderer: Ext.util.Format.htmlEncode
-            }, {
-            	id: 'stype',
-                header: ORYX.I18N.PropertyWindow.standardType,
-                width: 100,
-                dataIndex: 'stype',
-                editor: new Ext.form.ComboBox({
-                	id: 'typeCombo',
-                	valueField:'name',
-                	displayField:'value',
-                	labelStyle:'display:none',
-                	submitValue : true,
-                	typeAhead: false,
-                	queryMode: 'local',
-                	mode: 'local',
-					triggerAction: 'all',
-					selectOnFocus:true,
-					hideTrigger: false,
-					forceSelection: false,
-					selectOnFocus:true,
-					autoSelect:false,
-					store: new Ext.data.SimpleStore({
-				        fields: [
-				                  'name',
-				                  'value'
-				                ],
-				        data: typeData
-				    })
-                })
-            },{
-            	id: 'ctype',
-                header: ORYX.I18N.PropertyWindow.customType,
-                width: 200,
-                dataIndex: 'ctype',
-                editor: new Ext.form.TextField({ allowBlank: true }),
-                renderer: Ext.util.Format.htmlEncode
-            }, itemDeleter]),
-    		selModel: itemDeleter,
-            autoHeight: true,
-            tbar: [{
-                text: this.addButtonLabel,
-                handler : function(){
-                	if(this.single && vardefs.getCount() > 0) {
+                            newCustomType.push(classPart + " [" + pathPart + "]");
+                            newCustomType.push(unsortedData[t]);
+                            customTypeData.push(newCustomType);
+                        }
+
+                        var VarDef = Ext.data.Record.create([{
+                            name: 'name'
+                        }, {
+                            name: 'stype'
+                        }, {
+                            name: 'ctype'
+                        }]);
+
+                        var vardefsProxy = new Ext.data.MemoryProxy({
+                            root: []
+                        });
+
+                        var vardefs = new Ext.data.Store({
+                            autoDestroy: true,
+                            reader: new Ext.data.JsonReader({
+                                root: "root"
+                            }, VarDef),
+                            proxy: vardefsProxy,
+                            sorters: [{
+                                property: 'name',
+                                direction:'ASC'
+                            }]
+                        });
+                        vardefs.load();
+
+                        if(this.value.length > 0) {
+                            var valueParts = this.value.split(",");
+                            for(var i=0; i < valueParts.length; i++) {
+                                var nextPart = valueParts[i];
+                                if(nextPart.indexOf(":") > 0) {
+                                    var innerParts = nextPart.split(":");
+
+                                    var foundCustom = false;
+                                    for(var j=0; j < customTypeData.length; j++) {
+                                        var innerar = customTypeData[j];
+                                        for(var k = 0; k < innerar.length; k++) {
+                                            var inneror = innerar[k];
+                                            if(inneror == innerParts[1]) {
+                                                foundCustom = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if(foundCustom == true) {
+                                        vardefs.add(new VarDef({
+                                            name: innerParts[0],
+                                            stype: innerParts[1],
+                                            ctype: ''
+                                        }));
+                                    } else {
+                                        vardefs.add(new VarDef({
+                                            name: innerParts[0],
+                                            stype: '',
+                                            ctype: innerParts[1]
+                                        }));
+                                    }
+                                } else {
+                                    vardefs.add(new VarDef({
+                                        name: nextPart,
+                                        stype: '',
+                                        ctype: ''
+                                    }));
+                                }
+                            }
+
+                        }
+
+                        var itemDeleter = new Extensive.grid.ItemDeleter();
+                        itemDeleter.setDType(this.dtype);
+
+                        var gridId = Ext.id();
+                        Ext.form.VTypes["inputNameVal"] = /^[a-z0-9\-\.\_]*$/i;
+                        Ext.form.VTypes["inputNameText"] = 'Invalid name';
+                        Ext.form.VTypes["inputName"] = function(v){
+                            return Ext.form.VTypes["inputNameVal"].test(v);
+                        };
+                        var grid = new Ext.grid.EditorGridPanel({
+                            autoScroll: true,
+                            autoHeight: true,
+                            store: vardefs,
+                            id: gridId,
+                            stripeRows: true,
+                            cm: new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(), {
+                                id: 'name',
+                                header: ORYX.I18N.PropertyWindow.name,
+                                width: 100,
+                                dataIndex: 'name',
+                                editor: new Ext.form.TextField({ allowBlank: true, vtype: 'inputName', regex: /^[a-z0-9\-\.\_]*$/i }),
+                                renderer: Ext.util.Format.htmlEncode
+                            }, {
+                                id: 'stype',
+                                header: "Defined Types",
+                                width: 200,
+                                dataIndex: 'stype',
+                                editor: new Ext.form.ComboBox({
+                                    typeAhead: true,
+                                    anyMatch: true,
+                                    id: 'customTypeCombo',
+                                    valueField:'value',
+                                    displayField:'name',
+                                    labelStyle:'display:none',
+                                    submitValue : true,
+                                    typeAhead: true,
+                                    queryMode: 'local',
+                                    mode: 'local',
+                                    triggerAction: 'all',
+                                    selectOnFocus:true,
+                                    hideTrigger: false,
+                                    forceSelection: false,
+                                    selectOnFocus:true,
+                                    autoSelect:false,
+                                    editable: true,
+                                    store: new Ext.data.SimpleStore({
+                                        fields: [
+                                            'name',
+                                            'value'
+                                        ],
+                                        data: customTypeData
+                                    })
+                                })
+                            }, {
+                                id: 'ctype',
+                                header: ORYX.I18N.PropertyWindow.customType,
+                                width: 200,
+                                dataIndex: 'ctype',
+                                editor: new Ext.form.TextField({ allowBlank: true }),
+                                renderer: Ext.util.Format.htmlEncode
+                            }, itemDeleter]),
+                            selModel: itemDeleter,
+                            autoHeight: true,
+                            tbar: [{
+                                text: this.addButtonLabel,
+                                handler : function(){
+                                    if(this.single && vardefs.getCount() > 0) {
+                                        this.facade.raiseEvent({
+                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                                            ntype		: 'error',
+                                            msg         : ORYX.I18N.PropertyWindow.OnlySingleEntry,
+                                            title       : ''
+
+                                        });
+                                    } else {
+                                        vardefs.add(new VarDef({
+                                            name: '',
+                                            stype: '',
+                                            ctype: ''
+                                        }));
+                                        grid.fireEvent('cellclick', grid, vardefs.getCount()-1, 1, null);
+                                    }
+                                }.bind(this)
+                            }],
+                            clicksToEdit: 1
+                        });
+
+                        var dialog = new Ext.Window({
+                            layout		: 'anchor',
+                            autoCreate	: true,
+                            title		: this.windowTitle,
+                            height		: 300,
+                            width		: 600,
+                            modal		: true,
+                            collapsible	: false,
+                            fixedcenter	: true,
+                            shadow		: true,
+                            resizable   : true,
+                            proxyDrag	: true,
+                            autoScroll  : true,
+                            keys:[{
+                                key	: 27,
+                                fn	: function(){
+                                    dialog.hide()
+                                }.bind(this)
+                            }],
+                            items		:[grid],
+                            listeners	:{
+                                hide: function(){
+                                    this.fireEvent('dialogClosed', this.value);
+                                    //this.focus.defer(10, this);
+                                    dialog.destroy();
+                                }.bind(this)
+                            },
+                            buttons		: [{
+                                text: ORYX.I18N.PropertyWindow.ok,
+                                handler: function(){
+                                    var outValue = "";
+                                    grid.stopEditing();
+                                    grid.getView().refresh();
+                                    vardefs.data.each(function() {
+                                        if(this.data['name'].length > 0) {
+                                            if(this.data['stype'].length > 0) {
+                                                if(this.data['stype'] == "Object" && this.data['ctype'].length > 0) {
+                                                    outValue += this.data['name'] + ":" + this.data['ctype'] + ",";
+                                                } else {
+                                                    outValue += this.data['name'] + ":" + this.data['stype'] + ",";
+                                                }
+                                            } else if(this.data['ctype'].length > 0) {
+                                                outValue += this.data['name'] + ":" + this.data['ctype'] + ",";
+                                            } else {
+                                                outValue += this.data['name'] + ",";
+                                            }
+                                        }
+                                    });
+                                    if(outValue.length > 0) {
+                                        outValue = outValue.slice(0, -1)
+                                    }
+                                    this.setValue(outValue);
+                                    this.dataSource.getAt(this.row).set('value', outValue)
+                                    this.dataSource.commitChanges()
+
+                                    dialog.hide()
+                                }.bind(this)
+                            }, {
+                                text: ORYX.I18N.PropertyWindow.cancel,
+                                handler: function(){
+                                    this.setValue(this.value);
+                                    dialog.hide()
+                                }.bind(this)
+                            }]
+                        });
+
+                        dialog.show();
+                        grid.render();
+
+                        this.grid.stopEditing();
+                        grid.focus( false, 100 );
+                    } else {
                         this.facade.raiseEvent({
                             type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
                             ntype		: 'error',
-                            msg         : ORYX.I18N.PropertyWindow.OnlySingleEntry,
+                            msg         : 'Unable to find Data Types.',
                             title       : ''
 
                         });
-                	} else {
-                		vardefs.add(new VarDef({
-                            name: '',
-                            stype: '',
-                            ctype: ''
-                        }));
-                        grid.fireEvent('cellclick', grid, vardefs.getCount()-1, 1, null);
-                	}
-                }.bind(this)
-            }],
-            clicksToEdit: 1
-        });
+                    }
+                } catch(e) {
+                    this.facade.raiseEvent({
+                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                        ntype		: 'error',
+                        msg         : 'Error retrieving Data Types info '+' :\n' + e,
+                        title       : ''
 
-		var dialog = new Ext.Window({
-			layout		: 'anchor',
-			autoCreate	: true,
-			title		: this.windowTitle,
-			height		: 300,
-			width		: 500,
-			modal		: true,
-			collapsible	: false,
-			fixedcenter	: true,
-			shadow		: true,
-			resizable   : true,
-			proxyDrag	: true,
-			autoScroll  : true,
-			keys:[{
-				key	: 27,
-				fn	: function(){
-						dialog.hide()
-				}.bind(this)
-			}],
-			items		:[grid],
-			listeners	:{
-				hide: function(){
-					this.fireEvent('dialogClosed', this.value);
-					//this.focus.defer(10, this);
-					dialog.destroy();
-				}.bind(this)
-			},
-			buttons		: [{
-                text: ORYX.I18N.PropertyWindow.ok,
-                handler: function(){
-                	var outValue = "";
-                	grid.stopEditing();
-                	grid.getView().refresh();
-                	vardefs.data.each(function() {
-                		if(this.data['name'].length > 0) {
-                			if(this.data['stype'].length > 0) {
-                				if(this.data['stype'] == "Object" && this.data['ctype'].length > 0) {
-                					outValue += this.data['name'] + ":" + this.data['ctype'] + ",";
-                				} else {
-                					outValue += this.data['name'] + ":" + this.data['stype'] + ",";
-                				}
-                			} else if(this.data['ctype'].length > 0) {
-                				outValue += this.data['name'] + ":" + this.data['ctype'] + ",";
-                			} else {
-                				outValue += this.data['name'] + ",";
-                			}
-                		}
                     });
-                	if(outValue.length > 0) {
-                		outValue = outValue.slice(0, -1)
-                	}
-					this.setValue(outValue);
-					this.dataSource.getAt(this.row).set('value', outValue)
-					this.dataSource.commitChanges()
+                }
+            }.bind(this),
+            failure: function(){
+                this.facade.raiseEvent({
+                    type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                    ntype		: 'error',
+                    msg         : 'Error retrieving Data Types info.',
+                    title       : ''
 
-					dialog.hide()
-                }.bind(this)
-            }, {
-                text: ORYX.I18N.PropertyWindow.cancel,
-                handler: function(){
-					this.setValue(this.value);
-                	dialog.hide()
-                }.bind(this)
-            }]
-		});
-
-		dialog.show();
-		grid.render();
-
-		this.grid.stopEditing();
-		grid.focus( false, 100 );
-		
+                });
+            },
+            params: {
+                profile: ORYX.PROFILE,
+                uuid : ORYX.UUID,
+                ppackage: processPackage,
+                pid: processId,
+                action: 'showdatatypes'
+            }
+        });
 	}
 });
 
@@ -4594,9 +5443,341 @@ Ext.form.ConditionExpressionEditorField = Ext.extend(Ext.form.TriggerField,  {
     }
 });
 
+Ext.form.ComplexRuleflowGroupElementField = Ext.extend(Ext.form.TriggerField,  {
+    editable: true,
+    readOnly: false,
+    onTriggerClick : function() {
+        if(this.disabled){
+            return;
+        }
+
+        var processJSON = ORYX.EDITOR.getSerializedJSON();
+        var processPackage = jsonPath(processJSON.evalJSON(), "$.properties.package");
+        var processId = jsonPath(processJSON.evalJSON(), "$.properties.id");
+
+        var RuleFlowGroupDef = Ext.data.Record.create([{
+            name: 'name'
+        }, {
+            name: 'rules'
+        }, {
+            name: 'repo'
+        }, {
+            name: 'project'
+        }, {
+            name: 'branch'
+        }, {
+            name: 'fullpath'
+        }
+        ]);
+
+
+        var ruleflowgroupsProxy = new Ext.data.MemoryProxy({
+            root: []
+        });
+
+        var ruleflowgroupsdefs = new Ext.data.Store({
+            autoDestroy: true,
+            reader: new Ext.data.JsonReader({
+                root: "root"
+            }, RuleFlowGroupDef),
+            proxy: ruleflowgroupsProxy,
+            sorters: [{
+                property: 'name',
+                direction:'ASC'
+            }]
+        });
+        ruleflowgroupsdefs.load();
+
+        this.facade.raiseEvent({
+            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+            ntype		: 'info',
+            msg         : "Loading RuleFlow Groups",
+            title       : ''
+
+        });
+
+        // reuse called element servlet
+        Ext.Ajax.request({
+            url: ORYX.PATH + 'calledelement',
+            method: 'POST',
+            success: function(response) {
+                try {
+                    if(response.responseText.length > 0 && response.responseText != "false") {
+                        var responseJson = Ext.decode(response.responseText);
+
+                        for(var key in responseJson){
+                            var keyVal = responseJson[key];
+                            var containedRulesComboInfo = new Array();
+                            // example:
+                            //"mygroup1||test1.drl^^default://master@jbpm-playground/Evaluation/src/main/resources/test1.drl<<test2.drl^^default://master@jbpm-playground/Evaluation/src/main/resources/test2.drl"
+                            var keyValParts = keyVal.split("||");
+                            var ruleFlowName = keyValParts[0];
+                            var ruleFlowInfo = keyValParts[1];
+
+                            var ruleFlowInfoParts = ruleFlowInfo.split("<<");
+                            for(var i = 0; i < ruleFlowInfoParts.length; i++) {
+                                var ruleFlowInfoInnerParts = ruleFlowInfoParts[i].split("^^");
+                                var ruleFlowInfoInnerArray = new Array();
+                                ruleFlowInfoInnerArray.push(ruleFlowInfoInnerParts[0]);
+                                ruleFlowInfoInnerArray.push(ruleFlowInfoInnerParts[1]);
+                                containedRulesComboInfo.push(ruleFlowInfoInnerArray);
+                            }
+
+                            var firstInfoPart = ruleFlowInfoParts[0];
+                            // test1.drl^^default://master@jbpm-playground/Evaluation/src/main/resources/test1.drl
+                            var firstInfoPartParts = firstInfoPart.split("^^");
+                            var firstInfoPartPath = firstInfoPartParts[1];
+                            // default://master@jbpm-playground/Evaluation/src/main/resources/test1.drl
+                            var firstInfoPartPathParts = firstInfoPartPath.split("://");
+                            var finalInfo = firstInfoPartPathParts[1];
+                            // master@jbpm-playground/Evaluation/src/main/resources/test1.drl
+                            var finalInfoParts = finalInfo.split("@");
+
+                            var finalBranch = finalInfoParts[0];
+                            var finalPathParts = finalInfoParts[1];
+
+                            var finalRepository = finalPathParts.split("/")[0];
+                            var finalProject = finalPathParts.split("/")[1];
+
+                            ruleflowgroupsdefs.add(new RuleFlowGroupDef({
+                                name: ruleFlowName,
+                                rules : containedRulesComboInfo,
+                                repo : finalRepository,
+                                project : finalProject,
+                                branch : finalBranch,
+                                fullpath : firstInfoPartPath
+                            }));
+                        }
+                        ruleflowgroupsdefs.commitChanges();
+
+                        var gridId = Ext.id();
+                        var grid = new Ext.grid.EditorGridPanel({
+                            autoScroll: true,
+                            autoHeight: true,
+                            store: ruleflowgroupsdefs,
+                            id: gridId,
+                            stripeRows: true,
+                            cm: new Ext.grid.ColumnModel([new Ext.grid.RowNumberer(),
+                            {
+                                id: 'rfgname',
+                                header: 'RuleFlow Group Name',
+                                width: 200,
+                                sortable: true,
+                                dataIndex: 'name',
+                                editor: new Ext.form.TextField({ allowBlank: true, disabled: true })
+                            },
+                            {
+                                id: 'rfrulenames',
+                                header: 'Rules',
+                                width: 200,
+                                sortable: false,
+                                renderer: function(value, metaData, record, rowIndex, colIndex, store) {
+
+                                    function createGridCombo(value, id, record, comboid) {
+                                        new Ext.form.ComboBox({
+                                            name: 'ruleflowscombo',
+                                            id: comboid,
+                                            valueField:'value',
+                                            displayField:'name',
+                                            typeAhead: true,
+                                            mode: 'local',
+                                            triggerAction: 'all',
+                                            selectOnFocus:true,
+                                            store: new Ext.data.SimpleStore({
+                                                fields: [
+                                                    'name',
+                                                    'value'
+                                                ],
+                                                data: value
+                                            })
+//                                            ,
+//                                            listeners: {
+//                                                select: function(combo, record, index) {
+//                                                    parent.designeropenintab(combo.getRawValue(), combo.getValue());
+//                                                }
+//                                            }
+                                        }).render(document.getElementById(gridId), id);
+                                   }
+
+                                   function createGridButton(value, id, record, comboid) {
+                                       new Ext.Button({
+                                           text: 'view',
+                                           handler : function(btn, e) {
+                                               var rawValue =  Ext.getCmp(comboid).getRawValue();
+                                               var backValue =  Ext.getCmp(comboid).getValue();
+
+                                               if(rawValue && rawValue.length > 0 && backValue && backValue.length > 0) {
+                                                   parent.designeropenintab(rawValue, backValue);
+                                               }
+                                           }
+                                       }).render(document.getElementById(gridId), id);
+                                   }
+
+                                    var id = 'rulenamescombodiv-' + rowIndex;
+                                    var comboid = "rncombo-" + rowIndex;
+                                    createGridCombo.defer(1, this, [store.getAt(rowIndex).get("rules"), id, record, comboid]);
+                                    createGridButton.defer(1, this, [store.getAt(rowIndex).get("rules"), id, record, comboid]);
+                                    return('<div id="' + id + '"></div>');
+                                }
+                            },
+                            {
+                                id: 'rfrepository',
+                                header: 'Repository',
+                                width: 100,
+                                sortable: true,
+                                dataIndex: 'repo',
+                                editor: new Ext.form.TextField({ allowBlank: true, disabled: true })
+                            },
+                            {
+                                id: 'rfproject',
+                                header: 'Project',
+                                width: 100,
+                                sortable: true,
+                                dataIndex: 'project',
+                                editor: new Ext.form.TextField({ allowBlank: true, disabled: true })
+                            },
+                            {
+                                id: 'rfbranch',
+                                header: "Branch",
+                                width: 100,
+                                sortable: true,
+                                dataIndex: "branch",
+                                editor: new Ext.form.TextField({ allowBlank: true, disabled: true })
+                            }
+                            ])
+                        });
+
+                        grid.on('afterrender', function(e) {
+                            if(this.value.length > 0) {
+                                var index = 0;
+                                var val = this.value;
+                                var mygrid = grid;
+                                ruleflowgroupsdefs.data.each(function() {
+                                    if(this.data['name'] == val) {
+                                        mygrid.getSelectionModel().select(index, 1);
+                                    }
+                                    index++;
+                                });
+                            }
+                        }.bind(this));
+
+                        var ruleFlowGroupsPanel = new Ext.Panel({
+                            id: 'ruleFlowGroupsPanel',
+                            title: '<center><p style="font-size:11px"><i>Select RuleFlow Group Name and click on Save</i></p></center>',
+                            layout:'column',
+                            items:[
+                                grid
+                            ],
+                            layoutConfig: {
+                                columns: 1
+                            },
+                            defaults: {
+                                columnWidth: 1.0
+                            }
+                        });
+
+                        var dialog = new Ext.Window({
+                            layout		: 'anchor',
+                            autoCreate	: true,
+                            title		: 'Editor for RuleFlow Groups',
+                            height		: 350,
+                            width		: 760,
+                            modal		: true,
+                            collapsible	: false,
+                            fixedcenter	: true,
+                            shadow		: true,
+                            resizable   : true,
+                            proxyDrag	: true,
+                            autoScroll  : true,
+                            items		:[ruleFlowGroupsPanel],
+                            listeners	:{
+                                hide: function(){
+
+                                    this.fireEvent('dialogClosed', this.value);
+                                    dialog.destroy();
+
+                                }.bind(this)
+                            },
+                            buttons		: [{
+                                text: ORYX.I18N.Save.save,
+                                handler: function(){
+                                    if(grid.getSelectionModel().getSelectedCell() != null) {
+                                        var selectedIndex = grid.getSelectionModel().getSelectedCell()[0];
+                                        var outValue = ruleflowgroupsdefs.getAt(selectedIndex).data['name'];
+                                        grid.stopEditing();
+                                        grid.getView().refresh();
+                                        this.setValue(outValue);
+                                        this.dataSource.getAt(this.row).set('value', outValue)
+                                        this.dataSource.commitChanges()
+                                        dialog.hide();
+                                    } else {
+                                        this.facade.raiseEvent({
+                                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                                            ntype		: 'error',
+                                            msg         : 'No data selected.',
+                                            title       : ''
+
+                                        });
+                                    }
+                                }.bind(this)
+                            }, {
+                                text: ORYX.I18N.PropertyWindow.cancel,
+                                handler: function(){
+                                    this.setValue(this.value);
+                                    dialog.hide();
+                                }.bind(this)
+                            }]
+                        });
+
+                        dialog.show();
+                        grid.render();
+                        grid.fireEvent('afterrender');
+                        this.grid.stopEditing();
+                        grid.focus( false, 100 );
+                    } else {
+                        this.facade.raiseEvent({
+                            type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                            ntype		: 'error',
+                            msg         : 'Unable to find RuleFlow Groups.',
+                            title       : ''
+
+                        });
+                    }
+                } catch(e) {
+                    this.facade.raiseEvent({
+                        type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                        ntype		: 'error',
+                        msg         : 'Error retrieving RuleFlow Groups info '+' :\n' + e,
+                        title       : ''
+
+                    });
+                }
+            }.bind(this),
+            failure: function(){
+                this.facade.raiseEvent({
+                    type 		: ORYX.CONFIG.EVENT_NOTIFICATION_SHOW,
+                    ntype		: 'error',
+                    msg         : 'Error retrieving RuleFlow Groups info.',
+                    title       : ''
+
+                });
+            },
+            params: {
+                profile: ORYX.PROFILE,
+                uuid : ORYX.UUID,
+                ppackage: processPackage,
+                pid: processId,
+                action: 'showruleflowgroups'
+            }
+        });
+
+        this.grid.stopEditing();
+    }
+});
+
 Ext.form.ComplexCalledElementField = Ext.extend(Ext.form.TriggerField,  {
-    editable: false,
-    readOnly: true,
+    editable: true,
+    readOnly: false,
 	onTriggerClick : function(){
         if(this.disabled){
             return;

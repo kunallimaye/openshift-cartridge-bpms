@@ -74,7 +74,7 @@ f=true
 }}.bind(this));
 if(f){e.values().each(function(g){this.facade.getRules().initializeRules(g)
 }.bind(this));
-this.facade.raiseEvent({type:ORYX.CONFIG.EVENT_STENCIL_SET_LOADED});
+ORYX.EDITOR._pluginFacade.raiseEvent({type:ORYX.CONFIG.EVENT_STENCIL_SET_RELOAD});
 var b=this.facade.getSelection();
 this.facade.setSelection();
 this.facade.setSelection(b)
