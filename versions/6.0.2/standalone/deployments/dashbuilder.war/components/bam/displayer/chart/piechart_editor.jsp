@@ -23,12 +23,11 @@
 <%@ page import="org.jboss.dashboard.displayer.chart.AbstractChartDisplayer" %>
 <%@ page import="org.jboss.dashboard.ui.components.chart.PieChartEditor" %>
 <%@ page import="org.jboss.dashboard.LocaleManager" %>
-<%@ page import="org.jboss.dashboard.factory.Factory" %>
 <%@ page import="org.jboss.dashboard.ui.components.DataDisplayerViewer" %>
 <%@ page import="org.jboss.dashboard.ui.UIBeanLocator" %>
 <i18n:bundle baseName="org.jboss.dashboard.displayer.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%
-    PieChartEditor editor = (PieChartEditor) Factory.lookup("org.jboss.dashboard.ui.components.PieChartEditor");
+    PieChartEditor editor = (PieChartEditor) UIBeanLocator.lookup().getCurrentBean(request);
     request.setAttribute("editor", editor);
 
     AbstractChartDisplayer displayer = (AbstractChartDisplayer) editor.getDataDisplayer();
@@ -45,21 +44,17 @@
                 <mvc:include page="renderer_selection.jsp"  flush="true" />
                 <!-- Select the type of the pie -->
                 <mvc:include page="chart_type_selection.jsp" flush="true"/>
-                
-                <!-- Select the type of the pie -->                
+                <!-- Select the type of the pie -->
                 <mvc:include page="domain_properties.jsp" flush="true"/>
-                
                 <!-- Include the width, height, etc properties -->
                 <mvc:include page="generic_properties.jsp" flush="true"/>
                 
-                
-                 <!-- Submit button -->
                  <%--mvc:include page="../../kpi_submit.jsp"  flush="true" /--%>
             </table>
         </td>
-        <!-- Include the graphic -->
+        <!-- Include the viewer -->
         <td valign="top">
-            <factory:useComponent bean="<%= viewer.getName() %>"/>
+            <factory:useComponent bean="<%= viewer %>"/>
         </td>
     </tr>
 </table>

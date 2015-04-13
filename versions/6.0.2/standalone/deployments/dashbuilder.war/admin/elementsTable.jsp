@@ -15,10 +15,9 @@
     limitations under the License.
 
 --%>
-<%@ page import="org.jboss.dashboard.ui.SessionManager,
+<%@ page import="org.jboss.dashboard.LocaleManager,
                  org.jboss.dashboard.workspace.GraphicElementManager,
                  org.jboss.dashboard.ui.resources.GraphicElement" %>
-<%@ page import="org.jboss.dashboard.workspace.GraphicElementManager" %>
 <%@ taglib uri="http://dashboard.jboss.org/taglibs/i18n-1.0" prefix="i18n" %>
 <%@ taglib prefix="static" uri="static-resources.tld" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
@@ -41,7 +40,7 @@
             String skin = (String) request.getAttribute("skin");
 %>
 
-<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=SessionManager.getCurrentLocale()%>"/>
+<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <i18n:message key='<%="ui.admin.workarea."+graphicElement+"s.global"%>' id="global">!!!Global</i18n:message>
 <i18n:message key='<%="ui.admin.workarea."+graphicElement+"s.confirmDelete"+graphicElementClassName%>' id="msgDelete">!!!Sure?</i18n:message>
 
@@ -111,10 +110,6 @@
                     (element.getWorkspaceId() != null && element.getSectionId() != null)
                     )
                 if (!manager.isBaseElement(element)) {%>
-            <%--<a href="#" onclick="checkDelete(<%=element.getDbid()%>);return false;"
-               title="<i18n:message key='<%="ui.admin.workarea."+graphicElement+"s.delete"%>'>!!!Delete</i18n:message>">
-                <resource:image category="resourceGallery" categoryId="icons" resourceId="SMALL_x-directory-trash" border="0">
-                    X</resource:image></a>--%>
             <a href="#" onclick="eval('document.delete'+<%=element.getDbid()%> +'.onsubmit()');return false;"
                title="<i18n:message key='<%="ui.admin.workarea."+graphicElement+"s.delete"%>'>!!!Delete</i18n:message>">
                 <img src="<static:image relativePath="general/16x16/ico-directory-trash.png"/>" border="0" ></a>

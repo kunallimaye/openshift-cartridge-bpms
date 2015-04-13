@@ -16,7 +16,8 @@
 
 --%>
 <%@ page import="org.jboss.dashboard.workspace.Panel" %>
-<%@ page import="java.util.Properties" %>
+<%@ page import="org.jboss.dashboard.ui.UISettings" %>
+<%@ page import="org.jboss.dashboard.ui.controller.RequestContext" %>
 <%@ taglib prefix="mvc" uri="mvc_taglib.tld" %>
 <%@ taglib uri="factory.tld" prefix="factory" %>
 
@@ -137,7 +138,9 @@
         <mvc:fragmentValue name="panel" id="panel">
             <div id="Region_Panel_Container_<%=((Panel)panel).getPanelId()%>"
                     <%=((Panel) panel).getHeight() > 0 ? "style=\"height:" + ((Panel) panel).getHeight() + "\"" : ""%>>
-                <%@ include file="render_panel_content.jsp" %>
+              <% RequestContext.lookup().activatePanel((Panel) panel); %>
+              <mvc:include page="render_panel_content.jsp" flush="true"/>
+              <% RequestContext.lookup().deactivatePanel((Panel) panel); %>
             </div>
         </mvc:fragmentValue>
     </mvc:fragment>
@@ -154,7 +157,7 @@
                              onmouseout="$('Region_Panel_Menu_Link<%=((Panel)panel).getPanelId()%>').setOpacity(0.2);">
                             <%
                                 request.setAttribute("panel", panel);
-                                String configString = ((Properties) Factory.lookup("org.jboss.dashboard.ui.formatters.DisplayConfiguration")).getProperty("panelMenuRenderPage");
+                                String configString = UISettings.lookup().getPanelMenuRenderPage();
                             %>
                             <jsp:include page="<%=configString%>" flush="true">
                                 <jsp:param name="title" value="<%=String.valueOf(panelTitle)%>"/>
@@ -166,7 +169,9 @@
                     </div>
                     <div id="Region_Panel_Container_<%=((Panel)panel).getPanelId()%>"
                          style=" <%=Boolean.TRUE.equals(editMode) ? "" : "border: solid 1px #CCCCCC; "%>margin: 0; <%=((Panel)panel).getHeight()>0?"height: "+((Panel)panel).getHeight():""%>">
-                        <%@ include file="render_panel_content.jsp" %>
+                      <% RequestContext.lookup().activatePanel((Panel) panel); %>
+                      <mvc:include page="render_panel_content.jsp" flush="true"/>
+                      <% RequestContext.lookup().deactivatePanel((Panel) panel); %>
                     </div>
                 </mvc:fragmentValue>
             </mvc:fragmentValue>

@@ -28,6 +28,8 @@ var ajaxAlertsEnabled = false;
 var ajaxRequestNumber = 0;
 var ajaxMaxRequestNumber = <%=AjaxRefreshManager.lookup().getMaxAjaxRequests()%>;
 var value;
+var ajaxedElements=[];
+var ajaxedRefreshElements=[];
 
 // Boundary for multipart forms.  DO NOT CHANGE IT !!!
 var boundary = "AJAX_Boundary_" + new Date().getMilliseconds() * new Date().getMilliseconds() * new Date().getMilliseconds();
@@ -87,7 +89,10 @@ function doAjaxRequest(url, body, tagId, onAjaxRequestScript, onAjaxResponseScri
                     var newElement = document.createElement(element.tagName);
                     newElement.id = element.id;
                     //alert("Setting "+ ajaxHandler.ajaxReq.responseText);
-                    newElement.innerHTML = ajaxHandler.ajaxReq.responseText;
+                    var rText = ajaxHandler.ajaxReq.responseText;
+                    // JBPM-4369 - Fixing IE9 bug that create whitespaces bewtween td elements that produce table column's offsets.
+                    var expr = new RegExp('>[ \t\r\n\v\f]*<', 'g');
+                    newElement.innerHTML = rText.replace(expr, '><');
                     if (ajaxAlertsEnabled) alert("Set " + newElement.outerHTML);
 
                     // remove embedded objects from the old content to avoid js errors caused by flash
@@ -136,6 +141,8 @@ function doAjaxRequest(url, body, tagId, onAjaxRequestScript, onAjaxResponseScri
 
     var ajaxLoadingDivTimeout;
     function beforeAjaxRequest(){
+        ajaxedElements=[];
+        ajaxedRefreshElements=[];
         if (document.getElementById('modalAjaxLoadingDiv')) {
             ajaxLoadingDivTimeout = setTimeout('if(document.body)document.body.style.cursor = "wait"; if(document.getElementById(\'modalAjaxLoadingDiv\')); document.getElementById(\'modalAjaxLoadingDiv\').style.display=\'block\';',300);
         } else {
@@ -277,7 +284,7 @@ function sendFormToHandler(form, component, property){
 
 function prepareFormForHandler(form, component, property){
     setFormInputValue(form, '<%=FactoryURL.PARAMETER_BEAN%>', component );
-    setFormInputValue(form, '<%=FactoryURL.PARAMETER_PROPERTY%>', property );
+    setFormInputValue(form, '<%=FactoryURL.PARAMETER_ACTION%>', property );
     setFormInputValue(form, '<%=Parameters.DISPATCH_ACTION%>', "_factory" );
 };
 
@@ -435,17 +442,41 @@ function doSetAjax(elementId, onAjaxRequestScript, onAjaxResponseScript) {
     }
 };
 
+function isAjaxed(elementId) {
+    if (!elementId) return false;    
+    for (var i = 0; i < ajaxedElements.length; i++) {
+        if(ajaxedElements[i]==elementId) return true;
+    }
+    return false;
+}
+
 function setAjax(elementId) {
-    if (ajaxRequestNumber > ajaxMaxRequestNumber) return false;
-    setTimeout("doSetAjax('" + elementId + "', null, null)", 1);
+    if (ajaxRequestNumber > ajaxMaxRequestNumber) return false;    
+    if (!isAjaxed(elementId)) {
+        setTimeout("doSetAjax('" + elementId + "', null, null)", 1);
+        ajaxedElements.push(elementId);
+    }
 };
 
 function isFileUploadSupported() {
     return false;
 };
 
+function isRefreshApplied(elementId) {
+    if (!elementId) return false;
+    for (var i = 0; i < ajaxedRefreshElements.length; i++) {
+        if(ajaxedRefreshElements[i]==elementId) return true;
+    }
+    return false;
+}
+
 function refreshPanel(id) {
-    setTimeout("doRefreshPanel('"+ id + "')",10);
+    if (id) {
+        if (!isRefreshApplied(id)) { 
+            setTimeout("doRefreshPanel('"+ id + "')",10);
+            ajaxedRefreshElements.push(id)
+        }
+    }
 };
 
 function doRefreshPanel(id) {

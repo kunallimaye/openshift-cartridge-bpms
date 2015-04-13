@@ -15,44 +15,34 @@
     limitations under the License.
 
 --%>
-<%@ page import="org.jboss.dashboard.security.PanelPermission"%>
-<%@ page import="java.util.Properties"%>
-<%@ page import="org.jboss.dashboard.factory.Factory"%>
+<%@ page import="org.jboss.dashboard.LocaleManager" %>
 <%@ page import="org.jboss.dashboard.ui.taglib.LocalizeTag"%>
-<%@ page import="org.jboss.dashboard.ui.panel.PanelDriver" %>
-<%--
-    Layout for a single maximized panel
---%>
+<%@ page import="org.jboss.dashboard.ui.UISettings" %>
+<%@ page import="org.jboss.dashboard.ui.controller.RequestContext" %>
 <%@ include file="../common/global.jsp" %>
 <%@ taglib uri="http://dashboard.jboss.org/taglibs/i18n-1.0" prefix="i18n" %>
 <%@ taglib uri="resources.tld" prefix="resource" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%@ taglib uri="bui_taglib.tld" prefix="panel" %>
- 
 <%
-    /*
-     *  Displays a maximized panel.
-     */
     Panel maximizedPanel = currentSection.getMaximizedPanel(session);
-
-    // Provide parameters to the JSP
     Panel panel = maximizedPanel;
-    PanelDriver driver = panel.getProvider().getDriver();
-    String panelTitle = LocalizeTag.getLocalizedValue(panel.getTitle(), SessionManager.getLang(),true);
+    String panelTitle = LocalizeTag.getLocalizedValue(panel.getTitle(), LocaleManager.currentLang(),true);
 %>
-
-<div id="Region_Panel_Container_<%=((Panel)panel).getPanelId()%>" style=" border: solid; border-width: 1px; border-color: gray; width: 100%; height: 100%; position: relative; text-align:left; top:0; left:0;
-             <%=((Panel)panel).getHeight()>0?"height: "+((Panel)panel).getHeight():""%>
- ">
-    <%@ include file="/section/render_panel_content.jsp" %>
-    <div id="Region_Panel_Menu_Link<%=((Panel)panel).getPanelId()%>"
+<div id="Region_Panel_Container_<%= panel.getPanelId()%>" style=" border: solid; border-width: 1px; border-color: gray; width: 100%; height: 100%; position: relative; text-align:left; top:0; left:0;
+             <%=panel.getHeight()>0?"height: "+panel.getHeight():""%>">
+    <% RequestContext.lookup().activatePanel(panel); %>
+    <mvc:include page="render_panel_content.jsp" flush="true"/>
+    <% RequestContext.lookup().deactivatePanel(panel); %>
+    <div id="Region_Panel_Menu_Link<%=panel.getPanelId()%>"
          style="text-align: right; height:0; width:100%; visibility: visible; border:none; position: absolute; top:0; left:0">
-                    <%request.setAttribute("panel", panel);
-            String configString = ((Properties) Factory.lookup("org.jboss.dashboard.ui.formatters.DisplayConfiguration")).getProperty("panelMenuRenderPage");
-                    %>
+        <%
+            request.setAttribute("panel", panel);
+            String configString = UISettings.lookup().getPanelMenuRenderPage();
+        %>
         <jsp:include page="<%=configString%>" flush="true">
             <jsp:param name="title" value="<%=String.valueOf(panelTitle)%>"/>
         </jsp:include>
-                    <%request.removeAttribute("panel");%>
+        <% request.removeAttribute("panel"); %>
     </div>
 </div>

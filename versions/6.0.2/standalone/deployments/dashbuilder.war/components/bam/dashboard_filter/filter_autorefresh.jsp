@@ -17,6 +17,7 @@
 --%>
 <%@ page import="org.jboss.dashboard.LocaleManager" %>
 <%@ page import="org.jboss.dashboard.ui.components.DashboardFilterHandler" %>
+<%@ page import="org.jboss.dashboard.ui.UIBeanLocator" %>
 <%@ taglib prefix="factory" uri="factory.tld" %>
 <%@ taglib prefix="panel" uri="bui_taglib.tld" %>
 <%@ taglib uri="resources.tld" prefix="resource" %>
@@ -25,9 +26,8 @@
 <%@ taglib prefix="static" uri="static-resources.tld" %>
 <i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.components.filter.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%
-    String componentCode = (String) request.getAttribute("componentCode");
-    DashboardFilterHandler handler = DashboardFilterHandler.lookup(componentCode);
-    boolean  refreshEnabled = handler.isRefreshEnabled();
+    DashboardFilterHandler handler = (DashboardFilterHandler) UIBeanLocator.lookup().getCurrentBean(request);
+    boolean refreshEnabled = handler.isRefreshEnabled();
 %>
 <table cellpadding="4" cellspacing="0" border="0" class="skn-table_border" width="">
     <tr class="skn-table_header">
@@ -35,7 +35,7 @@
             <%  if (refreshEnabled) { %>
             <img src="<static:image relativePath="general/10x10/play.gif"/>" title="Play" style="border: 0px; opacity: 0.5; -moz-opacity: 0.5; filter: alpha( opacity = 50 );">
             <% } else { %>
-            <a id="<panel:encode name="refreshPlayLink"/>" href="<factory:url action="play" bean="<%=handler.getComponentPath()%>"/>">
+            <a id="<panel:encode name="refreshPlayLink"/>" href="<factory:url action="play" bean="<%=handler.getBeanName()%>"/>">
                 <img src="<static:image relativePath="general/10x10/play.gif"/>" title="Play" style="border: 0px;">
             </a>
             <script defer="defer">
@@ -47,7 +47,7 @@
             <% if (!handler.isRefreshEnabled()) { %>
             <img src="<static:image relativePath="general/10x10/stop.gif"/>" title="Stop" style="border: 0px; opacity: 0.5; -moz-opacity: 0.5; filter: alpha( opacity = 50 );">
             <% } else { %>
-            <a id="<panel:encode name="refreshStopLink"/>" onclick="clearTimeout(window.<panel:encode name="clearTimeout"/>);" href="<factory:url action="stop" bean="<%=handler.getComponentPath()%>"/>">
+            <a id="<panel:encode name="refreshStopLink"/>" onclick="clearTimeout(window.<panel:encode name="clearTimeout"/>);" href="<factory:url action="stop" bean="<%=handler.getBeanName()%>"/>">
                 <img src="<static:image relativePath="general/10x10/stop.gif"/>" title="Stop" style="border: 0px;">
             </a>
             <script defer="defer">

@@ -20,7 +20,6 @@
 <%@ page import="org.jboss.dashboard.ui.NavigationManager" %>
 <%@ page import="org.jboss.dashboard.workspace.Section" %>
 <%@ page import="org.jboss.dashboard.ui.formatters.DashboardFilterFormatter" %>
-<%@ page import="org.jboss.dashboard.workspace.Section" %>
 <%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
 <%@ taglib prefix="factory" uri="factory.tld" %>
 <%@ taglib prefix="panel" uri="bui_taglib.tld" %>
@@ -32,8 +31,6 @@
     NavigationManager navigationManager = NavigationManager.lookup();
     Section[] sections = navigationManager.getCurrentWorkspace().getAllSections();
     LocaleManager localeManager = LocaleManager.lookup();
-    String componentCode = (String) request.getAttribute("componentCode");
-    DashboardFilterHandler handler = DashboardFilterHandler.lookup(componentCode);
 %>
 <mvc:formatter name="org.jboss.dashboard.ui.formatters.DashboardFilterFormatter">
     <mvc:formatterParam name="<%=DashboardFilterFormatter.PARAM_RENDER_TYPE%>" value="<%=DashboardFilterFormatter.RENDER_TYPE_SHOW%>"/>
@@ -47,7 +44,7 @@
         <tr>
             <td width="100%">
                 <form method="post" action="<factory:formUrl friendly="false"/>" id="<panel:encode name="storePropertiesOptions"/>">
-                <factory:handler bean="<%=handler.getComponentPath()%>" action="store"/>
+                <factory:handler action="store"/>
                 <table cellspacing="0" cellpadding="8" border="0" width="100%">
 
     </mvc:fragment>

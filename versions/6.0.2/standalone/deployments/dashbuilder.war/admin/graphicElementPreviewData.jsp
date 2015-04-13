@@ -15,56 +15,51 @@
     limitations under the License.
 
 --%>
-<%@ page import="org.jboss.dashboard.ui.SessionManager,
+<%@ page import="org.jboss.dashboard.LocaleManager,
                  org.jboss.dashboard.workspace.GraphicElementManager,
                  org.jboss.dashboard.workspace.WorkspaceImpl,
                  org.jboss.dashboard.ui.resources.GraphicElementPreview,
-                 java.lang.reflect.Method" %>
-<%@ page import="org.jboss.dashboard.ui.config.components.resources.ResourcesPropertiesHandler"%>
-<%@ page import="org.jboss.dashboard.factory.Factory"%>
-<%@ page import="org.jboss.dashboard.ui.UIServices" %>
-<%@ page import="org.jboss.dashboard.workspace.WorkspaceImpl" %>
-<%@ page import="org.jboss.dashboard.workspace.GraphicElementManager" %>
+                 java.lang.reflect.Method,
+                 org.jboss.dashboard.ui.config.components.resources.ResourcesPropertiesHandler,
+                 org.jboss.dashboard.ui.UIServices,
+                 org.jboss.dashboard.workspace.WorkspaceImpl,
+                 org.jboss.dashboard.workspace.GraphicElementManager" %>
 
 <%@ taglib uri="http://dashboard.jboss.org/taglibs/i18n-1.0" prefix="i18n" %>
 <%@ taglib uri="resources.tld" prefix="resource" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%@ taglib uri="bui_taglib.tld" prefix="panel" %>
-<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=SessionManager.getCurrentLocale()%>"/>
+<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%
-    try {
-        ResourcesPropertiesHandler handler = (ResourcesPropertiesHandler) Factory.lookup(ResourcesPropertiesHandler.class.getName());
-        String resultMessage = null;
-        String graphicElement = (String) request.getAttribute("graphicElement");
-        String graphicElementClassName = graphicElement.substring(0, 1).toUpperCase() + graphicElement.substring(1);
-        Class graphicElementClass = Class.forName("org.jboss.dashboard.ui.resources." + graphicElementClassName);
-        Method managerGetter = graphicElementClass.getMethod("getManager", new Class[]{});
-        GraphicElementManager manager = (GraphicElementManager) managerGetter.invoke(null, new Object[]{});
-        GraphicElementPreview preview = (GraphicElementPreview) request.getSession().getAttribute(ResourcesPropertiesHandler.PREVIEW_ATTRIBUTE);
-        request.setAttribute("previewElement",preview.toElement());
-        switch (preview.getStatus()) {
-            case GraphicElementPreview.STATUS_MISSING_DESCRIPTOR:
-                resultMessage = "ui.admin.workarea." + graphicElement + "s.missingDescriptor";
-                break;
-            case GraphicElementPreview.STATUS_DESCRIPTOR_CORRUPT:
-                resultMessage = "ui.admin.workarea." + graphicElement + "s.corruptDescriptor";
-                break;
-            case GraphicElementPreview.STATUS_ZIP_CORRUPT:
-                resultMessage = "ui.admin.workarea." + graphicElement + "s.corruptZip";
-                break;
-            case GraphicElementPreview.STATUS_JSP_INSECURE:
-                resultMessage = "ui.admin.workarea." + graphicElement + "s.insecure";
-                break;
-        }
-        if (handler.isZipHasError()) resultMessage = "ui.admin.workarea." + graphicElement + "s.errorImport";
-        if (resultMessage != null) {
+    ResourcesPropertiesHandler handler = ResourcesPropertiesHandler.lookup();
+    String resultMessage = null;
+    String graphicElement = (String) request.getAttribute("graphicElement");
+    String graphicElementClassName = graphicElement.substring(0, 1).toUpperCase() + graphicElement.substring(1);
+    Class graphicElementClass = Class.forName("org.jboss.dashboard.ui.resources." + graphicElementClassName);
+    Method managerGetter = graphicElementClass.getMethod("getManager", new Class[]{});
+    GraphicElementManager manager = (GraphicElementManager) managerGetter.invoke(null, new Object[]{});
+    GraphicElementPreview preview = (GraphicElementPreview) request.getSession().getAttribute(ResourcesPropertiesHandler.PREVIEW_ATTRIBUTE);
+    request.setAttribute("previewElement",preview.toElement());
+    switch (preview.getStatus()) {
+        case GraphicElementPreview.STATUS_MISSING_DESCRIPTOR:
+            resultMessage = "ui.admin.workarea." + graphicElement + "s.missingDescriptor";
+            break;
+        case GraphicElementPreview.STATUS_DESCRIPTOR_CORRUPT:
+            resultMessage = "ui.admin.workarea." + graphicElement + "s.corruptDescriptor";
+            break;
+        case GraphicElementPreview.STATUS_ZIP_CORRUPT:
+            resultMessage = "ui.admin.workarea." + graphicElement + "s.corruptZip";
+            break;
+    }
+    if (handler.isZipHasError()) resultMessage = "ui.admin.workarea." + graphicElement + "s.errorImport";
+    if (resultMessage != null) {
 %>
 <span class="skn-error">
                 <br>
                 <p align="center"> <i18n:message key="<%=resultMessage%>">!!!Error</i18n:message></p>
             </span>
 <%
-} else {
+    } else {
 %>
 <i18n:message key='<%="ui.admin.workarea."+graphicElement+"s.global"%>' id="global">!!!Global</i18n:message>
 <br>
@@ -125,25 +120,12 @@
     %>
     <jsp:include page="previews/skinPreview.jsp" flush="true"/>
     <%
-    } else if ("resourceGallery".equals(graphicElement)) { //Extra information
-    %>
-    <jsp:include page="previews/resourceGalleryPreview.jsp" flush="true"/>
-    <%
         } else if ("layout".equals(graphicElement)) { //Extra information
     %>
         <jsp:include page="previews/layoutPreviewConfirm.jsp" flush="true"/>
-        <%
-            }
-        %>
-
-
+    <%
+        }
+    %>
 </td></tr>
 </table>
-<%}
-
-}
-catch (Exception e) {
-    e.printStackTrace();
-    //ResourcesPropertiesHandler handler = (ResourcesPropertiesHandler) Factory.lookup(ResourcesPropertiesHandler.class.getName());
-    //handler.setErrorOnZipFile();
-}%>
+<%  } %>

@@ -33,6 +33,8 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jboss.dashboard.ui.UIBeanLocator" %>
 <%@ page import="org.apache.commons.lang.StringEscapeUtils" %>
+<%@ page import="org.jboss.dashboard.ui.components.DataDisplayerEditor" %>
+<%@ page import="java.util.ResourceBundle" %>
 <i18n:bundle baseName="org.jboss.dashboard.displayer.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%
     // Get the selected tab
@@ -41,7 +43,8 @@
     KPI kpi = kpiEditor.getKpi();
     DataDisplayer displayer = kpi.getDataDisplayer();
     DataProvider provider = kpi.getDataProvider();
-    String editorPath = UIBeanLocator.lookup().getEditor(displayer).getName();
+    DataDisplayerEditor editor = UIBeanLocator.lookup().getEditor(displayer);
+    ResourceBundle i18n = LocaleManager.lookup().getBundle("org.jboss.dashboard.displayer.messages", LocaleManager.currentLocale());
 %>
 
 <!-- Add the properties to configure the KPIEditor -->
@@ -146,11 +149,16 @@
         </td>
         <td>
             <!-- Include the displayer editor -->
-            <factory:useComponent bean="<%= editorPath %>"/>
+            <factory:useComponent bean="<%= editor %>"/>
         </td>
       </tr>
      </table>
       <% } %>
      </td>
    </tr>
+<% if( kpi != null ) { %>
+   <tr>
+     <td align="right"><a href="javascript:alert('<%= i18n.getString(KPIEditor.I18N_PREFFIX + "kpiCodeAlert")%> <%=kpi.getCode()%>')"><%= i18n.getString(KPIEditor.I18N_PREFFIX + "kpiCodeLink")%></a></td>
+   </tr>
+<% } %>
 </table>

@@ -15,14 +15,15 @@
     limitations under the License.
 
 --%>
-<%@ page import="org.jboss.dashboard.factory.Factory" %>
 <%@ page import="org.jboss.dashboard.ui.config.components.resources.ResourcesPropertiesHandler" %>
 <%@ page import="org.jboss.dashboard.ui.SessionManager" %>
+<%@ page import="org.jboss.dashboard.LocaleManager" %>
 <%@ page import="org.jboss.dashboard.ui.utils.forms.FormStatus" %>
 <%@ page import="org.jboss.dashboard.workspace.GraphicElementManager" %>
 <%@ page import="org.jboss.dashboard.ui.resources.GraphicElement" %>
+<%@ page import="org.jboss.dashboard.commons.cdi.CDIBeanLocator" %>
 <%@ taglib uri="http://dashboard.jboss.org/taglibs/i18n-1.0" prefix="i18n" %>
-<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=SessionManager.getCurrentLocale()%>"/>
+<i18n:bundle id="bundle" baseName="org.jboss.dashboard.ui.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%@ taglib uri="factory.tld" prefix="factory" %>
 
@@ -39,7 +40,7 @@
                     </script>
                     <%
                         try {
-                            ResourcesPropertiesHandler handler = (ResourcesPropertiesHandler) Factory.lookup("org.jboss.dashboard.ui.config.components.resources.ResourcesPropertiesHandler");
+                            ResourcesPropertiesHandler handler = ResourcesPropertiesHandler.lookup();
                             request.getSession().setAttribute("gElm", (String) graphicElement);
                             request.getSession().setAttribute("graphicElement", (String) graphicElement);
                             request.setAttribute("graphicElement", (String) graphicElement);
@@ -77,8 +78,6 @@
                             request.setAttribute("skin", request.getSession().getAttribute("adminSkinToUse"));
                             if ("skin".equals(graphicElement))
                                 request.setAttribute("previewElementJSP", "previews/skin.jsp");
-                            if ("resourceGallery".equals(graphicElement))
-                                request.setAttribute("previewElementJSP", "previews/resourceGallery.jsp");
                             if ("layout".equals(graphicElement))
                                 request.setAttribute("previewElementJSP", "previews/layoutPreview.jsp");
                     %>

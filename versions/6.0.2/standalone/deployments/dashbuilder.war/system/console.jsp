@@ -16,7 +16,7 @@
 
 --%>
 <%@ page import="org.jboss.dashboard.Application" %>
-<%@ page import="org.jboss.dashboard.factory.ComponentsContextManager" %>
+<%@ page import="org.jboss.dashboard.ui.SessionManager" %>
 <%
     if (request.getSession().getAttribute("accessGranted") == null) {
         request.setAttribute("redirect", "console.jsp");
@@ -25,10 +25,6 @@
 <%
         return;
     }
-%>
-<%
-    ComponentsContextManager.startContext();
-    try {
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -48,8 +44,3 @@
 <%= Application.lookup().getCopyright() %>
 </body>
 </html>
-<%
-    } finally {
-        ComponentsContextManager.clearContext();
-    }
-%>

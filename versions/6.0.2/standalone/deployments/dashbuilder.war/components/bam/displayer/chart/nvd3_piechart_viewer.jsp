@@ -15,17 +15,23 @@
     limitations under the License.
 
 --%>
-<%@ page import="org.jboss.dashboard.factory.Factory" %>
 <%@ page import="org.jboss.dashboard.ui.UIServices" %>
 <%@ page import="org.jboss.dashboard.ui.components.chart.NVD3ChartViewer" %>
 <%@ page import="org.jboss.dashboard.displayer.chart.AbstractChartDisplayer" %>
-<%@ page import="java.util.HashMap" %>
+<%@ page import="org.jboss.dashboard.ui.UIBeanLocator" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
 <%
-    NVD3ChartViewer viewer = (NVD3ChartViewer) Factory.lookup("org.jboss.dashboard.ui.components.PieChartViewer_nvd3");
+    NVD3ChartViewer viewer = (NVD3ChartViewer) UIBeanLocator.lookup().getCurrentBean(request);
     AbstractChartDisplayer displayer = (AbstractChartDisplayer) viewer.getDataDisplayer();
 %>
-<%@include file="nvd3_chart_common.jspi"%>
+<%@include file="nvd3_chart_common.jsp"%>
+<%
+  if (xyDataSet == null || xyDataSet.getRowCount() == 0) {
+    // No data available
+    return;
+  }
+%>
 
 <%-- EDIT MODE --%>
 
@@ -51,15 +57,15 @@
 <% if( enableDrillDown ) { %>
 <!-- Form for drill down action -->
 <form method="post" action='<factory:formUrl friendly="false"/>' id='<%="form"+chartId%>'>
-  <factory:handler bean="<%=viewer.getComponentName()%>" action="<%= NVD3ChartViewer.PARAM_ACTION %>"/>
+  <factory:handler bean="<%=viewer.getBeanName()%>" action="<%= NVD3ChartViewer.PARAM_ACTION %>"/>
   <input type="hidden" name="<%= NVD3ChartViewer.PARAM_NSERIE %>" value="0" />
 </form>
 <script defer="true">
     setAjax('<%="form"+chartId%>');
 </script>
 <% } %>
-<%@include file="nvd3_chart_wrapper.jspi"%>
-<%@include file="nvd3_piechart_script.jspi"%>
+<%@include file="nvd3_chart_wrapper.jsp"%>
+<%@include file="nvd3_piechart_script.jsp"%>
 <%
    }
 %>

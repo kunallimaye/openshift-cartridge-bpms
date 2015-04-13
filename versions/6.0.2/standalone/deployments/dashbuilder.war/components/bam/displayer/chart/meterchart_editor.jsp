@@ -20,14 +20,13 @@
 <%@ taglib uri="resources.tld" prefix="resource" %>
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc"%>
 <%@ page import="org.jboss.dashboard.ui.components.chart.MeterChartEditor"%>
-<%@ page import="org.jboss.dashboard.factory.Factory"%>
 <%@ page import="org.jboss.dashboard.LocaleManager" %>
 <%@ page import="org.jboss.dashboard.displayer.chart.MeterChartDisplayer" %>
 <%@ page import="org.jboss.dashboard.ui.components.DataDisplayerViewer" %>
 <%@ page import="org.jboss.dashboard.ui.UIBeanLocator" %>
 <i18n:bundle baseName="org.jboss.dashboard.displayer.messages" locale="<%=LocaleManager.currentLocale()%>"/>
 <%
-    MeterChartEditor editor = (MeterChartEditor) Factory.lookup("org.jboss.dashboard.ui.components.MeterChartEditor");
+    MeterChartEditor editor = (MeterChartEditor) UIBeanLocator.lookup().getCurrentBean(request);
     MeterChartDisplayer displayer = (MeterChartDisplayer) editor.getDataDisplayer();
     DataDisplayerViewer viewer = UIBeanLocator.lookup().getViewer(displayer);
     request.setAttribute("editor", editor);
@@ -49,9 +48,9 @@
                  <%--mvc:include page="../../kpi_submit.jsp"  flush="true" /--%>
             </table>
         </td>
-        <!-- Include the graphic -->
+        <!-- Include the viewer -->
         <td valign="top">
-            <factory:useComponent bean="<%= viewer.getName() %>"/>
+            <factory:useComponent bean="<%= viewer %>"/>
         </td>
     </tr>
 </table>

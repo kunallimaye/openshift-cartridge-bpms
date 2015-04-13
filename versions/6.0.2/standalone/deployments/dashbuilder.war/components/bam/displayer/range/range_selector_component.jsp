@@ -16,7 +16,7 @@
 
 --%>
 <%@ page import="org.jboss.dashboard.LocaleManager" %>
-<%@ page import="org.jboss.dashboard.ui.components.AbstractChartDisplayerEditor" %>
+<%@ page import="org.jboss.dashboard.ui.components.chart.AbstractChartDisplayerEditor" %>
 <%@ page import="org.jboss.dashboard.displayer.chart.AbstractChartDisplayer" %>
 <%@ page import="org.jboss.dashboard.provider.DataProperty" %>
 <%@ page import="java.util.Locale" %>
@@ -55,10 +55,8 @@
         <%
             }
         %>
-        </select>
-        &nbsp;
-        <a style="border:0" href="#" onclick="window.<factory:encode name="editRange"/>(); return false;">
-            <img src="<static:image relativePath="general/16x16/ico-edit.png"/>" border="0"
+        </select><a style="border:0" href="#" onclick="window.<factory:encode name="editRange"/>(); return false;"><img
+                   src="<static:image relativePath="general/16x16/ico-edit.png"/>" border="0"
                    title="<i18n:message key='<%= AbstractChartDisplayerEditor.I18N_PREFFIX + "editar_range"%>'>!!Editar range</i18n:message>"
                    style="vertical-align:middle">
         </a>

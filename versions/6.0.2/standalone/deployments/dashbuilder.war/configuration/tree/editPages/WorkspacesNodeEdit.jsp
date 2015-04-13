@@ -37,7 +37,7 @@
         <form method="POST" action="<factory:formUrl friendly="false"/>">
             <factory:handler bean="org.jboss.dashboard.ui.config.components.workspace.WorkspacesPropertiesHandler" action="createWorkspace"/>
         <table cellpadding="4" cellspacing="1" border="0" width="100%" ><tr><td>
-        <table cellpadding="4" cellspacing="1" border="0" width="470" align="left" class="skn-table_border">
+        <table id="workspaceList" cellpadding="4" cellspacing="1" border="0" width="470" align="left" class="skn-table_border">
     </mvc:fragment>
     <mvc:fragment name="outputHeaderDelete">
         <td class="skn-table_header" width="10px"><i18n:message key="ui.admin.workarea.actions">!!!Actions</i18n:message></td>
@@ -114,7 +114,7 @@
     </mvc:fragment>
     <mvc:fragment name="outputCreateWorkspaceStart">
             <tr><td>
-        <table border="0" cellpadding="4" cellspacing="1" align="left" width="470" class="skn-table_border">
+        <table id="createWorkspace" border="0" cellpadding="4" cellspacing="1" align="left" width="470" class="skn-table_border">
                 <tr class="skn-table_header">
                     <td colspan="2">
                         <i18n:message key="ui.workspace.createNewWorkspace">!!Create new workspace</i18n:message>
@@ -152,12 +152,12 @@
                                             }
                                         }">
                                       <%
-                                          Locale[] locales = LocaleManager.lookup().getPlatformAvailableLocales();
-                                          for (int i = 0; i < locales.length; i++) {
-                                            Locale locale = locales[i];
+                                          String[] langs = LocaleManager.lookup().getPlatformAvailableLangs();
+                                          for (int i = 0; i < langs.length; i++) {
+                                              String lang = langs[i];
                                       %>
-                                        <option <%= LocaleManager.currentLang().equals(locale.getLanguage()) ? "selected" : ""%> value="<%=locale%>">
-                                          <%= StringUtils.capitalize(locale.getDisplayName(locale)) %>
+                                        <option <%= LocaleManager.currentLang().equals(lang) ? "selected" : ""%> value="<%=lang%>">
+                                          <%= StringUtils.capitalize(LocaleManager.lookup().getLangDisplayName(lang)) %>
                                         </option>
                                       <% } %>
                                         </select>

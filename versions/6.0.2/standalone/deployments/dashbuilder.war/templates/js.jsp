@@ -21,9 +21,7 @@
 <%@ taglib uri="mvc_taglib.tld" prefix="mvc" %>
 <%
     JSIncluder jsIncluder = UIServices.lookup().getJsIncluder();
-    String[] jsFiles = jsIncluder.getJsFilesToIncludeInHeader();
-    for (int i = 0; i < jsFiles.length; i++) {
-        String jsFile = jsFiles[i];
+    for (String jsFile : jsIncluder.getJsHeaderFiles()) {
 %>
     <script src='<mvc:context uri="<%= jsFile %>" />'></script>
 <%
@@ -31,9 +29,7 @@
 %>
 <script  language="Javascript" type="text/javascript">
 <%
-    String[] jspFiles = jsIncluder.getJspFilesToIncludeInHeader();
-    for (int i = 0; i < jspFiles.length; i++) {
-        String jspFile = jspFiles[i];
+    for (String jspFile : jsIncluder.getJspHeaderFiles()) {
 %>
     <jsp:include page="<%= jspFile %>" flush="true"/>
 <%
